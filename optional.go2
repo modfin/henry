@@ -1,0 +1,46 @@
+package main
+
+
+func OptionalOf[A any](val A) Optional[A] {
+	return Optional[A]{
+		val: &val,
+	}
+}
+
+func OptionalZero[A any](_ A) Optional[A] {
+	return Optional[A]{
+		val: nil,
+	}
+}
+
+
+type Optional[A any] struct {
+	val *A
+}
+func (o Optional[A]) Valid() bool {
+	return o.val != nil
+}
+
+func (o Optional[A]) Get() (A, bool) {
+	if o.Valid() {
+		return *o.val, true
+	}
+	var zero A
+	return zero, false
+}
+func (o Optional[A]) OrElse(fallback A) A {
+	a, ok := o.Get()
+	if ok {
+		return a
+	}
+	return fallback
+}
+
+func (o Optional[A]) OrGet(getter func () A ) A {
+	a, ok := o.Get()
+	if ok {
+		return a
+	}
+	return getter()
+}
+
