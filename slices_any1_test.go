@@ -294,3 +294,15 @@ func TestPartition(t *testing.T) {
 		t.Logf("expected, %v to equal %v\n", odd, expOdd)
 	}
 }
+
+func TestSort(t *testing.T) {
+	ints := []int{3, 2, 1}
+	exp := []int{1, 2, 3}
+	res := Sort(ints, func(a, b int) bool {
+		return a < b
+	})
+	if !reflect.DeepEqual(res, exp) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+}

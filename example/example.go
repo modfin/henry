@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/crholm/henry"
+	"github.com/crholm/henry/pipe"
 )
 
 func main() {
@@ -15,20 +16,17 @@ func main() {
 	}
 
 	var pslice = []int{1, 2, 3, 4, 5, 6, 7, 8}
-	var nslice = henry.PipeOf(pslice).Map(negate).Reverse().Slice()
+	var nslice = pipe.Of(pslice).Map(negate).Reverse().Slice()
 
-	var all = henry.PipeOf(pslice).
-		Concat(nslice). // Reversing original slice, negating numbers and concatenating the res
-		Filter(even).   // Filtering and keeping even numbers
-		DropLeft(1).    // Dropping one number on the left
-		DropRight(1).   // Dropping one number of the right
-		Reverse().      // Revers the slice
-		Slice()         // Retrive the resulting slice from pipe
-
-	// Partitioning into slice into positive and negative numbers
-	positive, negative := henry.Partition(all, func(_ int, val int) bool {
-		return val > 0
-	})
+	positive, negative := pipe.Of(pslice).
+		Concat(nslice).                       // Reversing original slice, negating numbers and concatenating the res
+		Filter(even).                         // Filtering and keeping even numbers
+		DropLeft(1).                          // Dropping one number on the left
+		DropRight(1).                         // Dropping one number of the right
+		Reverse().                            // Revers the slice
+		Partition(func(_ int, val int) bool { // Partitioning into slice into positive and negative numbers
+			return val > 0
+		})
 
 	// Mapping number to string
 	toStr := func(index int, v int) string {

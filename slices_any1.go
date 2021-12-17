@@ -3,6 +3,7 @@ package henry
 import (
 	"github.com/crholm/henry/maybe"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -265,4 +266,13 @@ func Sample[A any](slice []A, n int) []A {
 		ret = append(ret, slice[idx])
 	}
 	return ret
+}
+
+func Sort[A any](slice []A, less func(a, b A) bool) []A {
+	var res = make([]A, len(slice))
+	copy(res, slice)
+	sort.Slice(res, func(i, j int) bool {
+		return less(res[i], res[j])
+	})
+	return res
 }
