@@ -31,7 +31,7 @@ func Reverse[A any](slice []A) []A {
 
 func Head[A any](slice []A) maybe.Value[A] {
 	if len(slice) > 0 {
-		maybe.Some(slice[0])
+		return maybe.Some(slice[0])
 	}
 	var zero A
 	return maybe.None(zero)

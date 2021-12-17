@@ -81,6 +81,18 @@ func (p Pipe[A]) Reject(exclude func(i int, a A) bool) Pipe[A] {
 	return PipeOf(Reject(p.in, exclude))
 }
 
+func (p Pipe[A]) Map(f func(i int, a A) A) Pipe[A] {
+	return PipeOf(Map(p.in, f))
+}
+
+func (p Pipe[A]) FoldLeft(combined func(i int, accumulator A, val A) A, accumulator A) A {
+	return FoldLeft(p.in, combined, accumulator)
+}
+
+func (p Pipe[A]) FoldRight(combined func(i int, accumulator A, val A) A, accumulator A) A {
+	return FoldLeft(p.in, combined, accumulator)
+}
+
 func (p Pipe[A]) Every(predicate func(a A) bool) bool {
 	return Every(p.in, predicate)
 }

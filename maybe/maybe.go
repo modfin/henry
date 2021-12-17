@@ -27,18 +27,15 @@ func (o Value[A]) Get() (A, bool) {
 	var zero A
 	return zero, false
 }
-func (o Value[A]) Or(fallback A) A {
+
+func (o Value[A]) GetOr(fallback A) A {
 	a, ok := o.Get()
 	if ok {
 		return a
 	}
 	return fallback
 }
-
-func (o Value[A]) OrGet(getter func() A) A {
-	a, ok := o.Get()
-	if ok {
-		return a
-	}
-	return getter()
+func (o Value[A]) Value() A {
+	val, _ := o.Get()
+	return val
 }

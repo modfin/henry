@@ -228,7 +228,7 @@ func TestEvery2(t *testing.T) {
 func TestNth(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := 2
-	res := Nth(ints, 1).Or(0)
+	res := Nth(ints, 1).GetOr(0)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
@@ -238,7 +238,7 @@ func TestNth(t *testing.T) {
 func TestNth2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := 3
-	res := Nth(ints, -1).Or(0)
+	res := Nth(ints, -1).GetOr(0)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
@@ -248,7 +248,7 @@ func TestNth2(t *testing.T) {
 func TestNth3(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := 0
-	res := Nth(ints, 10).Or(0)
+	res := Nth(ints, 10).GetOr(0)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
