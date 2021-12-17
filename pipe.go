@@ -1,4 +1,6 @@
-package main
+package henry
+
+import "github.com/crholm/henry/maybe"
 
 func PipeOf[A any](a []A) Pipe[A] {
 	return Pipe[A]{
@@ -26,10 +28,10 @@ func (p Pipe[A]) Concat(slices ...[]A) Pipe[A] {
 func (p Pipe[A]) Tail() Pipe[A] {
 	return PipeOf(Tail(p.in))
 }
-func (p Pipe[A]) Head() Optional[A]  {
+func (p Pipe[A]) Head() maybe.Value[A] {
 	return Head(p.in)
 }
-func (p Pipe[A]) Last() Optional[A]  {
+func (p Pipe[A]) Last() maybe.Value[A] {
 	return Last(p.in)
 }
 
@@ -37,7 +39,7 @@ func (p Pipe[A]) Reverse() Pipe[A] {
 	return PipeOf(Reverse(p.in))
 }
 
-func (p Pipe[A]) Nth(i int) Optional[A] {
+func (p Pipe[A]) Nth(i int) maybe.Value[A] {
 	return Nth(p.in, i)
 }
 

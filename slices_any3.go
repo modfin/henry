@@ -1,4 +1,4 @@
-package main
+package henry
 
 func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) []C {
 	var i = len(aSlice)
@@ -8,7 +8,7 @@ func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) [
 	}
 	var cSlice []C
 	for k, a := range aSlice {
-		if k == j{
+		if k == j {
 			break
 		}
 		b := bSlice[k]

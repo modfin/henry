@@ -1,11 +1,10 @@
-package main
+package henry
 
 import (
+	"github.com/crholm/henry/maybe"
 	"math/rand"
 	"time"
 )
-
-/// ANY Algs
 
 func Each[A any](slice []A, apply func(i int, a A)) {
 	for i, a := range slice {
@@ -21,7 +20,6 @@ func Concat[A any](slices ...[]A) []A {
 	return ret
 }
 
-
 func Reverse[A any](slice []A) []A {
 	l := len(slice)
 	res := make([]A, l)
@@ -31,35 +29,35 @@ func Reverse[A any](slice []A) []A {
 	return res
 }
 
-func Head[A any](slice []A) Optional[A] {
-	if len(slice) > 0{
-		OptionalOf(slice[0])
+func Head[A any](slice []A) maybe.Value[A] {
+	if len(slice) > 0 {
+		maybe.Some(slice[0])
 	}
 	var zero A
-	return OptionalZero(zero)
+	return maybe.None(zero)
 }
 func Tail[A any](slice []A) []A {
 	return DropLeft(slice, 1)
 }
 
-func Last[A any](slice []A) Optional[A]  {
-	if len(slice) > 0{
-		return OptionalOf(slice[len(slice)-1])
+func Last[A any](slice []A) maybe.Value[A] {
+	if len(slice) > 0 {
+		return maybe.Some(slice[len(slice)-1])
 	}
 	var zero A
-	return OptionalZero(zero)
+	return maybe.None(zero)
 }
 
-func Nth[A any](slice []A, i int) Optional[A] {
+func Nth[A any](slice []A, i int) maybe.Value[A] {
 	if i < 0 {
 		i = len(slice) + i
 	}
 
-	if i < len(slice){
-		return OptionalOf(slice[i])
+	if i < len(slice) {
+		return maybe.Some(slice[i])
 	}
 	var zero A
-	return OptionalZero(zero)
+	return maybe.None(zero)
 }
 
 func TakeLeftWhile[A any](slice []A, take func(i int, a A) bool) []A {
@@ -99,20 +97,42 @@ func TakeRight[A any](slice []A, i int) []A {
 }
 
 func DropLeftWhile[A any](slice []A, drop func(i int, a A) bool) []A {
-	var index int
+	if len(slice) == 0 {
+		return nil
+	}
+
+	var index int = -1
 	for i, val := range slice {
 		if !drop(i, val) {
 			break
 		}
 		index = i
 	}
-	a := make([]A, len(slice)-index-1)
-	copy(a, slice[index+1:])
+
+	var a []A
+
+	if index == -1 {
+		a = make([]A, len(slice))
+		copy(a, slice)
+		return a
+	}
+
+	if index+1 < len(slice) {
+		a = make([]A, len(slice)-index-1)
+		copy(a, slice[index+1:])
+		return a
+	}
+
 	return a
 }
 
 func DropRightWhile[A any](slice []A, drop func(i int, a A) bool) []A {
-	var index int
+
+	if len(slice) == 0 {
+		return nil
+	}
+
+	var index int = -1
 	var l = len(slice)
 	for i := range slice {
 		i = l - i - 1
@@ -122,9 +142,20 @@ func DropRightWhile[A any](slice []A, drop func(i int, a A) bool) []A {
 		}
 		index = i
 	}
-	a := make([]A, index)
-	copy(a, slice[:index])
+	var a []A
+	if index == -1 {
+		a = make([]A, len(slice))
+		copy(a, slice)
+		return a
+	}
+
+	if 0 < index && index < len(slice) {
+		a = make([]A, index)
+		copy(a, slice[:index])
+		return a
+	}
 	return a
+
 }
 
 func DropLeft[A any](slice []A, i int) []A {
@@ -193,8 +224,7 @@ func None[A any](slice []A, predicate func(A) bool) bool {
 	return !Some(slice, predicate)
 }
 
-
-func Shuffle[A any](slice []A) []A{
+func Shuffle[A any](slice []A) []A {
 	rand.Seed(time.Now().UnixNano())
 	var ret []A
 	for _, a := range slice {
@@ -206,26 +236,26 @@ func Shuffle[A any](slice []A) []A{
 	return ret
 }
 
-func Sample[A any](slice []A, n int) []A{
+func Sample[A any](slice []A, n int) []A {
 	var ret []A
 
-	if n > len(slice){
+	if n > len(slice) {
 		n = len(slice)
 	}
 
-	if  n > len(slice)/3 { // sqare root?
+	if n > len(slice)/3 { // sqare root?
 		ret = Shuffle(slice)
 		return ret[:n]
 	}
 
-	idxs :=  map[int]struct{}{}
+	idxs := map[int]struct{}{}
 	rand.Seed(time.Now().UnixNano())
-	for i:= 0; i < n; i++{
+	for i := 0; i < n; i++ {
 		var idx int
 		for {
 			idx = rand.Intn(len(slice))
 			_, found := idxs[idx]
-			if found{
+			if found {
 				continue
 			}
 			idxs[idx] = struct{}{}
