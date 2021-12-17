@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/crholm/henry"
-	"github.com/crholm/henry/pipe"
+	"github.com/crholm/henry/henry"
+	"github.com/crholm/henry/henry/pipe"
 )
 
 func main() {
