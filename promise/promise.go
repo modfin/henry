@@ -29,6 +29,7 @@ type Promise[A any] struct {
 
 	thens []func(A)
 	errs  []func(error)
+	all   []func(A, error)
 }
 
 func Async[A any](ctx context.Context, exec func(context.Context) (A, error)) *Promise[A] {
@@ -48,6 +49,11 @@ func Async[A any](ctx context.Context, exec func(context.Context) (A, error)) *P
 		if p.err != nil {
 			for _, t := range p.errs {
 				t(p.err)
+			}
+		}
+		if p.all != nil {
+			for _, t := range p.all {
+				t(p.result, p.err)
 			}
 		}
 
@@ -72,6 +78,10 @@ func (p *Promise[A]) Then(onSuccess func(A)) *Promise[A] {
 }
 func (p *Promise[A]) Error(onError func(error)) *Promise[A] {
 	p.errs = append(p.errs, onError)
+	return p
+}
+func (p *Promise[A]) Finally(onAll func(A, error)) *Promise[A] {
+	p.all = append(p.all, onAll)
 	return p
 }
 
