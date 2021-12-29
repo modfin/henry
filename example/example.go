@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	henry2 "github.com/crholm/henry"
+	"github.com/crholm/henry"
 	"github.com/crholm/henry/pipe"
 )
 
@@ -32,16 +32,16 @@ func main() {
 	toStr := func(index int, v int) string {
 		return fmt.Sprintf("%d", v)
 	}
-	var pStrSlice = henry2.Map(positive, toStr)
-	var nStrSlice = henry2.Map(negative, toStr)
+	var pStrSlice = henry.Map(positive, toStr)
+	var nStrSlice = henry.Map(negative, toStr)
 
 	// Joining []string to string
 	joiner := func(index int, accumulator string, val string) string {
 		return fmt.Sprintf("%s, %s", accumulator, val)
 	}
 
-	var pStr = henry2.FoldLeft(henry2.Tail(pStrSlice), joiner, henry2.Head(pStrSlice).Value())
-	var nStr = henry2.FoldLeft(henry2.Tail(nStrSlice), joiner, henry2.Head(nStrSlice).Value())
+	var pStr = henry.FoldLeft(henry.Tail(pStrSlice), joiner, henry.Head(pStrSlice).Value())
+	var nStr = henry.FoldLeft(henry.Tail(nStrSlice), joiner, henry.Head(nStrSlice).Value())
 
 	fmt.Printf("(%s), (%s)\n", pStr, nStr)
 	// (8, 6, 4), (-4, -6, -8)

@@ -2,7 +2,7 @@ package numbers
 
 import (
 	"constraints"
-	henry2 "github.com/crholm/henry"
+	"github.com/crholm/henry"
 	"github.com/crholm/henry/pipe"
 	"math"
 	"sort"
@@ -44,13 +44,13 @@ func Range[N Numbers](a ...N) N {
 
 func Sum[N Numbers](a ...N) N {
 	var zero N
-	return henry2.FoldLeft(a, func(_ int, acc N, val N) N {
+	return henry.FoldLeft(a, func(_ int, acc N, val N) N {
 		return acc + val
 	}, zero)
 }
 
 func Pow[N Numbers](a []N, pow N) []N {
-	return henry2.Map(a, func(_ int, a N) N {
+	return henry.Map(a, func(_ int, a N) N {
 		return N(math.Pow(float64(a), float64(pow)))
 	})
 }
@@ -65,7 +65,7 @@ func Mean[N Numbers](a ...N) float64 {
 
 func Variance[N Numbers](samples ...N) float64 {
 	avg := Mean(samples...)
-	partial := henry2.Map(samples, func(_ int, x N) float64 {
+	partial := henry.Map(samples, func(_ int, x N) float64 {
 		return math.Pow(float64(x)-avg, 2)
 	})
 	return Sum(partial...) / float64(len(partial)-1)
@@ -79,14 +79,14 @@ func Correlation[N Numbers](x []N, y []N) float64 {
 	xm := Mean(x...)
 	ym := Mean(y...)
 
-	dx := henry2.Map(x, func(_ int, a N) float64 {
+	dx := henry.Map(x, func(_ int, a N) float64 {
 		return float64(a) - xm
 	})
-	dy := henry2.Map(y, func(_ int, a N) float64 {
+	dy := henry.Map(y, func(_ int, a N) float64 {
 		return float64(a) - ym
 	})
 
-	t := Sum(henry2.Zip(dx, dy, func(a float64, b float64) float64 {
+	t := Sum(henry.Zip(dx, dy, func(a float64, b float64) float64 {
 		return a * b
 	})...)
 
@@ -134,7 +134,7 @@ func Modes[N Numbers](nums ...N) []N {
 		return counts[i].c > counts[j].c
 	})
 	max := counts[0].c
-	return henry2.Map(
+	return henry.Map(
 		pipe.Of(counts).
 			TakeLeftWhile(func(i int, a modecount[N]) bool {
 				return a.c == max
