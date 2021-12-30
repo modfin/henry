@@ -306,3 +306,28 @@ func TestSort(t *testing.T) {
 		t.Logf("expected, %v to equal %v\n", res, exp)
 	}
 }
+
+func TestCompact(t *testing.T) {
+	ints := []int{3, 2, 2, 1, 1, 1, 1, 1, 3, 3, 4, 5}
+	exp := []int{3, 2, 1, 3, 4, 5}
+	res := Compact(ints, func(a, b int) bool {
+		return a == b
+	})
+	if !reflect.DeepEqual(res, exp) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+}
+
+func TestCompact2(t *testing.T) {
+	str := []byte("Remove   a  lot    of    white   spaces    !!")
+	exp := "Remove a lot of white spaces !!"
+	res := Compact(str, func(a, b byte) bool {
+		return a == b && a == byte(' ')
+	})
+	resStr := string(res)
+	if resStr != exp {
+		t.Fail()
+		t.Logf("expected, \"%v\" to equal \"%v\"\n", resStr, exp)
+	}
+}

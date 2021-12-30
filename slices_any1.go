@@ -276,3 +276,19 @@ func Sort[A any](slice []A, less func(a, b A) bool) []A {
 	})
 	return res
 }
+
+func Compact[A any](slice []A, equal func(a, b A) bool) []A {
+	if len(slice) == 0 {
+		return slice
+	}
+	head := slice[0]
+	last := head
+	tail := FoldLeft(slice[1:], func(_ int, accumulator []A, current A) []A {
+		if equal(last, current) {
+			return accumulator
+		}
+		last = current
+		return append(accumulator, current)
+	}, []A{})
+	return append([]A{head}, tail...)
+}
