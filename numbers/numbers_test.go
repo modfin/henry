@@ -60,7 +60,7 @@ func TestVDot(t *testing.T) {
 
 func TestMAD(t *testing.T) {
 	v := []int{3, 8, 10, 17, 24, 27}
-	res := MeanAbsDev(v...)
+	res := MAD(v...)
 	if res != 7.833333333333334 {
 		t.Log("Expected ", 1, "got", res)
 		t.Fail()
@@ -132,7 +132,7 @@ func TestModes(t *testing.T) {
 }
 
 func TestVariance(t *testing.T) {
-	v := Variance(1, 2, 3, 4, 5)
+	v := Var(1, 2, 3, 4, 5)
 	if v != 2.5 {
 		t.Log("Expected 2.5", "got", v)
 		t.Fail()

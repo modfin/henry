@@ -17,8 +17,8 @@ func main() {
 	fmt.Println("Max:", numbers.Max(ints...))
 	fmt.Println("Sum:", numbers.Sum(ints...))
 	fmt.Println("x^2:", numbers.VPow(ints, 2))
-	fmt.Println("Variance:", numbers.Variance(ints...)) // Sample
-	fmt.Println("StdDev:", numbers.StdDev(ints...))     // Sample
+	fmt.Println("Variance:", numbers.Var(ints...))  // Sample
+	fmt.Println("StdDev:", numbers.StdDev(ints...)) // Sample
 	fmt.Println()
 
 	floats := henry.Map(ints, numbers.MapFloat64[int])
@@ -33,7 +33,7 @@ func main() {
 	fmt.Println("Max:", numbers.Max(floats...))
 	fmt.Println("Sum:", numbers.Sum(floats...))
 	fmt.Println("x^2:", numbers.VPow(floats, 2))
-	fmt.Println("Variance:", numbers.Variance(floats...))
+	fmt.Println("Variance:", numbers.Var(floats...))
 	fmt.Println("StdDev:", numbers.StdDev(floats...))
 
 }

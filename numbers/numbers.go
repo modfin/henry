@@ -85,15 +85,17 @@ func Mean[N Numbers](a ...N) float64 {
 	return float64(Sum(a...)) / float64(len(a))
 }
 
-// MeanAbsDev - Mean Absolute Deviation
-func MeanAbsDev[N Numbers](n ...N) float64 {
+// MAD - Mean Absolute Deviation
+func MAD[N Numbers](n ...N) float64 {
 	mean := Mean(n...)
 	count := float64(len(n))
 	return henry.FoldLeft(n, func(_ int, accumulator float64, val N) float64 {
 		return accumulator + math.Abs(float64(val)-mean)/count
 	}, 0.0)
 }
-func Variance[N Numbers](samples ...N) float64 {
+
+// VAR Variance
+func Var[N Numbers](samples ...N) float64 {
 	avg := Mean(samples...)
 	partial := henry.Map(samples, func(_ int, x N) float64 {
 		return math.Pow(float64(x)-avg, 2)
@@ -102,7 +104,7 @@ func Variance[N Numbers](samples ...N) float64 {
 }
 
 func StdDev[N Numbers](samples ...N) float64 {
-	return math.Sqrt(Variance(samples...))
+	return math.Sqrt(Var(samples...))
 }
 func StdErr[N Numbers](n ...N) float64 {
 	return StdDev(n...) / math.Sqrt(float64(len(n)))
@@ -196,7 +198,7 @@ func LinReg[N Numbers](x []N, y []N) (intercept, slope float64) {
 }
 
 func FTest[N Numbers](x []N, y []N) float64 {
-	return Variance(x...) / Variance(y...)
+	return Var(x...) / Var(y...)
 }
 
 func Median[N Numbers](n ...N) float64 {
