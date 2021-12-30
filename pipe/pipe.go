@@ -122,3 +122,7 @@ func (p Pipe[A]) Shuffle() Pipe[A] {
 func (p Pipe[A]) Sort(less func(a, b A) bool) Pipe[A] {
 	return Of(henry.Sort(p.in, less))
 }
+
+func (p Pipe[A]) Compact(equal func(a, b A) bool) Pipe[A] {
+	return Of(henry.Compact(p.in, equal))
+}
