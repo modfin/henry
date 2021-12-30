@@ -57,3 +57,101 @@ func GroupBy[A any, B comparable](slice []A, key func(i int, a A) B) map[B][]A {
 	}
 	return m
 }
+
+func Uniq[A any, B comparable](by func(a A) B, slice []A) []A {
+	var res []A
+	var set = map[B]struct{}{}
+	for _, e := range slice {
+		key := by(e)
+		_, ok := set[key]
+		if ok {
+			continue
+		}
+		set[key] = struct{}{}
+		res = append(res, e)
+	}
+	return res
+}
+
+func Union[A any, B comparable](by func(a A) B, slices ...[]A) []A {
+	if len(slices) == 0 {
+		return nil
+	}
+	var res []A
+	var set = map[B]struct{}{}
+	for _, slice := range slices {
+		for _, e := range slice {
+			key := by(e)
+			_, ok := set[key]
+			if ok {
+				continue
+			}
+			set[key] = struct{}{}
+			res = append(res, e)
+		}
+	}
+	return res
+}
+
+func Intersection[A any, B comparable](by func(a A) B, slices ...[]A) []A {
+	if len(slices) == 0 {
+		return nil
+	}
+	var res = Uniq(by, slices[0])
+	for _, slice := range slices[1:] {
+		var set = map[B]bool{}
+		for _, e := range slice {
+			set[by(e)] = true
+		}
+		res = Filter(res, func(_ int, a A) bool {
+			return set[by(a)]
+		})
+	}
+	return res
+}
+
+func Difference[A any, B comparable](by func(a A) B, slices ...[]A) []A {
+	if len(slices) == 0 {
+		return nil
+	}
+	var exclude = map[B]bool{}
+	for _, v := range Intersection(by, slices...) {
+		exclude[by(v)] = true
+	}
+
+	var res []A
+	for _, slice := range slices {
+		for _, e := range slice {
+			key := by(e)
+			if exclude[key] {
+				continue
+			}
+			exclude[key] = true
+			res = append(res, e)
+		}
+	}
+	return res
+}
+
+func Complement[A any, B comparable](by func(a A) B, a, b []A) []A {
+	if len(a) == 0 {
+		return b
+	}
+
+	var exclude = map[B]bool{}
+	for _, e := range a {
+		exclude[by(e)] = true
+	}
+
+	var res []A
+	for _, e := range b {
+		key := by(e)
+		if exclude[key] {
+			continue
+		}
+		exclude[key] = true
+		res = append(res, e)
+	}
+
+	return res
+}

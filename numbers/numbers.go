@@ -45,10 +45,36 @@ func Sum[N Numbers](a ...N) N {
 	}, zero)
 }
 
-func Pow[N Numbers](a []N, pow N) []N {
+func VPow[N Numbers](a []N, pow N) []N {
 	return henry.Map(a, func(_ int, a N) N {
 		return N(math.Pow(float64(a), float64(pow)))
 	})
+}
+
+func VMul[N Numbers](x []N, y []N) []N {
+	l := Min(len(x), len(y))
+	x, y = x[:l], y[:l]
+	return henry.Zip(x, y, func(a, b N) N {
+		return a * b
+	})
+}
+func VAdd[N Numbers](x []N, y []N) []N {
+	l := Min(len(x), len(y))
+	x, y = x[:l], y[:l]
+	return henry.Zip(x, y, func(a, b N) N {
+		return a + b
+	})
+}
+func VSub[N Numbers](x []N, y []N) []N {
+	l := Min(len(y), len(y))
+	y, y = y[:l], y[:l]
+	return henry.Zip(x, y, func(a, b N) N {
+		return a - b
+	})
+}
+
+func VDot[N Numbers](x []N, y []N) N {
+	return Sum(VMul(x, y)...)
 }
 
 func Mean[N Numbers](a ...N) float64 {
@@ -59,6 +85,14 @@ func Mean[N Numbers](a ...N) float64 {
 	return float64(Sum(a...)) / float64(len(a))
 }
 
+// MeanAbsDev - Mean Absolute Deviation
+func MeanAbsDev[N Numbers](n ...N) float64 {
+	mean := Mean(n...)
+	count := float64(len(n))
+	return henry.FoldLeft(n, func(_ int, accumulator float64, val N) float64 {
+		return accumulator + math.Abs(float64(val)-mean)/count
+	}, 0.0)
+}
 func Variance[N Numbers](samples ...N) float64 {
 	avg := Mean(samples...)
 	partial := henry.Map(samples, func(_ int, x N) float64 {
@@ -70,8 +104,36 @@ func Variance[N Numbers](samples ...N) float64 {
 func StdDev[N Numbers](samples ...N) float64 {
 	return math.Sqrt(Variance(samples...))
 }
+func StdErr[N Numbers](n ...N) float64 {
+	return StdDev(n...) / math.Sqrt(float64(len(n)))
 
-func Correlation[N Numbers](x []N, y []N) float64 {
+}
+
+// SNR Signal noise ratio
+func SNR[N Numbers](x ...N) float64 {
+	return Mean(x...) / StdDev(x...)
+}
+
+func ZScore[N Numbers](x N, pop []N) float64 {
+	return (float64(x) - Mean(pop...)) / StdDev(pop...)
+}
+
+func Skew[N Numbers](n ...N) float64 {
+	count := float64(len(n))
+	mean := Mean(n...)
+	sd := StdDev(n...)
+	d := (count - 1) * math.Pow(sd, 3)
+
+	return henry.FoldLeft(n, func(_ int, accumulator float64, val N) float64 {
+		return accumulator + math.Pow(float64(val)-mean, 3)/d
+	}, 0)
+}
+
+// Corr Correlation
+func Corr[N Numbers](x []N, y []N) float64 {
+	l := Min(len(x), len(y))
+	x, y = x[:l], y[:l]
+
 	xm := Mean(x...)
 	ym := Mean(y...)
 
@@ -86,10 +148,55 @@ func Correlation[N Numbers](x []N, y []N) float64 {
 		return a * b
 	})...)
 
-	n1 := Sum(Pow(dx, 2)...)
-	n2 := Sum(Pow(dy, 2)...)
+	n1 := Sum(VPow(dx, 2)...)
+	n2 := Sum(VPow(dy, 2)...)
 
 	return t / (math.Sqrt(n1 * n2))
+}
+
+// Cov Covariance
+func Cov[N Numbers](x []N, y []N) float64 {
+
+	l := Min(len(x), len(y))
+	x, y = x[:l], y[:l]
+
+	xm := Mean(x...)
+	ym := Mean(y...)
+
+	dx := henry.Map(x, func(_ int, a N) float64 {
+		return float64(a) - xm
+	})
+	dy := henry.Map(y, func(_ int, a N) float64 {
+		return float64(a) - ym
+	})
+
+	t := Sum(henry.Zip(dx, dy, func(a float64, b float64) float64 {
+		return a * b
+	})...)
+	return t / float64(l)
+}
+
+func R2[N Numbers](x []N, y []N) float64 {
+	return math.Pow(Corr(x, y), 2)
+}
+
+func LinReg[N Numbers](x []N, y []N) (intercept, slope float64) {
+	l := Min(len(x), len(y))
+	x, y = x[:l], y[:l]
+
+	sum_x := float64(Sum(x...))
+	sum_x2 := float64(Sum(VPow(x, 2)...))
+	sum_y := float64(Sum(y...))
+	sum_xy := float64(Sum(VMul(x, y)...))
+	n := float64(l)
+
+	slope = (sum_y*sum_x2 - sum_x*sum_xy) / (n*sum_x2 - math.Pow(sum_x, 2))
+	intercept = (n*sum_xy - sum_x*sum_y) / (n*sum_x2 - math.Pow(sum_x, 2))
+	return intercept, slope
+}
+
+func FTest[N Numbers](x []N, y []N) float64 {
+	return Variance(x...) / Variance(y...)
 }
 
 func Median[N Numbers](n ...N) float64 {
@@ -145,21 +252,69 @@ func Modes[N Numbers](nums ...N) []N {
 	)
 }
 
-func GCD[I constraints.Integer](a, b I) I {
-	for b != 0 {
-		t := b
-		b = a % b
-		a = t
+// GCD Greatest common divisor
+func GCD[I constraints.Integer](ints ...I) (gcd I) {
+	if len(ints) == 0 {
+		return gcd
 	}
-	return a
+	gcd = ints[0]
+	for _, b := range ints[1:] {
+		for b != 0 {
+			t := b
+			b = gcd % b
+			gcd = t
+		}
+	}
+	return gcd
 }
 
+// LCM Least Common Multiple
 func LCM[I constraints.Integer](a, b I, integers ...I) I {
 	result := a * b / GCD(a, b)
 
 	for i := 0; i < len(integers); i++ {
 		result = LCM(result, integers[i])
 	}
-
 	return result
+}
+
+func Percentile[N Numbers](score N, n ...N) float64 {
+	count := pipe.Of(n).Filter(func(_ int, n N) bool { return n < score }).Count()
+	return float64(count) / float64(len(n))
+}
+
+func BitOR[I constraints.Integer](a []I) (i I) {
+	if len(a) == 0 {
+		return i
+	}
+	if len(a) == 1 {
+		return a[0]
+	}
+	return henry.FoldLeft(a[1:], func(_ int, accumulator I, val I) I {
+		return accumulator | val
+	}, a[0])
+}
+
+func BitAND[I constraints.Integer](a []I) (i I) {
+	if len(a) == 0 {
+		return i
+	}
+	if len(a) == 1 {
+		return a[0]
+	}
+	return henry.FoldLeft(a[1:], func(_ int, accumulator I, val I) I {
+		return accumulator & val
+	}, a[0])
+}
+
+func BitXOR[I constraints.Integer](a []I) (i I) {
+	if len(a) == 0 {
+		return i
+	}
+	if len(a) == 1 {
+		return a[0]
+	}
+	return henry.FoldLeft(a[1:], func(_ int, accumulator I, val I) I {
+		return accumulator ^ val
+	}, a[0])
 }

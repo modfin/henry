@@ -126,3 +126,7 @@ func (p Pipe[A]) Sort(less func(a, b A) bool) Pipe[A] {
 func (p Pipe[A]) Compact(equal func(a, b A) bool) Pipe[A] {
 	return Of(henry.Compact(p.in, equal))
 }
+
+func (p Pipe[A]) Count() int {
+	return len(p.in)
+}
