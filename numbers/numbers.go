@@ -8,10 +8,6 @@ import (
 	"sort"
 )
 
-type Numbers interface {
-	constraints.Integer | constraints.Float
-}
-
 func Min[N Numbers](a ...N) N {
 	if len(a) == 0 {
 		panic("no min of nothing")

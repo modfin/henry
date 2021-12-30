@@ -1,11 +1,10 @@
 package cmap
 
 import (
-	"constraints"
 	"sync"
 )
 
-type Map[K constraints.Ordered, V any] interface {
+type Map[K comparable, V any] interface {
 	Clear() Map[K, V]
 	Set(k K, v V) Map[K, V]
 	Add(m map[K]V) Map[K, V]
@@ -21,7 +20,7 @@ type Map[K constraints.Ordered, V any] interface {
 	Range(apply func(a K, v V))
 }
 
-type ImmutableMap[K constraints.Ordered, V any] interface {
+type ImmutableMap[K comparable, V any] interface {
 	Get(k K) (V, bool)
 	Exists(k K) bool
 	Keys() []K
@@ -30,17 +29,17 @@ type ImmutableMap[K constraints.Ordered, V any] interface {
 	Range(apply func(a K, v V))
 }
 
-func New[K constraints.Ordered, V any]() Map[K, V] {
+func New[K comparable, V any]() Map[K, V] {
 	return &cmap[K, V]{
 		store: map[K]V{},
 	}
 }
 
-func From[K constraints.Ordered, V any](m map[K]V) Map[K, V] {
+func From[K comparable, V any](m map[K]V) Map[K, V] {
 	return New[K, V]().Add(m)
 }
 
-type cmap[K constraints.Ordered, V any] struct {
+type cmap[K comparable, V any] struct {
 	store     map[K]V
 	mu        sync.RWMutex
 	immutable bool

@@ -1,11 +1,10 @@
 package cset
 
 import (
-	"constraints"
 	"sync"
 )
 
-type Set[K constraints.Ordered] interface {
+type Set[K comparable] interface {
 	Clear() Set[K]
 	Add(a ...K) Set[K]
 	Delete(a ...K) Set[K]
@@ -16,26 +15,26 @@ type Set[K constraints.Ordered] interface {
 	Range(apply func(a K))
 }
 
-type ImmutableSet[K constraints.Ordered] interface {
+type ImmutableSet[K comparable] interface {
 	Exists(a ...K) bool
 	Keys() []K
 	Range(apply func(a K))
 }
 
-type set[K constraints.Ordered] struct {
+type set[K comparable] struct {
 	immutable bool
 	mu        sync.RWMutex
 	content   map[K]bool
 }
 
-func New[K constraints.Ordered]() Set[K] {
+func New[K comparable]() Set[K] {
 	s := &set[K]{
 		content: map[K]bool{},
 	}
 	return s
 }
 
-func From[K constraints.Ordered](keys ...K) Set[K] {
+func From[K comparable](keys ...K) Set[K] {
 	return New[K]().Add(keys...)
 }
 
