@@ -7,14 +7,14 @@ import (
 
 type Map[K constraints.Ordered, V any] interface {
 	Clear() Map[K, V]
-	Add(k K, v V) Map[K, V]
-	AddAll(m map[K]V) Map[K, V]
+	Set(k K, v V) Map[K, V]
+	Add(m map[K]V) Map[K, V]
 	Delete(k K) Map[K, V]
 	Immutable() ImmutableMap[K, V]
 
 	Len() int
 	Get(k K) (V, bool)
-	Contains(k K) bool
+	Exists(k K) bool
 	Keys() []K
 	Values() []V
 	Map() map[K]V
@@ -23,7 +23,7 @@ type Map[K constraints.Ordered, V any] interface {
 
 type ImmutableMap[K constraints.Ordered, V any] interface {
 	Get(k K) (V, bool)
-	Contains(k K) bool
+	Exists(k K) bool
 	Keys() []K
 	Values() []V
 	Map() map[K]V
@@ -37,7 +37,7 @@ func New[K constraints.Ordered, V any]() Map[K, V] {
 }
 
 func From[K constraints.Ordered, V any](m map[K]V) Map[K, V] {
-	return New[K, V]().AddAll(m)
+	return New[K, V]().Add(m)
 }
 
 type cmap[K constraints.Ordered, V any] struct {
@@ -57,7 +57,7 @@ func (m *cmap[K, V]) Clear() Map[K, V] {
 	m.store = map[K]V{}
 	return m
 }
-func (m *cmap[K, V]) Add(k K, v V) Map[K, V] {
+func (m *cmap[K, V]) Set(k K, v V) Map[K, V] {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -68,7 +68,7 @@ func (m *cmap[K, V]) Add(k K, v V) Map[K, V] {
 	m.store[k] = v
 	return m
 }
-func (m *cmap[K, V]) AddAll(all map[K]V) Map[K, V] {
+func (m *cmap[K, V]) Add(all map[K]V) Map[K, V] {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -101,7 +101,7 @@ func (m *cmap[K, V]) Get(k K) (V, bool) {
 	v, ok := m.store[k]
 	return v, ok
 }
-func (m *cmap[K, V]) Contains(k K) bool {
+func (m *cmap[K, V]) Exists(k K) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

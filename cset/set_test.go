@@ -6,17 +6,17 @@ import (
 
 func TestNew(t *testing.T) {
 	s := New[int]()
-	if s.Contains(2) {
+	if s.Exists(2) {
 		t.Log("expected not containing 2")
 		t.Fail()
 	}
 	s.Add(2)
-	if !s.Contains(2) {
+	if !s.Exists(2) {
 		t.Log("expected to containing 2")
 		t.Fail()
 	}
 	s.Delete(2)
-	if s.Contains(2) {
+	if s.Exists(2) {
 		t.Log("expected not containing 2")
 		t.Fail()
 	}

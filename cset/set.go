@@ -11,13 +11,13 @@ type Set[K constraints.Ordered] interface {
 	Delete(a ...K) Set[K]
 	Immutable() ImmutableSet[K]
 
-	Contains(a ...K) bool
+	Exists(a ...K) bool
 	Keys() []K
 	Range(apply func(a K))
 }
 
 type ImmutableSet[K constraints.Ordered] interface {
-	Contains(a ...K) bool
+	Exists(a ...K) bool
 	Keys() []K
 	Range(apply func(a K))
 }
@@ -81,7 +81,7 @@ func (s *set[K]) Delete(all ...K) Set[K] {
 	return s
 }
 
-func (s *set[K]) Contains(all ...K) bool {
+func (s *set[K]) Exists(all ...K) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
