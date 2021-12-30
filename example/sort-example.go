@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
+	"github.com/crholm/henry/compare"
 	"github.com/crholm/henry/sort"
 )
 
 func main() {
 	in := []int{2, 3, 5, 1, 12, 3, 6, 7, 34, 123, 65, 4631, 1, 1323}
 
-	sort.Slice(in, sort.Reverse(sort.Ordered[int]))
+	sort.Slice(in, compare.Reverse(compare.Less[int]))
 	fmt.Println("Sorted in Descending order")
 	fmt.Println(in)
 	fmt.Println()
 
-	sort.Slice(in, sort.Ordered[int])
+	sort.Slice(in, compare.Less[int])
 	fmt.Println("Sorted in Ascending order")
 	fmt.Println(in)
 	fmt.Println()

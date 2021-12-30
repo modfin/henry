@@ -1,11 +1,12 @@
 package heap
 
 import (
+	"github.com/crholm/henry/compare"
 	"testing"
 )
 
 func TestMax(t *testing.T) {
-	h := New[int](Ordered[int])
+	h := New[int](compare.Less[int])
 	h.Push(4)
 	h.Push(982130, 41, 15, 62, 1, 4, 11, 5, 64, 45, 4, 48, 85, 23, 12)
 
@@ -19,7 +20,7 @@ func TestMax(t *testing.T) {
 		i = p
 	}
 
-	h = New[int](Ordered[int], 3, 2, 1, 67, 83, 21, 3, 1, 23)
+	h = New[int](compare.Less[int], 3, 2, 1, 67, 83, 21, 3, 1, 23)
 	h.Push(3)
 	h.Push(4)
 	i = 0
@@ -31,7 +32,7 @@ func TestMax(t *testing.T) {
 		i = p
 	}
 
-	h = New[int](Ordered[int], 3, 2, 1, 67, 83, 21, 3, 1, 23)
+	h = New[int](compare.Less[int], 3, 2, 1, 67, 83, 21, 3, 1, 23)
 	h.Push(3)
 	h.Push(4)
 

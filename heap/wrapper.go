@@ -1,22 +1,10 @@
 package heap
 
 import (
-	"constraints"
 	heap2 "container/heap"
+	"github.com/crholm/henry/compare"
 	"sync"
 )
-
-func Ordered[E constraints.Ordered](a, b E) bool {
-	return a < b
-}
-
-type Less[E any] func(a, b E) bool
-
-func Reverse[E any](less Less[E]) Less[E] {
-	return func(a, b E) bool {
-		return less(b, a)
-	}
-}
 
 type Heap[E any] interface {
 	Pop() E
@@ -26,7 +14,7 @@ type Heap[E any] interface {
 	Len() int
 }
 
-func New[E any](less Less[E], init ...E) Heap[E] {
+func New[E any](less compare.IsLess[E], init ...E) Heap[E] {
 	h := &heap[E]{data: init, less: less}
 
 	heap2.Init(h)
@@ -92,7 +80,7 @@ func (w *wrapper[E]) Slice() []E {
 }
 
 type heap[E any] struct {
-	less Less[E]
+	less compare.IsLess[E]
 	data []E
 }
 

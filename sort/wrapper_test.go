@@ -1,6 +1,7 @@
 package sort
 
 import (
+	"github.com/crholm/henry/compare"
 	"reflect"
 	"testing"
 )
@@ -8,7 +9,7 @@ import (
 func TestSlice(t *testing.T) {
 	in := []int{2, 3, 5, 1, 12, 3, 6, 7, 34, 123, 65, 4631, 1, 1323}
 	exp := []int{1, 1, 2, 3, 3, 5, 6, 7, 12, 34, 65, 123, 1323, 4631}
-	Slice(in, Ordered[int])
+	Slice(in, compare.Less[int])
 	if !reflect.DeepEqual(exp, in) {
 		t.Log("Expected", exp)
 		t.Log("     got", in)
@@ -19,7 +20,7 @@ func TestSlice(t *testing.T) {
 func TestStableSlice(t *testing.T) {
 	in := []int{2, 3, 5, 1, 12, 3, 6, 7, 34, 123, 65, 4631, 1, 1323}
 	exp := []int{1, 1, 2, 3, 3, 5, 6, 7, 12, 34, 65, 123, 1323, 4631}
-	StableSlice(in, Ordered[int])
+	StableSlice(in, compare.Less[int])
 	if !reflect.DeepEqual(exp, in) {
 		t.Log("Expected", exp)
 		t.Log("     got", in)
@@ -30,7 +31,7 @@ func TestStableSlice(t *testing.T) {
 func TestSliceReverse(t *testing.T) {
 	in := []int{2, 3, 5, 1, 12, 3, 6, 7, 34, 123, 65, 4631, 1, 1323}
 	exp := []int{4631, 1323, 123, 65, 34, 12, 7, 6, 5, 3, 3, 2, 1, 1}
-	Slice(in, Reverse(Ordered[int]))
+	Slice(in, compare.Reverse(compare.Less[int]))
 	if !reflect.DeepEqual(exp, in) {
 		t.Log("Expected", exp)
 		t.Log("     got", in)
@@ -40,11 +41,11 @@ func TestSliceReverse(t *testing.T) {
 
 func TestIsSorted(t *testing.T) {
 	in := []int{1, 1, 2, 3, 3, 5, 6, 7, 12, 34, 65, 123, 1323, 4631}
-	if !IsSorted(in, Ordered[int]) {
+	if !IsSorted(in, compare.Less[int]) {
 		t.Log("Expected to be sorted")
 		t.Fail()
 	}
-	if IsSorted(in, Reverse(Ordered[int])) {
+	if IsSorted(in, compare.Reverse(compare.Less[int])) {
 		t.Log("Expected to be sorted")
 		t.Fail()
 	}

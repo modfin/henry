@@ -2,6 +2,7 @@ package henry
 
 import (
 	"fmt"
+	"github.com/crholm/henry/compare"
 	"reflect"
 	"testing"
 )
@@ -107,15 +108,11 @@ func TestGroupBy(t *testing.T) {
 	}
 }
 
-func ByComparable[N comparable](n N) N {
-	return n
-}
-
 func TestUniq(t *testing.T) {
 	a := []int{1, 2, 3, 3, 3, 4, 5, 6, 6, 6, 6}
 	exp := []int{1, 2, 3, 4, 5, 6}
 
-	res := Uniq[int, int](ByComparable[int], a)
+	res := Uniq[int, int](compare.EqualBy[int], a)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -128,7 +125,7 @@ func TestUnion(t *testing.T) {
 	d := []int{4, 5, -1}
 	exp := []int{1, 2, 3, 4, 5, -1}
 
-	res := Union[int, int](ByComparable[int], a, b, c, d)
+	res := Union[int, int](compare.EqualBy[int], a, b, c, d)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -141,7 +138,7 @@ func TestIntersection(t *testing.T) {
 	c := []int{3, 4, 5, 2}
 	exp := []int{2, 3}
 
-	res := Intersection[int, int](ByComparable[int], a, b, c)
+	res := Intersection[int, int](compare.EqualBy[int], a, b, c)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -154,7 +151,7 @@ func TestDifference(t *testing.T) {
 	c := []int{3, 4, 5, 2}
 	exp := []int{1, 4, 5}
 
-	res := Difference[int, int](ByComparable[int], a, b, c)
+	res := Difference[int, int](compare.EqualBy[int], a, b, c)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -165,7 +162,7 @@ func TestComplement(t *testing.T) {
 	b := []int{3, 2, 5, 5, 6, 1}
 	exp := []int{5, 6}
 
-	res := Complement[int, int](ByComparable[int], a, b)
+	res := Complement[int, int](compare.EqualBy[int], a, b)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)

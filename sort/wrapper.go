@@ -1,25 +1,13 @@
 package sort
 
 import (
-	"constraints"
+	"github.com/crholm/henry/compare"
 	sort2 "sort"
 )
 
-func Ordered[E constraints.Ordered](a, b E) bool {
-	return a < b
-}
-
-type Less[E any] func(a, b E) bool
-
-func Reverse[E any](less Less[E]) Less[E] {
-	return func(a, b E) bool {
-		return less(b, a)
-	}
-}
-
 type sortable[E any] struct {
 	data []E
-	less Less[E]
+	less compare.IsLess[E]
 }
 
 func (s sortable[E]) Len() int {
@@ -32,7 +20,7 @@ func (s sortable[E]) Swap(i, j int) {
 	s.data[i], s.data[j] = s.data[j], s.data[i]
 }
 
-func Slice[E any](data []E, less Less[E]) {
+func Slice[E any](data []E, less compare.IsLess[E]) {
 	sort2.Sort(sortable[E]{
 		data: data,
 		less: less,
@@ -40,14 +28,14 @@ func Slice[E any](data []E, less Less[E]) {
 
 }
 
-func StableSlice[E any](data []E, less Less[E]) {
+func StableSlice[E any](data []E, less compare.IsLess[E]) {
 	sort2.Stable(sortable[E]{
 		data: data,
 		less: less,
 	})
 }
 
-func IsSorted[E any](data []E, less Less[E]) bool {
+func IsSorted[E any](data []E, less compare.IsLess[E]) bool {
 	return sort2.IsSorted(sortable[E]{
 		data: data,
 		less: less,
