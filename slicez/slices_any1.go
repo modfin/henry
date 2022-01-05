@@ -359,6 +359,10 @@ func SortFunc[A any](slice []A, less func(a, b A) bool) []A {
 	return res
 }
 
+func Search[A any](slice []A, f func(e A) bool) (index int, e A) {
+	return sort.Search(slice, f)
+}
+
 func Compact[A comparable](slice []A) []A {
 	return CompactFunc(slice, compare.Equal[A])
 }
