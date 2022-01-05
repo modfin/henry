@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/crholm/go18exp/slicez"
-	"github.com/crholm/go18exp/slicez/pipe"
+	"github.com/modfin/go18exp/slicez"
+	"github.com/modfin/go18exp/slicez/pipe"
 )
 
 func main() {

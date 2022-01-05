@@ -1,4 +1,4 @@
-package cset
+package set
 
 import (
 	"sync"

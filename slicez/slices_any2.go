@@ -1,5 +1,7 @@
 package slicez
 
+import "constraints"
+
 func Flatten[A any](slice [][]A) []A {
 	var res []A
 	for _, val := range slice {
@@ -58,7 +60,13 @@ func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
 	return m
 }
 
-func Uniq[A any, B comparable](by func(a A) B, slice []A) []A {
+func Uniq[A constraints.Ordered](slice []A) []A {
+	return UniqBy(func(a A) A {
+		return a
+	}, slice)
+}
+
+func UniqBy[A any, B comparable](by func(a A) B, slice []A) []A {
 	var res []A
 	var set = map[B]struct{}{}
 	for _, e := range slice {
@@ -97,7 +105,7 @@ func Intersection[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
 	}
-	var res = Uniq(by, slices[0])
+	var res = UniqBy(by, slices[0])
 	for _, slice := range slices[1:] {
 		var set = map[B]bool{}
 		for _, e := range slice {

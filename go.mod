@@ -1,3 +1,3 @@
-module github.com/crholm/go18exp
+module github.com/modfin/go18exp
 
 go 1.18

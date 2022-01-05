@@ -2,8 +2,8 @@ package numberz
 
 import (
 	"constraints"
-	"github.com/crholm/go18exp/slicez"
-	"github.com/crholm/go18exp/slicez/pipe"
+	"github.com/modfin/go18exp/slicez"
+	"github.com/modfin/go18exp/slicez/pipe"
 	"math"
 	"sort"
 )

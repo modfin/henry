@@ -2,7 +2,7 @@ package slicez
 
 import (
 	"fmt"
-	"github.com/crholm/go18exp/compare"
+	"github.com/modfin/go18exp/compare"
 	"reflect"
 	"testing"
 )
@@ -112,7 +112,7 @@ func TestUniq(t *testing.T) {
 	a := []int{1, 2, 3, 3, 3, 4, 5, 6, 6, 6, 6}
 	exp := []int{1, 2, 3, 4, 5, 6}
 
-	res := Uniq[int, int](compare.EqualBy[int], a)
+	res := UniqBy[int, int](compare.EqualBy[int], a)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)

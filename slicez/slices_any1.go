@@ -4,8 +4,8 @@ import (
 	"constraints"
 	"errors"
 	"fmt"
-	"github.com/crholm/go18exp/compare"
-	"github.com/crholm/go18exp/slicez/sort"
+	"github.com/modfin/go18exp/compare"
+	"github.com/modfin/go18exp/slicez/sort"
 	"math/rand"
 	"time"
 )
@@ -26,8 +26,35 @@ func EqualFunc[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
 	return true
 }
 
+func Index[E comparable](s []E, needle E) int {
+	return IndexFunc(s, func(e E) bool {
+		return needle == e
+	})
+}
+
+func IndexFunc[E any](s []E, f func(E) bool) int {
+	for i, v := range s {
+		if f(v) {
+			return i
+		}
+	}
+	return -1
+}
+
+func Contains[E comparable](s []E, v E) bool {
+	return Index(s, v) >= 0
+}
+
 func Compare[E constraints.Ordered](s1, s2 []E) int {
 	return CompareFunc(s1, s2, compare.Compare[E])
+}
+
+func Clone[E any](s []E) []E {
+	// Preserve nil in case it matters.
+	if s == nil {
+		return nil
+	}
+	return append([]E{}, s...)
 }
 
 func CompareFunc[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
@@ -350,4 +377,32 @@ func CompactFunc[A any](slice []A, equal func(a, b A) bool) []A {
 		return append(accumulator, current)
 	}, []A{})
 	return append([]A{head}, tail...)
+}
+
+func Max[E constraints.Ordered](slice ...E) E {
+	var zero E
+	if slice == nil || len(slice) == 0 {
+		return zero
+	}
+	cur := slice[0]
+	for _, c := range slice {
+		if cur < c {
+			cur = c
+		}
+	}
+	return cur
+}
+
+func Min[E constraints.Ordered](slice ...E) E {
+	var zero E
+	if slice == nil || len(slice) == 0 {
+		return zero
+	}
+	cur := slice[0]
+	for _, c := range slice {
+		if cur > c {
+			cur = c
+		}
+	}
+	return cur
 }

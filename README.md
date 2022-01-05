@@ -8,8 +8,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/crholm/go18exp/slicez"
-	"github.com/crholm/go18exp/slicez/pipe"
+	"github.com/modfin/go18exp/slicez"
+	"github.com/modfin/go18exp/slicez/pipe"
 )
 
 func main() {
@@ -60,8 +60,8 @@ func main() {
 ```go 
 import (
 	"fmt"
-	"github.com/crholm/go18exp/compare"
-	"github.com/crholm/go18exp/heap"
+	"github.com/modfin/go18exp/compare"
+	"github.com/modfin/go18exp/heap"
 )
 
 func main() {
@@ -94,8 +94,8 @@ func main() {
 ```go 
 import (
 	"fmt"
-	"github.com/crholm/go18exp/compare"
-	"github.com/crholm/go18exp/sort"
+	"github.com/modfin/go18exp/compare"
+	"github.com/modfin/go18exp/sort"
 )
 
 func main() {
@@ -124,8 +124,8 @@ func main() {
 ```go 
 import (
 	"fmt"
-	"github.com/crholm/go18exp"
-	"github.com/crholm/go18exp/numbers"
+	"github.com/modfin/go18exp"
+	"github.com/modfin/go18exp/numbers"
 )
 
 func main() {
