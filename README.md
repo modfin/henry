@@ -1,5 +1,5 @@
 # go18exp 
-> A test implementation of some functional concepts with go generics
+> A test implementation of some go generics concepts
 
 
 ## Example usage of some functional concepts
