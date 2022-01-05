@@ -1,4 +1,4 @@
-# Henry 
+# slicez 
 > A test implementation of some functional concepts with go generics
 
 
@@ -8,8 +8,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/crholm/henry/henry"
-	"github.com/crholm/henry/henry/pipe"
+	"github.com/crholm/go18exp/slicez"
+	"github.com/crholm/go18exp/slicez/pipe"
 )
 
 func main() {
@@ -38,16 +38,16 @@ func main() {
 	toStr := func(index int, v int) string {
 		return fmt.Sprintf("%d", v)
 	}
-	var pStrSlice = henry.Map(positive, toStr)
-	var nStrSlice = henry.Map(negative, toStr)
+	var pStrSlice = slicez.Map(positive, toStr)
+	var nStrSlice = slicez.Map(negative, toStr)
 
 	// Joining []string to string
 	joiner := func(index int, accumulator string, val string) string {
 		return fmt.Sprintf("%s, %s", accumulator, val)
 	}
 
-	var pStr = henry.FoldLeft(henry.Tail(pStrSlice), joiner, henry.Head(pStrSlice).Value())
-	var nStr = henry.FoldLeft(henry.Tail(nStrSlice), joiner, henry.Head(nStrSlice).Value())
+	var pStr = slicez.FoldLeft(slicez.Tail(pStrSlice), joiner, slicez.Head(pStrSlice).Value())
+	var nStr = slicez.FoldLeft(slicez.Tail(nStrSlice), joiner, slicez.Head(nStrSlice).Value())
 
 	fmt.Printf("(%s), (%s)\n", pStr, nStr)
 	// (8, 6, 4), (-4, -6, -8)
@@ -60,8 +60,8 @@ func main() {
 ```go 
 import (
 	"fmt"
-	"github.com/crholm/henry/compare"
-	"github.com/crholm/henry/heap"
+	"github.com/crholm/go18exp/compare"
+	"github.com/crholm/go18exp/heap"
 )
 
 func main() {
@@ -94,8 +94,8 @@ func main() {
 ```go 
 import (
 	"fmt"
-	"github.com/crholm/henry/compare"
-	"github.com/crholm/henry/sort"
+	"github.com/crholm/go18exp/compare"
+	"github.com/crholm/go18exp/sort"
 )
 
 func main() {
@@ -124,8 +124,8 @@ func main() {
 ```go 
 import (
 	"fmt"
-	"github.com/crholm/henry"
-	"github.com/crholm/henry/numbers"
+	"github.com/crholm/go18exp"
+	"github.com/crholm/go18exp/numbers"
 )
 
 func main() {
@@ -143,8 +143,8 @@ func main() {
 	fmt.Println("StdDev:", numbers.StdDev(ints...))     // Sample
 	fmt.Println()
 
-	floats := henry.Map(ints, numbers.MapFloat64[int])
-	floats = henry.Map(floats, func(_ int, a float64) float64 {
+	floats := slicez.Map(ints, numbers.MapFloat64[int])
+	floats = slicez.Map(floats, func(_ int, a float64) float64 {
 		return a + 0.5
 	})
 	fmt.Println("Floats")

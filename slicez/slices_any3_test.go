@@ -1,4 +1,4 @@
-package henry
+package slicez
 
 import (
 	"fmt"

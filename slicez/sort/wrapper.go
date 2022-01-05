@@ -1,7 +1,7 @@
 package sort
 
 import (
-	"github.com/crholm/henry/compare"
+	"github.com/crholm/go18exp/compare"
 	sort2 "sort"
 )
 

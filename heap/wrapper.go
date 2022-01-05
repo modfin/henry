@@ -2,7 +2,7 @@ package heap
 
 import (
 	heap2 "container/heap"
-	"github.com/crholm/henry/compare"
+	"github.com/crholm/go18exp/compare"
 	"sync"
 )
 

@@ -1,8 +1,8 @@
-package henry
+package slicez
 
 import (
 	"fmt"
-	"github.com/crholm/henry/compare"
+	"github.com/crholm/go18exp/compare"
 	"reflect"
 	"testing"
 )
@@ -11,7 +11,7 @@ func TestMap(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := []string{"1", "2", "3"}
 
-	res := Map(ints, func(_ int, i int) string {
+	res := Map(ints, func(i int) string {
 		return fmt.Sprintf("%d", i)
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -37,7 +37,7 @@ func TestFoldLeft(t *testing.T) {
 
 	ints := []int{1, 2, 3}
 	exp := "123"
-	res := FoldLeft(ints, func(_ int, acc string, i int) string {
+	res := Fold(ints, func(acc string, i int) string {
 		return fmt.Sprintf("%s%d", acc, i)
 	}, "")
 	if !reflect.DeepEqual(res, exp) {
@@ -50,7 +50,7 @@ func TestFoldRight(t *testing.T) {
 
 	ints := []int{1, 2, 3}
 	exp := "321"
-	res := FoldRight(ints, func(_ int, acc string, i int) string {
+	res := FoldRight(ints, func(acc string, i int) string {
 		return fmt.Sprintf("%s%d", acc, i)
 	}, "")
 	if !reflect.DeepEqual(res, exp) {
@@ -63,7 +63,7 @@ func TestFlatMap(t *testing.T) {
 	ints := []int{1, 2}
 	exp := []string{"1", "1", "2", "2"}
 
-	res := FlatMap(ints, func(_ int, i int) []string {
+	res := FlatMap(ints, func(i int) []string {
 		str := fmt.Sprintf("%d", i)
 		return []string{str, str}
 	})
@@ -82,7 +82,7 @@ func TestKeyBy(t *testing.T) {
 		"[3]": 3,
 	}
 
-	m := KeyBy(a, func(_ int, a int) string {
+	m := KeyBy(a, func(a int) string {
 		return fmt.Sprintf("[%d]", a)
 	})
 	if !reflect.DeepEqual(exp, m) {
@@ -99,7 +99,7 @@ func TestGroupBy(t *testing.T) {
 		"1": {1, 3},
 	}
 
-	m := GroupBy(a, func(_ int, a int) string {
+	m := GroupBy(a, func(a int) string {
 		return fmt.Sprintf("%d", a%2)
 	})
 	if !reflect.DeepEqual(exp, m) {

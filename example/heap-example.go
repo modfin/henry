@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/crholm/henry/compare"
-	"github.com/crholm/henry/heap"
+	"github.com/crholm/go18exp/compare"
+	"github.com/crholm/go18exp/heap"
 )
 
 func main() {

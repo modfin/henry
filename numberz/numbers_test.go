@@ -1,4 +1,4 @@
-package numbers
+package numberz
 
 import (
 	"fmt"

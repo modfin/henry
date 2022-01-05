@@ -1,4 +1,4 @@
-package henry
+package slicez
 
 func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) []C {
 	var i = len(aSlice)

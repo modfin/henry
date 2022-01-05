@@ -1,16 +1,50 @@
-package henry
+package slicez
 
 import (
-	"github.com/crholm/henry/maybe"
+	"constraints"
+	"errors"
+	"fmt"
+	"github.com/crholm/go18exp/compare"
+	"github.com/crholm/go18exp/slicez/sort"
 	"math/rand"
-	"sort"
 	"time"
 )
 
-func Each[A any](slice []A, apply func(i int, a A)) {
-	for i, a := range slice {
-		apply(i, a)
+func Equal[A comparable](s1, s2 []A) bool {
+	return EqualFunc(s1, s2, compare.Equal[A])
+}
+func EqualFunc[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
+	if len(s1) != len(s2) {
+		return false
 	}
+	for i, v1 := range s1 {
+		v2 := s2[i]
+		if !eq(v1, v2) {
+			return false
+		}
+	}
+	return true
+}
+
+func Compare[E constraints.Ordered](s1, s2 []E) int {
+	return CompareFunc(s1, s2, compare.Compare[E])
+}
+
+func CompareFunc[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
+	s2len := len(s2)
+	for i, v1 := range s1 {
+		if i >= s2len {
+			return +1
+		}
+		v2 := s2[i]
+		if c := cmp(v1, v2); c != 0 {
+			return c
+		}
+	}
+	if len(s1) < s2len {
+		return -1
+	}
+	return 0
 }
 
 func Concat[A any](slices ...[]A) []A {
@@ -30,54 +64,61 @@ func Reverse[A any](slice []A) []A {
 	return res
 }
 
-func Head[A any](slice []A) maybe.Value[A] {
+func Head[A any](slice []A) (A, error) {
 	if len(slice) > 0 {
-		return maybe.Some(slice[0])
+		return slice[0], nil
 	}
 	var zero A
-	return maybe.None(zero)
-}
-func Tail[A any](slice []A) []A {
-	return DropLeft(slice, 1)
+	return zero, errors.New("slice does not have any elements")
 }
 
-func Last[A any](slice []A) maybe.Value[A] {
+func Last[A any](slice []A) (A, error) {
 	if len(slice) > 0 {
-		return maybe.Some(slice[len(slice)-1])
+		return slice[len(slice)-1], nil
 	}
 	var zero A
-	return maybe.None(zero)
+	return zero, errors.New("slice does not have any elements")
 }
 
-func Nth[A any](slice []A, i int) maybe.Value[A] {
+func Nth[A any](slice []A, i int) (A, error) {
 	if i < 0 {
 		i = len(slice) + i
 	}
 
 	if i < len(slice) {
-		return maybe.Some(slice[i])
+		return slice[i], nil
 	}
 	var zero A
-	return maybe.None(zero)
+	return zero, fmt.Errorf("slice of len %d does not contain element %d", len(slice), i)
 }
 
-func TakeLeftWhile[A any](slice []A, take func(i int, a A) bool) []A {
+func Tail[A any](slice []A) []A {
+	return Drop(slice, 1)
+}
+
+func Each[A any](slice []A, apply func(a A)) {
+	for _, a := range slice {
+		apply(a)
+	}
+}
+
+func TakeWhile[A any](slice []A, take func(a A) bool) []A {
 	var res []A
-	for i, val := range slice {
-		if !take(i, val) {
+	for _, val := range slice {
+		if !take(val) {
 			break
 		}
 		res = append(res, val)
 	}
 	return res
 }
-func TakeRightWhile[A any](slice []A, take func(i int, a A) bool) []A {
+func TakeRightWhile[A any](slice []A, take func(a A) bool) []A {
 	var l = len(slice)
 	var res []A
 	for i := range slice {
 		i = l - i - 1
 		val := slice[i]
-		if !take(i, val) {
+		if !take(val) {
 			break
 		}
 		res = append([]A{val}, res...)
@@ -85,26 +126,32 @@ func TakeRightWhile[A any](slice []A, take func(i int, a A) bool) []A {
 	return res
 }
 
-func TakeLeft[A any](slice []A, i int) []A {
-	return TakeLeftWhile(slice, func(j int, _ A) bool {
-		return j < i
+func Take[A any](slice []A, i int) []A {
+	var j int
+	return TakeWhile(slice, func(_ A) bool {
+		res := j < i
+		j += 1
+		return res
 	})
 }
 func TakeRight[A any](slice []A, i int) []A {
 	i = len(slice) - i - 1
-	return TakeRightWhile(slice, func(j int, _ A) bool {
-		return j > i
+	j := len(slice) - 1
+	return TakeRightWhile(slice, func(_ A) bool {
+		res := j > i
+		j -= 1
+		return res
 	})
 }
 
-func DropLeftWhile[A any](slice []A, drop func(i int, a A) bool) []A {
+func DropWhile[A any](slice []A, drop func(a A) bool) []A {
 	if len(slice) == 0 {
 		return nil
 	}
 
 	var index int = -1
 	for i, val := range slice {
-		if !drop(i, val) {
+		if !drop(val) {
 			break
 		}
 		index = i
@@ -127,7 +174,7 @@ func DropLeftWhile[A any](slice []A, drop func(i int, a A) bool) []A {
 	return a
 }
 
-func DropRightWhile[A any](slice []A, drop func(i int, a A) bool) []A {
+func DropRightWhile[A any](slice []A, drop func(a A) bool) []A {
 
 	if len(slice) == 0 {
 		return nil
@@ -138,7 +185,7 @@ func DropRightWhile[A any](slice []A, drop func(i int, a A) bool) []A {
 	for i := range slice {
 		i = l - i - 1
 		val := slice[i]
-		if !drop(i, val) {
+		if !drop(val) {
 			break
 		}
 		index = i
@@ -159,31 +206,37 @@ func DropRightWhile[A any](slice []A, drop func(i int, a A) bool) []A {
 
 }
 
-func DropLeft[A any](slice []A, i int) []A {
-	return DropLeftWhile(slice, func(j int, _ A) bool {
-		return j < i
+func Drop[A any](slice []A, i int) []A {
+	var j int
+	return DropWhile(slice, func(_ A) bool {
+		res := j < i
+		j += 1
+		return res
 	})
 }
 func DropRight[A any](slice []A, i int) []A {
 	i = len(slice) - i - 1
-	return DropRightWhile(slice, func(j int, _ A) bool {
-		return j > i
+	j := len(slice) - 1
+	return DropRightWhile(slice, func(_ A) bool {
+		res := j > i
+		j -= 1
+		return res
 	})
 }
 
-func Filter[A any](slice []A, include func(i int, a A) bool) []A {
+func Filter[A any](slice []A, include func(a A) bool) []A {
 	var res []A
-	for i, val := range slice {
-		if include(i, val) {
+	for _, val := range slice {
+		if include(val) {
 			res = append(res, val)
 		}
 	}
 	return res
 }
 
-func Reject[A any](slice []A, exclude func(i int, a A) bool) []A {
-	return Filter(slice, func(i int, a A) bool {
-		return !exclude(i, a)
+func Reject[A any](slice []A, exclude func(a A) bool) []A {
+	return Filter(slice, func(a A) bool {
+		return !exclude(a)
 	})
 }
 
@@ -195,6 +248,7 @@ func Every[A any](slice []A, predicate func(A) bool) bool {
 	}
 	return true
 }
+
 func Some[A any](slice []A, predicate func(A) bool) bool {
 	for _, val := range slice {
 		if predicate(val) {
@@ -204,15 +258,15 @@ func Some[A any](slice []A, predicate func(A) bool) bool {
 	return false
 }
 
-func Has[A any](slice []A, target A, predicate func(a A, b A) bool) bool {
+func Has[A comparable](slice []A, needle A) bool {
 	return Some(slice, func(a A) bool {
-		return predicate(target, a)
+		return needle == a
 	})
 }
 
-func Partition[A any](slice []A, predicate func(i int, a A) bool) (satisfied, notSatisfied []A) {
-	for i, a := range slice {
-		if predicate(i, a) {
+func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisfied []A) {
+	for _, a := range slice {
+		if predicate(a) {
 			satisfied = append(satisfied, a)
 			continue
 		}
@@ -268,22 +322,27 @@ func Sample[A any](slice []A, n int) []A {
 	return ret
 }
 
-func Sort[A any](slice []A, less func(a, b A) bool) []A {
+func Sort[A constraints.Ordered](slice []A) []A {
+	return SortFunc(slice, compare.Less[A])
+}
+func SortFunc[A any](slice []A, less func(a, b A) bool) []A {
 	var res = make([]A, len(slice))
 	copy(res, slice)
-	sort.Slice(res, func(i, j int) bool {
-		return less(res[i], res[j])
-	})
+	sort.Slice(res, less)
 	return res
 }
 
-func Compact[A any](slice []A, equal func(a, b A) bool) []A {
+func Compact[A comparable](slice []A) []A {
+	return CompactFunc(slice, compare.Equal[A])
+}
+
+func CompactFunc[A any](slice []A, equal func(a, b A) bool) []A {
 	if len(slice) == 0 {
 		return slice
 	}
 	head := slice[0]
 	last := head
-	tail := FoldLeft(slice[1:], func(_ int, accumulator []A, current A) []A {
+	tail := Fold(slice[1:], func(accumulator []A, current A) []A {
 		if equal(last, current) {
 			return accumulator
 		}

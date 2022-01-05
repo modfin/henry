@@ -2,38 +2,38 @@ package main
 
 import (
 	"fmt"
-	"github.com/crholm/henry"
-	"github.com/crholm/henry/numbers"
+	"github.com/crholm/go18exp/numberz"
+	"github.com/crholm/go18exp/slicez"
 )
 
 func main() {
 
 	ints := []int{1, 2, 3, 4, 5, 23, 12, 5, 231, 12, 12}
 	fmt.Println("Integers")
-	fmt.Println("Mean:", numbers.Mean(ints...))
-	fmt.Println("Median:", numbers.Median(ints...))
-	fmt.Println("Mode:", numbers.Mode(ints...))
-	fmt.Println("Min:", numbers.Min(ints...))
-	fmt.Println("Max:", numbers.Max(ints...))
-	fmt.Println("Sum:", numbers.Sum(ints...))
-	fmt.Println("x^2:", numbers.VPow(ints, 2))
-	fmt.Println("Variance:", numbers.Var(ints...))  // Sample
-	fmt.Println("StdDev:", numbers.StdDev(ints...)) // Sample
+	fmt.Println("Mean:", numberz.Mean(ints...))
+	fmt.Println("Median:", numberz.Median(ints...))
+	fmt.Println("Mode:", numberz.Mode(ints...))
+	fmt.Println("Min:", numberz.Min(ints...))
+	fmt.Println("Max:", numberz.Max(ints...))
+	fmt.Println("Sum:", numberz.Sum(ints...))
+	fmt.Println("x^2:", numberz.VPow(ints, 2))
+	fmt.Println("Variance:", numberz.Var(ints...))  // Sample
+	fmt.Println("StdDev:", numberz.StdDev(ints...)) // Sample
 	fmt.Println()
 
-	floats := henry.Map(ints, numbers.MapFloat64[int])
-	floats = henry.Map(floats, func(_ int, a float64) float64 {
+	floats := slicez.Map(ints, numberz.MapFloat64[int])
+	floats = slicez.Map(floats, func(a float64) float64 {
 		return a + 0.5
 	})
 	fmt.Println("Floats")
-	fmt.Println("Mean:", numbers.Mean(floats...))
-	fmt.Println("Median:", numbers.Median(floats...))
-	fmt.Println("Mode:", numbers.Mode(floats...))
-	fmt.Println("Min:", numbers.Min(floats...))
-	fmt.Println("Max:", numbers.Max(floats...))
-	fmt.Println("Sum:", numbers.Sum(floats...))
-	fmt.Println("x^2:", numbers.VPow(floats, 2))
-	fmt.Println("Variance:", numbers.Var(floats...))
-	fmt.Println("StdDev:", numbers.StdDev(floats...))
+	fmt.Println("Mean:", numberz.Mean(floats...))
+	fmt.Println("Median:", numberz.Median(floats...))
+	fmt.Println("Mode:", numberz.Mode(floats...))
+	fmt.Println("Min:", numberz.Min(floats...))
+	fmt.Println("Max:", numberz.Max(floats...))
+	fmt.Println("Sum:", numberz.Sum(floats...))
+	fmt.Println("x^2:", numberz.VPow(floats, 2))
+	fmt.Println("Variance:", numberz.Var(floats...))
+	fmt.Println("StdDev:", numberz.StdDev(floats...))
 
 }

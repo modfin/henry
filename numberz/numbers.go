@@ -1,9 +1,9 @@
-package numbers
+package numberz
 
 import (
 	"constraints"
-	"github.com/crholm/henry"
-	"github.com/crholm/henry/pipe"
+	"github.com/crholm/go18exp/slicez"
+	"github.com/crholm/go18exp/slicez/pipe"
 	"math"
 	"sort"
 )
@@ -40,13 +40,13 @@ func Range[N Numbers](a ...N) N {
 
 func Sum[N Numbers](a ...N) N {
 	var zero N
-	return henry.FoldLeft(a, func(_ int, acc N, val N) N {
+	return slicez.Fold(a, func(acc N, val N) N {
 		return acc + val
 	}, zero)
 }
 
 func VPow[N Numbers](a []N, pow N) []N {
-	return henry.Map(a, func(_ int, a N) N {
+	return slicez.Map(a, func(a N) N {
 		return N(math.Pow(float64(a), float64(pow)))
 	})
 }
@@ -54,21 +54,21 @@ func VPow[N Numbers](a []N, pow N) []N {
 func VMul[N Numbers](x []N, y []N) []N {
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
-	return henry.Zip(x, y, func(a, b N) N {
+	return slicez.Zip(x, y, func(a, b N) N {
 		return a * b
 	})
 }
 func VAdd[N Numbers](x []N, y []N) []N {
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
-	return henry.Zip(x, y, func(a, b N) N {
+	return slicez.Zip(x, y, func(a, b N) N {
 		return a + b
 	})
 }
 func VSub[N Numbers](x []N, y []N) []N {
 	l := Min(len(y), len(y))
 	y, y = y[:l], y[:l]
-	return henry.Zip(x, y, func(a, b N) N {
+	return slicez.Zip(x, y, func(a, b N) N {
 		return a - b
 	})
 }
@@ -89,7 +89,7 @@ func Mean[N Numbers](a ...N) float64 {
 func MAD[N Numbers](n ...N) float64 {
 	mean := Mean(n...)
 	count := float64(len(n))
-	return henry.FoldLeft(n, func(_ int, accumulator float64, val N) float64 {
+	return slicez.Fold(n, func(accumulator float64, val N) float64 {
 		return accumulator + math.Abs(float64(val)-mean)/count
 	}, 0.0)
 }
@@ -97,7 +97,7 @@ func MAD[N Numbers](n ...N) float64 {
 // VAR Variance
 func Var[N Numbers](samples ...N) float64 {
 	avg := Mean(samples...)
-	partial := henry.Map(samples, func(_ int, x N) float64 {
+	partial := slicez.Map(samples, func(x N) float64 {
 		return math.Pow(float64(x)-avg, 2)
 	})
 	return Sum(partial...) / float64(len(partial)-1)
@@ -126,7 +126,7 @@ func Skew[N Numbers](n ...N) float64 {
 	sd := StdDev(n...)
 	d := (count - 1) * math.Pow(sd, 3)
 
-	return henry.FoldLeft(n, func(_ int, accumulator float64, val N) float64 {
+	return slicez.Fold(n, func(accumulator float64, val N) float64 {
 		return accumulator + math.Pow(float64(val)-mean, 3)/d
 	}, 0)
 }
@@ -139,14 +139,14 @@ func Corr[N Numbers](x []N, y []N) float64 {
 	xm := Mean(x...)
 	ym := Mean(y...)
 
-	dx := henry.Map(x, func(_ int, a N) float64 {
+	dx := slicez.Map(x, func(a N) float64 {
 		return float64(a) - xm
 	})
-	dy := henry.Map(y, func(_ int, a N) float64 {
+	dy := slicez.Map(y, func(a N) float64 {
 		return float64(a) - ym
 	})
 
-	t := Sum(henry.Zip(dx, dy, func(a float64, b float64) float64 {
+	t := Sum(slicez.Zip(dx, dy, func(a float64, b float64) float64 {
 		return a * b
 	})...)
 
@@ -165,14 +165,14 @@ func Cov[N Numbers](x []N, y []N) float64 {
 	xm := Mean(x...)
 	ym := Mean(y...)
 
-	dx := henry.Map(x, func(_ int, a N) float64 {
+	dx := slicez.Map(x, func(a N) float64 {
 		return float64(a) - xm
 	})
-	dy := henry.Map(y, func(_ int, a N) float64 {
+	dy := slicez.Map(y, func(a N) float64 {
 		return float64(a) - ym
 	})
 
-	t := Sum(henry.Zip(dx, dy, func(a float64, b float64) float64 {
+	t := Sum(slicez.Zip(dx, dy, func(a float64, b float64) float64 {
 		return a * b
 	})...)
 	return t / float64(l)
@@ -204,10 +204,10 @@ func FTest[N Numbers](x []N, y []N) float64 {
 func Median[N Numbers](n ...N) float64 {
 	l := len(n)
 	middle := pipe.Of(n).
-		Sort(func(i, j N) bool {
+		SortFunc(func(i, j N) bool {
 			return i < j
 		}).
-		DropLeft(l/2 - 1).
+		Drop(l/2 - 1).
 		DropRight(l/2 - 1).
 		Slice()
 	if len(middle) == 2 {
@@ -239,16 +239,16 @@ func Modes[N Numbers](nums ...N) []N {
 		return counts[i].c > counts[j].c
 	})
 	max := counts[0].c
-	return henry.Map(
+	return slicez.Map(
 		pipe.Of(counts).
-			TakeLeftWhile(func(i int, a modecount[N]) bool {
+			TakeWhile(func(a modecount[N]) bool {
 				return a.c == max
 			}).
-			Sort(func(a, b modecount[N]) bool {
+			SortFunc(func(a, b modecount[N]) bool {
 				return a.val < b.val
 			}).
 			Slice(),
-		func(i int, a modecount[N]) N {
+		func(a modecount[N]) N {
 			return a.val
 		},
 	)
@@ -281,7 +281,7 @@ func LCM[I constraints.Integer](a, b I, integers ...I) I {
 }
 
 func Percentile[N Numbers](score N, n ...N) float64 {
-	count := pipe.Of(n).Filter(func(_ int, n N) bool { return n < score }).Count()
+	count := pipe.Of(n).Filter(func(n N) bool { return n < score }).Count()
 	return float64(count) / float64(len(n))
 }
 
@@ -292,7 +292,7 @@ func BitOR[I constraints.Integer](a []I) (i I) {
 	if len(a) == 1 {
 		return a[0]
 	}
-	return henry.FoldLeft(a[1:], func(_ int, accumulator I, val I) I {
+	return slicez.Fold(a[1:], func(accumulator I, val I) I {
 		return accumulator | val
 	}, a[0])
 }
@@ -304,7 +304,7 @@ func BitAND[I constraints.Integer](a []I) (i I) {
 	if len(a) == 1 {
 		return a[0]
 	}
-	return henry.FoldLeft(a[1:], func(_ int, accumulator I, val I) I {
+	return slicez.Fold(a[1:], func(accumulator I, val I) I {
 		return accumulator & val
 	}, a[0])
 }
@@ -316,7 +316,7 @@ func BitXOR[I constraints.Integer](a []I) (i I) {
 	if len(a) == 1 {
 		return a[0]
 	}
-	return henry.FoldLeft(a[1:], func(_ int, accumulator I, val I) I {
+	return slicez.Fold(a[1:], func(accumulator I, val I) I {
 		return accumulator ^ val
 	}, a[0])
 }

@@ -1,7 +1,7 @@
 package heap
 
 import (
-	"github.com/crholm/henry/compare"
+	"github.com/crholm/go18exp/compare"
 	"testing"
 )
 

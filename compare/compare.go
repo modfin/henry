@@ -18,6 +18,17 @@ func Reverse[E any](less IsLess[E]) IsLess[E] {
 	}
 }
 
+func Compare[N constraints.Ordered](e1 N, e2 N) int {
+	switch {
+	case e1 < e2:
+		return -1
+	case e1 > e2:
+		return +1
+	default:
+		return 0
+	}
+}
+
 func Equal[N comparable](a, b N) bool {
 	return a == b
 }

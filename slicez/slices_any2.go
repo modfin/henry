@@ -1,4 +1,4 @@
-package henry
+package slicez
 
 func Flatten[A any](slice [][]A) []A {
 	var res []A
@@ -8,51 +8,51 @@ func Flatten[A any](slice [][]A) []A {
 	return res
 }
 
-func Map[A any, B any](slice []A, f func(i int, a A) B) []B {
+func Map[A any, B any](slice []A, f func(a A) B) []B {
 	res := make([]B, 0, len(slice))
-	for i, a := range slice {
-		res = append(res, f(i, a))
+	for _, a := range slice {
+		res = append(res, f(a))
 	}
 	return res
 }
 
-func FlatMap[A any, B any](slice []A, f func(i int, a A) []B) []B {
+func FlatMap[A any, B any](slice []A, f func(a A) []B) []B {
 	return Flatten(Map(slice, f))
 }
 
-func FoldLeft[I any, A any](slice []I, combined func(i int, accumulator A, val I) A, accumulator A) A {
-	for i, val := range slice {
-		accumulator = combined(i, accumulator, val)
+func Fold[I any, A any](slice []I, combined func(accumulator A, val I) A, accumulator A) A {
+	for _, val := range slice {
+		accumulator = combined(accumulator, val)
 	}
 	return accumulator
 }
 
-func FoldRight[I any, A any](slice []I, combined func(i int, accumulator A, val I) A, accumulator A) A {
+func FoldRight[I any, A any](slice []I, combined func(accumulator A, val I) A, accumulator A) A {
 	l := len(slice)
 	for i := range slice {
 		i := l - i - 1
-		accumulator = combined(i, accumulator, slice[i])
+		accumulator = combined(accumulator, slice[i])
 	}
 	return accumulator
 }
 
-func KeyBy[A any, B comparable](slice []A, key func(i int, a A) B) map[B]A {
+func KeyBy[A any, B comparable](slice []A, key func(a A) B) map[B]A {
 
 	m := make(map[B]A)
 
-	for i, v := range slice {
-		k := key(i, v)
+	for _, v := range slice {
+		k := key(v)
 		m[k] = v
 	}
 	return m
 }
 
-func GroupBy[A any, B comparable](slice []A, key func(i int, a A) B) map[B][]A {
+func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
 
 	m := make(map[B][]A)
 
-	for i, v := range slice {
-		k := key(i, v)
+	for _, v := range slice {
+		k := key(v)
 		m[k] = append(m[k], v)
 	}
 	return m
@@ -103,7 +103,7 @@ func Intersection[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 		for _, e := range slice {
 			set[by(e)] = true
 		}
-		res = Filter(res, func(_ int, a A) bool {
+		res = Filter(res, func(a A) bool {
 			return set[by(a)]
 		})
 	}
