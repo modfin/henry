@@ -1,7 +1,5 @@
 package slicez
 
-import "constraints"
-
 func Flatten[A any](slice [][]A) []A {
 	var res []A
 	for _, val := range slice {
@@ -60,7 +58,7 @@ func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
 	return m
 }
 
-func Uniq[A constraints.Ordered](slice []A) []A {
+func Uniq[A comparable](slice []A) []A {
 	return UniqBy(func(a A) A {
 		return a
 	}, slice)
