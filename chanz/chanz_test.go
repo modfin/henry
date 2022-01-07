@@ -5,6 +5,7 @@ import (
 	"github.com/modfin/go18exp/compare"
 	"github.com/modfin/go18exp/slicez"
 	"strconv"
+	"sync"
 	"testing"
 )
 
@@ -76,6 +77,47 @@ func TestFilter(t *testing.T) {
 		t.Logf("expected, %v, but got %v", exp, res)
 		t.Fail()
 	}
+}
+
+func TestFanOut(t *testing.T) {
+
+	c := Generate(1, 2, 3, 4, 5, 6, 7, 8, 9)
+	expansion := 11
+	outs := FanOut(c, expansion)
+
+	var wg sync.WaitGroup
+
+	var mu sync.Mutex
+
+	var res [][]int
+
+	wg.Add(expansion)
+	for _, o := range outs {
+		o := o
+		go func() {
+			nums := Collect(o)
+			mu.Lock()
+			res = append(res, nums)
+			mu.Unlock()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
+	exp := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+	if len(res) != expansion {
+		t.Logf("expected, %v, but got %v", expansion, len(res))
+		t.Fail()
+	}
+
+	for i, r := range res {
+		if !slicez.Equal(r, exp) {
+			t.Logf("expected, %v, but got %v, for i %d", exp, r, i)
+			t.Fail()
+		}
+	}
+
 }
 
 func TestCompact(t *testing.T) {

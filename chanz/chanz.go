@@ -94,6 +94,46 @@ func MergeUntil[A any](done <-chan interface{}, buffer int, cs ...<-chan A) <-ch
 	return out
 }
 
+func FanOut[A any](c <-chan A, size int) []<-chan A {
+	return FanOutUntil(nil, 0, c, size)
+}
+
+func FanOut1[A any](c <-chan A, size int) []<-chan A {
+	return FanOutUntil(nil, 1, c, size)
+}
+
+func FanOutN[A any](buffer int, c <-chan A, size int) []<-chan A {
+	return FanOutUntil(nil, buffer, c, size)
+}
+func FanOutUntil[A any](done <-chan interface{}, buffer int, c <-chan A, size int) []<-chan A {
+	outs := make([]chan A, size)
+	outputs := make([]<-chan A, size)
+	for i := range outs {
+		outs[i] = make(chan A, buffer)
+		outputs[i] = outs[i]
+	}
+
+	go func() {
+		defer func() {
+			for _, o := range outs {
+				close(o)
+			}
+		}()
+
+		for e := range c {
+			select {
+			case <-done:
+				return
+			case outs[0] <- e: // Might want to do this concurrently somehow?
+				for _, o := range outs[1:] {
+					o <- e
+				}
+			}
+		}
+	}()
+	return outputs
+}
+
 func Concat[A any](cs ...<-chan A) <-chan A {
 	return ConcatUntil(nil, 0, cs...)
 }
