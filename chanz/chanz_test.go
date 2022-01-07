@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/modfin/go18exp/compare"
 	"github.com/modfin/go18exp/slicez"
+	"math/rand"
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestGenerated(t *testing.T) {
@@ -291,6 +293,27 @@ func TestUnzip(t *testing.T) {
 	sexp := []string{"a", "b", "c"}
 	if !slicez.Equal(strings, sexp) {
 		t.Logf("expected, %v, but got %v", sexp, strings)
+		t.Fail()
+	}
+
+}
+
+func TestSomeDone(t *testing.T) {
+
+	num := 10
+	dones := make([]chan interface{}, num)
+	for i := range dones {
+		dones[i] = make(chan interface{})
+	}
+
+	done := SomeDone(Readers(dones...)...)
+
+	close(dones[rand.Intn(num)])
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Log("expected done to be closed by now")
 		t.Fail()
 	}
 

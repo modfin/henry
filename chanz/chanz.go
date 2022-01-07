@@ -107,10 +107,8 @@ func FanOutN[A any](buffer int, c <-chan A, size int) []<-chan A {
 }
 func FanOutUntil[A any](done <-chan interface{}, buffer int, c <-chan A, size int) []<-chan A {
 	outs := make([]chan A, size)
-	outputs := make([]<-chan A, size)
 	for i := range outs {
 		outs[i] = make(chan A, buffer)
-		outputs[i] = outs[i]
 	}
 
 	go func() {
@@ -131,7 +129,7 @@ func FanOutUntil[A any](done <-chan interface{}, buffer int, c <-chan A, size in
 			}
 		}
 	}()
-	return outputs
+	return Readers(outs...)
 }
 
 func Concat[A any](cs ...<-chan A) <-chan A {
@@ -475,31 +473,47 @@ func DropAll[A any](c <-chan A, async bool) {
 	dropper()
 }
 
-func OrDone(channels ...<-chan interface{}) <-chan interface{} {
-	switch len(channels) {
+func SomeDone(done ...<-chan interface{}) <-chan interface{} {
+	switch len(done) {
 	case 0:
 		return nil
 	case 1:
-		return channels[0]
+		return done[0]
 	}
 
-	orDone := make(chan interface{})
+	someDone := make(chan interface{})
 	go func() {
-		defer close(orDone)
-		switch len(channels) {
+		defer close(someDone)
+		switch len(done) {
 		case 2:
 			select {
-			case <-channels[0]:
-			case <-channels[1]:
+			case <-done[0]:
+			case <-done[1]:
 			}
 		default:
 			select {
-			case <-channels[0]:
-			case <-channels[1]:
-			case <-channels[2]:
-			case <-OrDone(append(channels[3:], orDone)...):
+			case <-done[0]:
+			case <-done[1]:
+			case <-done[2]:
+			case <-SomeDone(append(done[3:], someDone)...):
 			}
 		}
 	}()
-	return orDone
+	return someDone
+}
+
+func Readers[A any](chans ...chan A) []<-chan A {
+	readers := make([]<-chan A, len(chans))
+	for i := range chans {
+		readers[i] = chans[i]
+	}
+	return readers
+}
+
+func Writers[A any](chans ...chan A) []chan<- A {
+	readers := make([]chan<- A, len(chans))
+	for i := range chans {
+		readers[i] = chans[i]
+	}
+	return readers
 }
