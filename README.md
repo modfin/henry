@@ -4,54 +4,96 @@
 
 ## Example usage of some functional concepts
 ```go 
-
 import (
 	"fmt"
+	"github.com/modfin/go18exp/result"
 	"github.com/modfin/go18exp/slicez"
 	"github.com/modfin/go18exp/slicez/pipe"
+	"strconv"
 )
 
 func main() {
 
-	even := func(i int) bool {
-		return i%2 == 0
-	}
-	negate := func(i int) int {
-		return -i
-	}
+	var slice = []int{1, 2, 3, 4, 5, 6, 7, 8}
 
-	var pslice = []int{1, 2, 3, 4, 5, 6, 7, 8}
-	var nslice = pipe.Of(pslice).Map(negate).Reverse().Slice()
+	squares := pipe.Of(slice).
+		Map(func(a int) int { // Squaring numbers
+			return a * a
+		}).
+		Filter(func(a int) bool { // Filtering even
+			return a%2 == 0
+		}).
+		Slice()
+	fmt.Println(squares)
+	// [4 16 36 64]
 
-	positive, negative := pipe.Of(pslice).
-		Concat(nslice).                // Reversing original slice, negating numbers and concatenating the res
-		Filter(even).                  // Filtering and keeping even numbers
-		Drop(1).                       // Dropping one number on the left
-		DropRight(1).                  // Dropping one number of the right
-		Reverse().                     // Revers the slice
-		Partition(func(val int) bool { // Partitioning into slice into positive and negative numbers
-			return val > 0
-		})
+	sum := slicez.Fold(squares, func(acc int, val int) int {
+		return acc + val
+	}, 0)
+	// 120
 
-	// Mapping number to string
-	toStr := func(v int) string {
-		return fmt.Sprintf("%d", v)
-	}
-	var pStrSlice = slicez.Map(positive, toStr)
-	var nStrSlice = slicez.Map(negative, toStr)
+	avg := sum / len(squares)
+	// 30
 
-	// Joining []string to string
-	joiner := func(accumulator string, val string) string {
-		return fmt.Sprintf("%s, %s", accumulator, val)
-	}
+	small, big := slicez.Partition(squares, func(i int) bool {
+		return i < avg
+	})
+	fmt.Println(small, big)
+	// [4 16] [36 64]
 
-	h1, _ := slicez.Head(pStrSlice)
-	var pStr = slicez.Fold(slicez.Tail(pStrSlice), joiner, h1)
-	h2, _ := slicez.Head(nStrSlice)
-	var nStr = slicez.Fold(slicez.Tail(nStrSlice), joiner, h2)
+	zipped := slicez.Zip(small, big, func(s int, b int) string {
+		return fmt.Sprintf("(%d, %d)", s, b)
+	})
+	fmt.Println(zipped)
+	// [(4, 36) (16, 64)]
 
-	fmt.Printf("(%s), (%s)\n", pStr, nStr)
-	// (8, 6, 4), (-4, -6, -8)
+	// This is all well and good, but does not cover error handling.
+	// Introducing error handling in map function could give the following api
+	//
+	// mapped, err := Map(slice, func(i int) (string, error){
+	//	  i, err := strconv.ParseInt(str, 10, 64)
+	//	  return int(i), err
+	//})
+	//
+	//However, this would make the slicez api harder to work with in the usecases where errors is not needed to be returned.
+	//Using something like wrapping, boxing or optional might be a better solution
+	//eg.
+
+	strslice := []string{"1", "2", "NaN", "4", "inf"}
+	maybeInts := slicez.Map(strslice, func(str string) result.Result[int] {
+		i, err := strconv.ParseInt(str, 10, 64)
+		return result.From(int(i), err)
+	})
+	fmt.Println(maybeInts)
+	// [{1} {2} {strconv.ParseInt: parsing "NaN": invalid syntax} {4} {strconv.ParseInt: parsing "inf": invalid syntax}]
+
+	fmt.Println(result.SliceOk(maybeInts))
+	// false
+
+	fmt.Println(result.SliceError(maybeInts))
+	// strconv.ParseInt: parsing "NaN": invalid syntax
+
+	fmt.Println(result.SliceErrors(maybeInts))
+	// [strconv.ParseInt: parsing "NaN": invalid syntax strconv.ParseInt: parsing "inf": invalid syntax]
+
+	resultInts := slicez.Filter(maybeInts, result.ValueFilter[int])
+	//or
+	//resultInts := slicez.Filter(maybeInts, func(a result.Result[int]) bool {
+	//	return a.Ok()
+	//})
+	fmt.Println(resultInts)
+	// [{1} {2} {4}]
+
+	ints := result.SliceValues(resultInts)
+	//or
+	//int := slicez.Map(resultInts, result.ValueMapper[int])
+	//or
+	//ints := slicez.Map(resultInts, func(a result.Result[int]) int {
+	//	return a.Value()
+	//})
+	fmt.Println(ints)
+	// [1 2 4]
+
 }
 ```
 

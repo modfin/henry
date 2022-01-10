@@ -57,6 +57,7 @@ func GenerateUntil[A any](done <-chan interface{}, buffer int, elements ...A) <-
 	return out
 }
 
+// Fan-In?
 func Merge[A any](cs ...<-chan A) <-chan A {
 	return MergeUntil(nil, 0, cs...)
 }

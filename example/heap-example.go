@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/modfin/go18exp/containers/heap"
+	"github.com/modfin/go18exp/containerz/heap"
 	"math/rand"
 	"sync"
 )
