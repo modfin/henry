@@ -50,14 +50,15 @@ func main() {
 	// This is all well and good, but does not cover error handling.
 	// Introducing error handling in map function could give the following api
 	//
-	// mapped, err := Map(slice, func(i int) (string, error){
+	//  mapped, err := Map(slice, func(i int) (string, error){
 	//	  i, err := strconv.ParseInt(str, 10, 64)
 	//	  return int(i), err
-	//})
+	// })
 	//
-	//However, this would make the slicez api harder to work with in the usecases where errors is not needed to be returned.
-	//Using something like wrapping, boxing or optional might be a better solution
-	//eg.
+	// However, this would make the slicez api harder to work with in the usecases 
+	// where errors is not needed to be returned.
+	// Using something like wrapping, boxing or optional might be a better solution
+	// eg.
 
 	strslice := []string{"1", "2", "NaN", "4", "inf"}
 	maybeInts := slicez.Map(strslice, func(str string) result.Result[int] {
@@ -77,20 +78,20 @@ func main() {
 	// [strconv.ParseInt: parsing "NaN": invalid syntax strconv.ParseInt: parsing "inf": invalid syntax]
 
 	resultInts := slicez.Filter(maybeInts, result.ValueFilter[int])
-	//or
-	//resultInts := slicez.Filter(maybeInts, func(a result.Result[int]) bool {
-	//	return a.Ok()
-	//})
+	// or
+	// resultInts := slicez.Filter(maybeInts, func(a result.Result[int]) bool {
+	// 	 return a.Ok()
+	// })
 	fmt.Println(resultInts)
 	// [{1} {2} {4}]
 
 	ints := result.SliceValues(resultInts)
-	//or
-	//int := slicez.Map(resultInts, result.ValueMapper[int])
-	//or
-	//ints := slicez.Map(resultInts, func(a result.Result[int]) int {
-	//	return a.Value()
-	//})
+	// or
+	// int := slicez.Map(resultInts, result.ValueMapper[int])
+	// or
+	// ints := slicez.Map(resultInts, func(a result.Result[int]) int {
+	// 	 return a.Value()
+	// })
 	fmt.Println(ints)
 	// [1 2 4]
 
