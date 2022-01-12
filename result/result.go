@@ -56,7 +56,8 @@ func From[A any](a A, err error) Result[A] {
 }
 
 func ValuesOfSlice[A any](results []Result[A]) []A {
-	return slicez.Map(slicez.Filter(results, Ok[A]), ValueOf[A])
+	vals := slicez.Filter(results, Ok[A])
+	return slicez.Map(vals, ValueOf[A])
 }
 
 func ErrorsOfSlice[A any](results []Result[A]) []error {
