@@ -18,7 +18,7 @@ func (p Pipe[A]) Slice() []A {
 	return p.in
 }
 
-func (p Pipe[A]) Each(apply func(a A)) Pipe[A] {
+func (p Pipe[A]) Peek(apply func(a A)) Pipe[A] {
 	slicez.Each(p.in, apply)
 	return p
 }

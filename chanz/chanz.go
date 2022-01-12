@@ -4,6 +4,33 @@ import (
 	"sync"
 )
 
+func Peek[A any](in <-chan A, apply func(a A)) <-chan A {
+	return PeekUntil(nil, 0, in, apply)
+}
+func Peek1[A any](in <-chan A, apply func(a A)) <-chan A {
+	return PeekUntil(nil, 1, in, apply)
+}
+
+func PeekN[A any](buffer int, in <-chan A, apply func(a A)) <-chan A {
+	return PeekUntil(nil, buffer, in, apply)
+}
+
+func PeekUntil[A any](done <-chan interface{}, buffer int, in <-chan A, apply func(a A)) <-chan A {
+	out := make(chan A, buffer)
+	go func() {
+		defer close(out)
+		for e := range in {
+			apply(e)
+			select {
+			case <-done:
+				return
+			case out <- e:
+			}
+		}
+	}()
+	return out
+}
+
 func Map[A any, B any](in <-chan A, mapper func(a A) B) <-chan B {
 	return MapUntil(nil, 0, in, mapper)
 }
@@ -24,6 +51,39 @@ func MapUntil[A any, B any](done <-chan interface{}, buffer int, in <-chan A, ma
 			case <-done:
 				return
 			case out <- mapper(e):
+			}
+		}
+	}()
+	return out
+}
+
+func Flatten[A any](in <-chan []A) <-chan A {
+	return FlattenUntil(nil, 0, in)
+}
+
+func Flatten1[A any](in <-chan []A) <-chan A {
+	return FlattenUntil(nil, 1, in)
+}
+
+func FlattenN[A any](buffer int, in <-chan []A) <-chan A {
+	return FlattenUntil(nil, buffer, in)
+}
+
+func FlattenUntil[A any](done <-chan interface{}, buffer int, in <-chan []A) <-chan A {
+	out := make(chan A, buffer)
+	go func() {
+		defer close(out)
+		for slice := range in {
+			if len(slice) == 0 {
+				continue
+			}
+			select {
+			case <-done:
+				return
+			case out <- slice[0]:
+				for _, e := range slice[1:] {
+					out <- e
+				}
 			}
 		}
 	}()

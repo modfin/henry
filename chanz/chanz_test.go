@@ -22,6 +22,27 @@ func TestGenerated(t *testing.T) {
 	}
 }
 
+func TestPeek(t *testing.T) {
+	type wrap struct {
+		A int
+	}
+	in := []*wrap{{1}, {2}, {3}}
+	exp := []*wrap{{1}, {4}, {9}}
+	generated := Generate[*wrap](in...)
+	peeked := Peek[*wrap](generated, func(a *wrap) {
+		a.A = a.A * a.A
+	})
+
+	res := Collect(peeked)
+
+	if !slicez.EqualFunc(exp, res, func(e1 *wrap, e2 *wrap) bool {
+		return e1.A == e2.A
+	}) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
 func TestMap0(t *testing.T) {
 
 	res := []string{}
@@ -34,6 +55,22 @@ func TestMap0(t *testing.T) {
 	for s := range mapped {
 		res = append(res, s)
 	}
+
+	if !slicez.Equal(exp, res) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+
+}
+
+func TestFlatten(t *testing.T) {
+
+	in := [][]int{{1, 2}, {3}, {}, {4}}
+	exp := []int{1, 2, 3, 4}
+	generated := Generate[[]int](in...)
+	flatten := Flatten[int](generated)
+
+	res := Collect(flatten)
 
 	if !slicez.Equal(exp, res) {
 		t.Logf("expected, %v, but got %v", exp, res)
