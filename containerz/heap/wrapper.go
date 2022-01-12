@@ -2,7 +2,6 @@ package heap
 
 import (
 	heap2 "container/heap"
-	"github.com/modfin/go18exp/compare"
 	"sync"
 )
 
@@ -14,7 +13,7 @@ type Heap[E any] interface {
 	Len() int
 }
 
-func New[E any](less compare.IsLess[E], init ...E) Heap[E] {
+func New[E any](less func(a, b E) bool, init ...E) Heap[E] {
 	h := &heap[E]{data: init, less: less}
 
 	heap2.Init(h)
@@ -80,7 +79,7 @@ func (w *wrapper[E]) Slice() []E {
 }
 
 type heap[E any] struct {
-	less compare.IsLess[E]
+	less func(a, b E) bool
 	data []E
 }
 

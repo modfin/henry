@@ -109,6 +109,62 @@ func TestDropLeftWhile(t *testing.T) {
 	}
 }
 
+func TestLastIndex(t *testing.T) {
+	ints := []int{1, 4, 3, 4, 5}
+	i := LastIndex(ints, 4)
+
+	if i != 3 {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", i, 3)
+	}
+
+	i = LastIndex(ints, 10)
+
+	if i != -1 {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", i, -1)
+	}
+}
+
+func TestFind(t *testing.T) {
+	ints := []int{1, 2, 3, 4, 5}
+	res, found := Find(ints, func(ii int) bool {
+		return ii == 3
+	})
+	exp := 3
+	if res != exp {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+	if !found {
+		t.Fail()
+		t.Logf("expected to be found")
+	}
+
+	res, found = Find(ints, func(ii int) bool {
+		return ii == 10
+	})
+	exp = 0
+	if res != exp {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+	if found {
+		t.Fail()
+		t.Logf("expected not to be found")
+	}
+}
+
+func TestJoin(t *testing.T) {
+	ints := [][]int{{1, 2, 3}, {4, 5}, {6}}
+	exp := []int{1, 2, 3, 0, 0, 4, 5, 0, 0, 6}
+	res := Join(ints, []int{0, 0})
+	if !Equal(res, exp) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+}
+
 func TestTakeRight(t *testing.T) {
 
 	ints := []int{1, 2, 3}
@@ -158,7 +214,7 @@ func TestReject(t *testing.T) {
 func TestSome(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := true
-	res := Some(ints, func(a int) bool {
+	res := SomeFunc(ints, func(a int) bool {
 		return a == 2
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -170,7 +226,7 @@ func TestSome(t *testing.T) {
 func TestSome2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := false
-	res := Some(ints, func(a int) bool {
+	res := SomeFunc(ints, func(a int) bool {
 		return a == 5
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -182,9 +238,7 @@ func TestSome2(t *testing.T) {
 func TestNone(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := true
-	res := None(ints, func(a int) bool {
-		return a == 5
-	})
+	res := None(ints, 5)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
@@ -194,9 +248,7 @@ func TestNone(t *testing.T) {
 func TestNone2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := false
-	res := None(ints, func(a int) bool {
-		return a == 2
-	})
+	res := None(ints, 2)
 
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
@@ -207,7 +259,7 @@ func TestNone2(t *testing.T) {
 func TestEvery(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := true
-	res := Every(ints, func(a int) bool {
+	res := EveryFunc(ints, func(a int) bool {
 		return a < 5
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -219,7 +271,7 @@ func TestEvery(t *testing.T) {
 func TestEvery2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := false
-	res := Every(ints, func(a int) bool {
+	res := EveryFunc(ints, func(a int) bool {
 		return a < 3
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -231,7 +283,7 @@ func TestEvery2(t *testing.T) {
 func TestNth(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := 2
-	res, _ := Nth(ints, 1)
+	res := Nth(ints, 1)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
@@ -241,7 +293,12 @@ func TestNth(t *testing.T) {
 func TestNth2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := 3
-	res, _ := Nth(ints, -1)
+	res := Nth(ints, -1)
+	if !reflect.DeepEqual(res, exp) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+	res = Nth(ints, -4)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
@@ -250,8 +307,8 @@ func TestNth2(t *testing.T) {
 
 func TestNth3(t *testing.T) {
 	ints := []int{1, 2, 3}
-	exp := 0
-	res, _ := Nth(ints, 10)
+	exp := 2
+	res := Nth(ints, 4)
 	if !reflect.DeepEqual(res, exp) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", res, exp)
@@ -425,7 +482,17 @@ func TestUniq(t *testing.T) {
 	a := []int{1, 2, 3, 3, 3, 4, 5, 6, 6, 6, 6}
 	exp := []int{1, 2, 3, 4, 5, 6}
 
-	res := UniqBy[int, int](compare.EqualBy[int], a)
+	res := UniqBy[int, int](a, compare.Identity[int])
+	if !reflect.DeepEqual(exp, res) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", exp, res)
+	}
+}
+func TestUniq2(t *testing.T) {
+	a := []int{1, 2, 3, 3, 3, 4, 5, 6, 6, 6, 6}
+	exp := []int{1, 2, 3, 4, 5, 6}
+
+	res := Uniq[int](a)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -438,7 +505,7 @@ func TestUnion(t *testing.T) {
 	d := []int{4, 5, -1}
 	exp := []int{1, 2, 3, 4, 5, -1}
 
-	res := Union[int, int](compare.EqualBy[int], a, b, c, d)
+	res := UnionBy[int, int](compare.Identity[int], a, b, c, d)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -451,7 +518,7 @@ func TestIntersection(t *testing.T) {
 	c := []int{3, 4, 5, 2}
 	exp := []int{2, 3}
 
-	res := Intersection[int, int](compare.EqualBy[int], a, b, c)
+	res := IntersectionBy[int, int](compare.Identity[int], a, b, c)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -464,7 +531,7 @@ func TestDifference(t *testing.T) {
 	c := []int{3, 4, 5, 2}
 	exp := []int{1, 4, 5}
 
-	res := Difference[int, int](compare.EqualBy[int], a, b, c)
+	res := DifferenceBy[int, int](compare.Identity[int], a, b, c)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)
@@ -475,7 +542,7 @@ func TestComplement(t *testing.T) {
 	b := []int{3, 2, 5, 5, 6, 1}
 	exp := []int{5, 6}
 
-	res := Complement[int, int](compare.EqualBy[int], a, b)
+	res := ComplementBy[int, int](compare.Identity[int], a, b)
 	if !reflect.DeepEqual(exp, res) {
 		t.Fail()
 		t.Logf("expected, %v to equal %v\n", exp, res)

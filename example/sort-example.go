@@ -14,7 +14,7 @@ func main() {
 	fmt.Println(in)
 	fmt.Println()
 
-	in = slicez.SortFunc(in, compare.Reverse(compare.Less[int]))
+	in = slicez.SortFunc(in, compare.Negate(compare.Less[int]))
 	fmt.Println("Sorted in Descending order")
 	fmt.Println(in)
 	fmt.Println()

@@ -2,22 +2,6 @@ package compare
 
 import "constraints"
 
-type IsLess[E any] func(a, b E) bool
-type IsEqual[E any] func(a, b E) bool
-
-func Less[E constraints.Ordered](a, b E) bool {
-	return a < b
-}
-func Greater[E constraints.Ordered](a, b E) bool {
-	return a > b
-}
-
-func Reverse[E any](less IsLess[E]) IsLess[E] {
-	return func(a, b E) bool {
-		return less(b, a)
-	}
-}
-
 func Compare[N constraints.Ordered](e1 N, e2 N) int {
 	switch {
 	case e1 < e2:
@@ -29,14 +13,31 @@ func Compare[N constraints.Ordered](e1 N, e2 N) int {
 	}
 }
 
+func Identity[N comparable](n N) N {
+	return n
+}
+
 func Equal[N comparable](a, b N) bool {
 	return a == b
 }
-
-func NotEqual[N comparable](a, b N) bool {
-	return a != b
+func Less[E constraints.Ordered](a, b E) bool {
+	return a < b
 }
 
-func EqualBy[N comparable](n N) N {
-	return n
+func Negate[A any](f func(a, b A) bool) func(A, A) bool {
+	return func(a, b A) bool {
+		return !f(a, b)
+	}
+}
+
+func EqualOf[N comparable](needle N) func(b N) bool {
+	return func(b N) bool {
+		return needle == b
+	}
+}
+
+func NegateOf[A any](f func(A) bool) func(A) bool {
+	return func(a A) bool {
+		return !f(a)
+	}
 }

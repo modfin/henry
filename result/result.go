@@ -2,6 +2,7 @@ package result
 
 import (
 	"fmt"
+	"github.com/modfin/go18exp/compare"
 	"github.com/modfin/go18exp/slicez"
 )
 
@@ -54,44 +55,33 @@ func From[A any](a A, err error) Result[A] {
 	}
 }
 
-func Error[A any](err error) Result[A] {
-	var zero A
-	return Result[A]{
-		value: zero,
-		err:   err,
+func ValuesOfSlice[A any](results []Result[A]) []A {
+	return slicez.Map(slicez.Filter(results, Ok[A]), ValueOf[A])
+}
+
+func ErrorsOfSlice[A any](results []Result[A]) []error {
+	errs := slicez.Filter(results, compare.NegateOf(Ok[A]))
+	return slicez.Map(errs, ErrorOf[A])
+}
+
+func ErrorOfSlice[A any](results []Result[A]) error {
+	r, found := slicez.Find(results, compare.NegateOf(Ok[A]))
+	if !found {
+		return nil
 	}
-}
-
-func SliceValues[A any](results []Result[A]) []A {
-	values := slicez.Filter(results, ValueFilter[A])
-	return slicez.Map(values, ValueMapper[A])
-}
-
-func SliceErrors[A any](results []Result[A]) []error {
-	errs := slicez.Filter(results, ErrorFilter[A])
-	return slicez.Map(errs, ErrorMapper[A])
-}
-
-func SliceError[A any](results []Result[A]) error {
-	err, _ := slicez.Head(SliceErrors(results))
-	return err
+	return r.err
 }
 func SliceOk[A any](results []Result[A]) bool {
-	return slicez.None(results, func(a Result[A]) bool {
-		return !a.Ok()
-	})
+	return slicez.EveryFunc(results, Ok[A])
 }
 
-func ValueMapper[A any](res Result[A]) A {
+func ValueOf[A any](res Result[A]) A {
 	return res.Value()
 }
-func ValueFilter[A any](res Result[A]) bool {
+func Ok[A any](res Result[A]) bool {
 	return res.Ok()
 }
 
-func ErrorMapper[A any](res Result[A]) error {
+func ErrorOf[A any](res Result[A]) error {
 	return res.Error()
-}
-func ErrorFilter[A any](res Result[A]) bool {
-	return !res.Ok()
 }

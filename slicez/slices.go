@@ -3,7 +3,6 @@ package slicez
 import (
 	"constraints"
 	"errors"
-	"fmt"
 	"github.com/modfin/go18exp/compare"
 	"github.com/modfin/go18exp/slicez/sort"
 	"math/rand"
@@ -41,12 +40,78 @@ func IndexFunc[E any](s []E, f func(E) bool) int {
 	return -1
 }
 
+func LastIndex[E comparable](s []E, needle E) int {
+	return LastIndexFunc(s, func(e E) bool {
+		return e == needle
+	})
+}
+func LastIndexFunc[E any](s []E, f func(E) bool) int {
+	n := len(s)
+
+	for i := 0; i < n; i++ {
+		if f(s[n-i-1]) {
+			return n - i - 1
+		}
+	}
+	return -1
+}
+
+func Cut[E comparable](s []E, needle E) (left, right []E, found bool) {
+	return CutFunc(s, func(e E) bool {
+		return e == needle
+	})
+}
+
+func CutFunc[E any](s []E, on func(E) bool) (left, right []E, found bool) {
+	i := IndexFunc(s, on)
+	if i == -1 {
+		return s, nil, false
+	}
+	return s[:i], s[i+1:], true
+}
+
+func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
+	i := IndexFunc(s, equal)
+	if i == -1 {
+		return e, false
+	}
+	return s[i], true
+}
+
+func FindLast[E any](s []E, equal func(E) bool) (e E, found bool) {
+	i := LastIndexFunc(s, equal)
+	if i == -1 {
+		return e, false
+	}
+	return s[i], true
+}
+
+func Join[E any](slices [][]E, sep []E) []E {
+	if len(slices) == 0 {
+		return []E{}
+	}
+	if len(slices) == 1 {
+		return append([]E(nil), slices[0]...)
+	}
+	n := len(sep) * (len(slices) - 1)
+	for _, v := range slices {
+		n += len(v)
+	}
+
+	b := make([]E, n)
+	bp := copy(b, slices[0])
+	for _, v := range slices[1:] {
+		bp += copy(b[bp:], sep)
+		bp += copy(b[bp:], v)
+	}
+	return b
+}
+
 func Contains[E comparable](s []E, v E) bool {
 	return Index(s, v) >= 0
 }
-
-func Compare[E constraints.Ordered](s1, s2 []E) int {
-	return CompareFunc(s1, s2, compare.Compare[E])
+func ContainsFunc[E any](s []E, f func(e E) bool) bool {
+	return IndexFunc(s, f) >= 0
 }
 
 func Clone[E any](s []E) []E {
@@ -56,7 +121,9 @@ func Clone[E any](s []E) []E {
 	}
 	return append([]E{}, s...)
 }
-
+func Compare[E constraints.Ordered](s1, s2 []E) int {
+	return CompareFunc(s1, s2, compare.Compare[E])
+}
 func CompareFunc[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
 	s2len := len(s2)
 	for i, v1 := range s1 {
@@ -107,16 +174,22 @@ func Last[A any](slice []A) (A, error) {
 	return zero, errors.New("slice does not have any elements")
 }
 
-func Nth[A any](slice []A, i int) (A, error) {
+func Nth[A any](slice []A, i int) A {
+	var zero A
+	n := len(slice)
+	if n == 0 {
+		return zero
+	}
+	if n == 1 {
+		return slice[0]
+	}
+
+	i = i % n
+
 	if i < 0 {
 		i = len(slice) + i
 	}
-
-	if i < len(slice) {
-		return slice[i], nil
-	}
-	var zero A
-	return zero, fmt.Errorf("slice of len %d does not contain element %d", len(slice), i)
+	return slice[i]
 }
 
 func Tail[A any](slice []A) []A {
@@ -267,7 +340,11 @@ func Reject[A any](slice []A, exclude func(a A) bool) []A {
 	})
 }
 
-func Every[A any](slice []A, predicate func(A) bool) bool {
+func Every[A comparable](slice []A, needle A) bool {
+	return EveryFunc(slice, compare.EqualOf[A](needle))
+
+}
+func EveryFunc[A any](slice []A, predicate func(A) bool) bool {
 	for _, val := range slice {
 		if !predicate(val) {
 			return false
@@ -276,7 +353,11 @@ func Every[A any](slice []A, predicate func(A) bool) bool {
 	return true
 }
 
-func Some[A any](slice []A, predicate func(A) bool) bool {
+func Some[A comparable](slice []A, needle A) bool {
+	return SomeFunc(slice, compare.EqualOf[A](needle))
+}
+
+func SomeFunc[A any](slice []A, predicate func(A) bool) bool {
 	for _, val := range slice {
 		if predicate(val) {
 			return true
@@ -285,10 +366,12 @@ func Some[A any](slice []A, predicate func(A) bool) bool {
 	return false
 }
 
-func Has[A comparable](slice []A, needle A) bool {
-	return Some(slice, func(a A) bool {
-		return needle == a
-	})
+func None[A comparable](slice []A, needle A) bool {
+	return !SomeFunc(slice, compare.EqualOf[A](needle))
+}
+
+func NoneFunc[A any](slice []A, predicate func(A) bool) bool {
+	return !SomeFunc(slice, predicate)
 }
 
 func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisfied []A) {
@@ -302,16 +385,9 @@ func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisf
 	return satisfied, notSatisfied
 }
 
-func None[A any](slice []A, predicate func(A) bool) bool {
-	return !Some(slice, predicate)
-}
-
 func Shuffle[A any](slice []A) []A {
+	var ret = append([]A{}, slice...)
 	rand.Seed(time.Now().UnixNano())
-	var ret []A
-	for _, a := range slice {
-		ret = append(ret, a)
-	}
 	rand.Shuffle(len(ret), func(i, j int) {
 		ret[i], ret[j] = ret[j], ret[i]
 	})
@@ -353,8 +429,7 @@ func Sort[A constraints.Ordered](slice []A) []A {
 	return SortFunc(slice, compare.Less[A])
 }
 func SortFunc[A any](slice []A, less func(a, b A) bool) []A {
-	var res = make([]A, len(slice))
-	copy(res, slice)
+	var res = append([]A{}, slice...)
 	sort.Slice(res, less)
 	return res
 }
@@ -470,12 +545,10 @@ func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
 }
 
 func Uniq[A comparable](slice []A) []A {
-	return UniqBy(func(a A) A {
-		return a
-	}, slice)
+	return UniqBy(slice, compare.Identity[A])
 }
 
-func UniqBy[A any, B comparable](by func(a A) B, slice []A) []A {
+func UniqBy[A any, B comparable](slice []A, by func(a A) B) []A {
 	var res []A
 	var set = map[B]struct{}{}
 	for _, e := range slice {
@@ -490,7 +563,11 @@ func UniqBy[A any, B comparable](by func(a A) B, slice []A) []A {
 	return res
 }
 
-func Union[A any, B comparable](by func(a A) B, slices ...[]A) []A {
+func Union[A comparable](slices ...[]A) []A {
+	return UnionBy(compare.Identity[A], slices...)
+}
+
+func UnionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
 	}
@@ -510,11 +587,14 @@ func Union[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
-func Intersection[A any, B comparable](by func(a A) B, slices ...[]A) []A {
+func Intersection[A comparable](slices ...[]A) []A {
+	return IntersectionBy(compare.Identity[A], slices...)
+}
+func IntersectionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
 	}
-	var res = UniqBy(by, slices[0])
+	var res = UniqBy(slices[0], by)
 	for _, slice := range slices[1:] {
 		var set = map[B]bool{}
 		for _, e := range slice {
@@ -527,12 +607,15 @@ func Intersection[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
-func Difference[A any, B comparable](by func(a A) B, slices ...[]A) []A {
+func Difference[A comparable](slices ...[]A) []A {
+	return DifferenceBy(compare.Identity[A], slices...)
+}
+func DifferenceBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
 	}
 	var exclude = map[B]bool{}
-	for _, v := range Intersection(by, slices...) {
+	for _, v := range IntersectionBy(by, slices...) {
 		exclude[by(v)] = true
 	}
 
@@ -550,7 +633,10 @@ func Difference[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
-func Complement[A any, B comparable](by func(a A) B, a, b []A) []A {
+func Complement[A comparable](a, b []A) []A {
+	return ComplementBy(compare.Identity[A], a, b)
+}
+func ComplementBy[A any, B comparable](by func(a A) B, a, b []A) []A {
 	if len(a) == 0 {
 		return b
 	}

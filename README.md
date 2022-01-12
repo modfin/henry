@@ -2,8 +2,10 @@
 > A test implementation of some go generics concepts
 
 
-## Example usage of some functional concepts
+## Example usage of slicez
 ```go 
+package main
+
 import (
 	"fmt"
 	"github.com/modfin/go18exp/result"
@@ -50,15 +52,14 @@ func main() {
 	// This is all well and good, but does not cover error handling.
 	// Introducing error handling in map function could give the following api
 	//
-	//  mapped, err := Map(slice, func(i int) (string, error){
+	// mapped, err := Map(slice, func(i int) (string, error){
 	//	  i, err := strconv.ParseInt(str, 10, 64)
 	//	  return int(i), err
-	// })
+	//})
 	//
-	// However, this would make the slicez api harder to work with in the usecases 
-	// where errors is not needed to be returned.
-	// Using something like wrapping, boxing or optional might be a better solution
-	// eg.
+	//However, this would make the slicez api harder to work with in the usecases where errors is not needed to be returned.
+	//Using something like wrapping, boxing or optional might be a better solution
+	//eg.
 
 	strslice := []string{"1", "2", "NaN", "4", "inf"}
 	maybeInts := slicez.Map(strslice, func(str string) result.Result[int] {
@@ -71,27 +72,27 @@ func main() {
 	fmt.Println(result.SliceOk(maybeInts))
 	// false
 
-	fmt.Println(result.SliceError(maybeInts))
+	fmt.Println(result.ErrorOfSlice(maybeInts))
 	// strconv.ParseInt: parsing "NaN": invalid syntax
 
-	fmt.Println(result.SliceErrors(maybeInts))
+	fmt.Println(result.ErrorsOfSlice(maybeInts))
 	// [strconv.ParseInt: parsing "NaN": invalid syntax strconv.ParseInt: parsing "inf": invalid syntax]
 
-	resultInts := slicez.Filter(maybeInts, result.ValueFilter[int])
-	// or
-	// resultInts := slicez.Filter(maybeInts, func(a result.Result[int]) bool {
-	// 	 return a.Ok()
-	// })
+	resultInts := slicez.Filter(maybeInts, result.Ok[int])
+	//or
+	//resultInts := slicez.Filter(maybeInts, func(a result.Result[int]) bool {
+	//	return a.Ok()
+	//})
 	fmt.Println(resultInts)
 	// [{1} {2} {4}]
 
-	ints := result.SliceValues(resultInts)
-	// or
-	// int := slicez.Map(resultInts, result.ValueMapper[int])
-	// or
-	// ints := slicez.Map(resultInts, func(a result.Result[int]) int {
-	// 	 return a.Value()
-	// })
+	ints := result.ValuesOfSlice(resultInts)
+	//or
+	//int := slicez.Map(resultInts, result.ValueOf[int])
+	//or
+	//ints := slicez.Map(resultInts, func(a result.Result[int]) int {
+	//	return a.ValueOf()
+	//})
 	fmt.Println(ints)
 	// [1 2 4]
 
@@ -102,9 +103,11 @@ func main() {
 
 ## Example usage a wrapped version of container/heap as a priority queue
 ```go 
+package main
+
 import (
 	"fmt"
-	"github.com/modfin/go18exp/containers/heap"
+	"github.com/modfin/go18exp/containerz/heap"
 	"math/rand"
 	"sync"
 )
@@ -119,6 +122,7 @@ func (w Work) Do() {
 }
 
 func main() {
+
 	wg := sync.WaitGroup{}
 
 	priorityQueue := heap.New[Work](func(a, b Work) bool {
@@ -156,12 +160,15 @@ func main() {
 	go consumer()
 
 	wg.Wait()
+
 }
 ```
 
 
 ## Example usage a wrapped version of sort
 ```go 
+package main
+
 import (
 	"fmt"
 	"github.com/modfin/go18exp/compare"
@@ -176,7 +183,7 @@ func main() {
 	fmt.Println(in)
 	fmt.Println()
 
-	in = slicez.SortFunc(in, compare.Reverse(compare.Less[int]))
+	in = slicez.SortFunc(in, compare.Negate(compare.Less[int]))
 	fmt.Println("Sorted in Descending order")
 	fmt.Println(in)
 	fmt.Println()
@@ -191,6 +198,8 @@ func main() {
 
 ## Example usage of generics for common number calculations
 ```go 
+package main
+
 import (
 	"fmt"
 	"github.com/modfin/go18exp/numberz"
@@ -228,4 +237,5 @@ func main() {
 	fmt.Println("StdDev:", numberz.StdDev(floats...))
 
 }
+
 ```

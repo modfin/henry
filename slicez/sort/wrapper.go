@@ -1,13 +1,12 @@
 package sort
 
 import (
-	"github.com/modfin/go18exp/compare"
 	sort2 "sort"
 )
 
 type sortable[E any] struct {
 	data []E
-	less compare.IsLess[E]
+	less func(a, b E) bool
 }
 
 func (s sortable[E]) Len() int {
@@ -20,7 +19,7 @@ func (s sortable[E]) Swap(i, j int) {
 	s.data[i], s.data[j] = s.data[j], s.data[i]
 }
 
-func Slice[E any](data []E, less compare.IsLess[E]) {
+func Slice[E any](data []E, less func(a, b E) bool) {
 	sort2.Sort(sortable[E]{
 		data: data,
 		less: less,
@@ -28,14 +27,14 @@ func Slice[E any](data []E, less compare.IsLess[E]) {
 
 }
 
-func StableSlice[E any](data []E, less compare.IsLess[E]) {
+func StableSlice[E any](data []E, less func(a, b E) bool) {
 	sort2.Stable(sortable[E]{
 		data: data,
 		less: less,
 	})
 }
 
-func IsSorted[E any](data []E, less compare.IsLess[E]) bool {
+func IsSorted[E any](data []E, less func(a, b E) bool) bool {
 	return sort2.IsSorted(sortable[E]{
 		data: data,
 		less: less,

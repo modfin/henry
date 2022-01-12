@@ -66,13 +66,13 @@ func main() {
 	fmt.Println(result.SliceOk(maybeInts))
 	// false
 
-	fmt.Println(result.SliceError(maybeInts))
+	fmt.Println(result.ErrorOfSlice(maybeInts))
 	// strconv.ParseInt: parsing "NaN": invalid syntax
 
-	fmt.Println(result.SliceErrors(maybeInts))
+	fmt.Println(result.ErrorsOfSlice(maybeInts))
 	// [strconv.ParseInt: parsing "NaN": invalid syntax strconv.ParseInt: parsing "inf": invalid syntax]
 
-	resultInts := slicez.Filter(maybeInts, result.ValueFilter[int])
+	resultInts := slicez.Filter(maybeInts, result.Ok[int])
 	//or
 	//resultInts := slicez.Filter(maybeInts, func(a result.Result[int]) bool {
 	//	return a.Ok()
@@ -80,12 +80,12 @@ func main() {
 	fmt.Println(resultInts)
 	// [{1} {2} {4}]
 
-	ints := result.SliceValues(resultInts)
+	ints := result.ValuesOfSlice(resultInts)
 	//or
-	//int := slicez.Map(resultInts, result.ValueMapper[int])
+	//int := slicez.Map(resultInts, result.ValueOf[int])
 	//or
 	//ints := slicez.Map(resultInts, func(a result.Result[int]) int {
-	//	return a.Value()
+	//	return a.ValueOf()
 	//})
 	fmt.Println(ints)
 	// [1 2 4]

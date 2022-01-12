@@ -41,7 +41,7 @@ func (p Pipe[A]) Reverse() Pipe[A] {
 	return Of(slicez.Reverse(p.in))
 }
 
-func (p Pipe[A]) Nth(i int) (A, error) {
+func (p Pipe[A]) Nth(i int) A {
 	return slicez.Nth(p.in, i)
 }
 
@@ -96,13 +96,13 @@ func (p Pipe[A]) FoldRight(combined func(accumulator A, val A) A, accumulator A)
 }
 
 func (p Pipe[A]) Every(predicate func(a A) bool) bool {
-	return slicez.Every(p.in, predicate)
+	return slicez.EveryFunc(p.in, predicate)
 }
 func (p Pipe[A]) Some(predicate func(a A) bool) bool {
-	return slicez.Some(p.in, predicate)
+	return slicez.SomeFunc(p.in, predicate)
 }
 func (p Pipe[A]) None(predicate func(a A) bool) bool {
-	return slicez.None(p.in, predicate)
+	return slicez.NoneFunc(p.in, predicate)
 }
 
 func (p Pipe[A]) Partition(predicate func(a A) bool) (satisfied, notSatisfied []A) {
