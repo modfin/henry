@@ -515,9 +515,18 @@ func UnzipUntil[A any, B any, C any](done <-chan interface{}, buffer int, zipped
 }
 
 func Collect[A any](c <-chan A) []A {
+	return CollectUntil(nil, c)
+}
+
+func CollectUntil[A any](done <-chan interface{}, c <-chan A) []A {
 	var out []A
 	for val := range c {
 		out = append(out, val)
+		select {
+		case <-done:
+			return out
+		default:
+		}
 	}
 	return out
 }
