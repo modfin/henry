@@ -1,15 +1,11 @@
 package numberz
 
-import (
-	"constraints"
-)
-
 type Numbers interface {
-	~byte | constraints.Integer | constraints.Float
+	~byte | compare.Integer | compare.Float
 }
 
 type SignedNumbers interface {
-	constraints.Signed | constraints.Float
+	compare.Signed | compare.Float
 }
 
 func MapNegate[N Numbers](n N) N {

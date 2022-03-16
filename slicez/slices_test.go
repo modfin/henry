@@ -8,6 +8,22 @@ import (
 	"testing"
 )
 
+func TestCut(t *testing.T) {
+	a := []int{1, 2, 3, 4, 5}
+	expLeft := []int{1, 2}
+	expRight := []int{4, 5}
+
+	left, right, _ := Cut(a, 3)
+	if !Equal(left, expLeft) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", expLeft, left)
+	}
+	if !Equal(right, expRight) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", expRight, right)
+	}
+}
+
 func TestDropLeft0(t *testing.T) {
 	var ints []int
 	var exp []int

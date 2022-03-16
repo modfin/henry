@@ -1,7 +1,6 @@
 package numberz
 
 import (
-	"constraints"
 	"github.com/modfin/go18exp/slicez"
 	"github.com/modfin/go18exp/slicez/pipe"
 	"math"
@@ -255,7 +254,7 @@ func Modes[N Numbers](nums ...N) []N {
 }
 
 // GCD Greatest common divisor
-func GCD[I constraints.Integer](ints ...I) (gcd I) {
+func GCD[I compare.Integer](ints ...I) (gcd I) {
 	if len(ints) == 0 {
 		return gcd
 	}
@@ -271,7 +270,7 @@ func GCD[I constraints.Integer](ints ...I) (gcd I) {
 }
 
 // LCM Least Common Multiple
-func LCM[I constraints.Integer](a, b I, integers ...I) I {
+func LCM[I compare.Integer](a, b I, integers ...I) I {
 	result := a * b / GCD(a, b)
 
 	for i := 0; i < len(integers); i++ {
@@ -285,7 +284,7 @@ func Percentile[N Numbers](score N, n ...N) float64 {
 	return float64(count) / float64(len(n))
 }
 
-func BitOR[I constraints.Integer](a []I) (i I) {
+func BitOR[I compare.Integer](a []I) (i I) {
 	if len(a) == 0 {
 		return i
 	}
@@ -297,7 +296,7 @@ func BitOR[I constraints.Integer](a []I) (i I) {
 	}, a[0])
 }
 
-func BitAND[I constraints.Integer](a []I) (i I) {
+func BitAND[I compare.Integer](a []I) (i I) {
 	if len(a) == 0 {
 		return i
 	}
@@ -309,7 +308,7 @@ func BitAND[I constraints.Integer](a []I) (i I) {
 	}, a[0])
 }
 
-func BitXOR[I constraints.Integer](a []I) (i I) {
+func BitXOR[I compare.Integer](a []I) (i I) {
 	if len(a) == 0 {
 		return i
 	}
