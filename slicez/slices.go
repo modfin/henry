@@ -530,6 +530,7 @@ func CompactFunc[A any](slice []A, equal func(a, b A) bool) []A {
 	return append([]A{head}, tail...)
 }
 
+// Max returns the largest element of the slice
 func Max[E compare.Ordered](slice ...E) E {
 	var zero E
 	if slice == nil || len(slice) == 0 {
@@ -544,6 +545,7 @@ func Max[E compare.Ordered](slice ...E) E {
 	return cur
 }
 
+// Min returns the smalest element of the slice
 func Min[E compare.Ordered](slice ...E) E {
 	var zero E
 	if slice == nil || len(slice) == 0 {
@@ -558,6 +560,7 @@ func Min[E compare.Ordered](slice ...E) E {
 	return cur
 }
 
+// Flatten will flatten a 2d slice into a 1d slice
 func Flatten[A any](slice [][]A) []A {
 	var res []A
 	for _, val := range slice {
@@ -566,6 +569,7 @@ func Flatten[A any](slice [][]A) []A {
 	return res
 }
 
+// Map will map entries in one slice to entries in another slice
 func Map[A any, B any](slice []A, f func(a A) B) []B {
 	res := make([]B, 0, len(slice))
 	for _, a := range slice {
@@ -574,10 +578,12 @@ func Map[A any, B any](slice []A, f func(a A) B) []B {
 	return res
 }
 
+// FlatMap will map entries in one slice to enteris in another slice and then flatten the map
 func FlatMap[A any, B any](slice []A, f func(a A) []B) []B {
 	return Flatten(Map(slice, f))
 }
 
+// Fold will iterate through the slice, from the left, and execute the combine function on each element accumulating the result into a value
 func Fold[I any, A any](slice []I, combined func(accumulator A, val I) A, init A) A {
 	for _, val := range slice {
 		init = combined(init, val)
@@ -585,6 +591,7 @@ func Fold[I any, A any](slice []I, combined func(accumulator A, val I) A, init A
 	return init
 }
 
+// FoldRight will iterate through the slice, from the right, and execute the combine function on each element accumulating the result into a value
 func FoldRight[I any, A any](slice []I, combined func(accumulator A, val I) A, init A) A {
 	l := len(slice)
 	for i := range slice {
@@ -594,17 +601,24 @@ func FoldRight[I any, A any](slice []I, combined func(accumulator A, val I) A, i
 	return init
 }
 
+// KeyBy will iterate through the slice and create a map where the key function generates the key value pair.
+// If multiple values generate the same key, it is the first value that is stored in the map
 func KeyBy[A any, B comparable](slice []A, key func(a A) B) map[B]A {
 
 	m := make(map[B]A)
 
 	for _, v := range slice {
 		k := key(v)
+		_, exist := m[k]
+		if exist {
+			continue
+		}
 		m[k] = v
 	}
 	return m
 }
 
+// GroupBy will iterate through the slice and create a map where entries are grouped into slices using the key function generates the key .
 func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
 
 	m := make(map[B][]A)
@@ -616,17 +630,19 @@ func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
 	return m
 }
 
+// Uniq returns a slice with no duplicate entries
 func Uniq[A comparable](slice []A) []A {
 	return UniqBy(slice, compare.Identity[A])
 }
 
+// UniqBy returns a slice with no duplicate entries using the by function to determine the key
 func UniqBy[A any, B comparable](slice []A, by func(a A) B) []A {
 	var res []A
 	var set = map[B]struct{}{}
 	for _, e := range slice {
 		key := by(e)
-		_, ok := set[key]
-		if ok {
+		_, exist := set[key]
+		if exist {
 			continue
 		}
 		set[key] = struct{}{}
@@ -635,10 +651,12 @@ func UniqBy[A any, B comparable](slice []A, by func(a A) B) []A {
 	return res
 }
 
+// Union will return the union of an arbitrary number of slices. This is equivalent to Uniq(Concat(sliceA, sliceB))
 func Union[A comparable](slices ...[]A) []A {
 	return UnionBy(compare.Identity[A], slices...)
 }
 
+// UnionBy will return the union of an arbitrary number of slices where the by function is used to determine the key. This is equivalent to UniqBy(Concat(sliceA, sliceB), by)
 func UnionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
@@ -659,9 +677,12 @@ func UnionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
+// Intersection returns a slice containing the intersection between passed in slices
 func Intersection[A comparable](slices ...[]A) []A {
 	return IntersectionBy(compare.Identity[A], slices...)
 }
+
+// IntersectionBy returns a slice containing the intersection between passed in slices determined by the "by" function
 func IntersectionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
@@ -679,9 +700,12 @@ func IntersectionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
+// Difference returns a slice containing the difference between passed in slices
 func Difference[A comparable](slices ...[]A) []A {
 	return DifferenceBy(compare.Identity[A], slices...)
 }
+
+// DifferenceBy returns a slice containing the difference between passed in slices determined by the "by" function
 func DifferenceBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
@@ -705,9 +729,12 @@ func DifferenceBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
+// Complement returns a slice containing all elements in "b" that is not present in "a"
 func Complement[A comparable](a, b []A) []A {
 	return ComplementBy(compare.Identity[A], a, b)
 }
+
+// ComplementBy returns a slice containing all elements in "b" that is not present in "a" determined using the "by" function
 func ComplementBy[A any, B comparable](by func(a A) B, a, b []A) []A {
 	if len(a) == 0 {
 		return b
@@ -731,6 +758,7 @@ func ComplementBy[A any, B comparable](by func(a A) B, a, b []A) []A {
 	return res
 }
 
+// Zip will zip two slices, a and b, into one slice, c, using the zip function to combined elements
 func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) []C {
 	var i = len(aSlice)
 	var j = len(bSlice)
@@ -748,6 +776,7 @@ func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) [
 	return cSlice
 }
 
+// Unzip will unzip a slice slices, c, into two slices, a and b, using the supplied unziper function
 func Unzip[A any, B any, C any](cSlice []C, unzipper func(c C) (a A, b B)) ([]A, []B) {
 	var aSlice []A
 	var bSlice []B
@@ -760,6 +789,7 @@ func Unzip[A any, B any, C any](cSlice []C, unzipper func(c C) (a A, b B)) ([]A,
 
 }
 
+// Zip2 will zip three slices, a, b and c, into one slice, d, using the zip function to combined elements
 func Zip2[A any, B any, C any, D any](aSlice []A, bSlice []B, cSlice []C, zipper func(a A, b B, c C) D) []D {
 	var i = len(aSlice)
 	var j = len(bSlice)
@@ -778,6 +808,7 @@ func Zip2[A any, B any, C any, D any](aSlice []A, bSlice []B, cSlice []C, zipper
 	return dSlice
 }
 
+// Unzip2 will unzip a slice slices, d, into three slices, a, b and c, using the supplied unziper function
 func Unzip2[A any, B any, C any, D any](dSlice []D, unzipper func(d D) (a A, b B, c C)) ([]A, []B, []C) {
 	var aSlice []A
 	var bSlice []B
