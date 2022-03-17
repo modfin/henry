@@ -355,3 +355,32 @@ func TestSomeDone(t *testing.T) {
 	}
 
 }
+
+func TestEveryDone(t *testing.T) {
+
+	num := 10
+	dones := make([]chan interface{}, num)
+	for i := range dones {
+		dones[i] = make(chan interface{})
+	}
+
+	done := EveryDone(Readers(dones...)...)
+
+	for _, d := range slicez.Shuffle(dones) {
+		close(d)
+		select {
+		case <-done:
+			t.Log("did not expect early close")
+			t.Fail()
+		default:
+		}
+	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Log("expected done to be closed by now")
+		t.Fail()
+	}
+
+}
