@@ -1,62 +1,81 @@
 package numberz
 
-type Numbers interface {
-	~byte | compare.Integer | compare.Float
-}
+import "github.com/modfin/go18exp/compare"
 
-type SignedNumbers interface {
-	compare.Signed | compare.Float
-}
-
-func MapNegate[N Numbers](n N) N {
+// Negate will return -1*n
+func Negate[N compare.Number](n N) N {
 	return -n
 }
-func MapAbs[N Numbers](n N) N {
+
+// Abs will return the absolut number of n
+func Abs[N compare.Number](n N) N {
 	if n < 0 {
 		return -n
 	}
 	return n
 }
 
-func MapFloat64[N Numbers](n N) float64 {
+// CastFloat64 will cast n to a float64
+func CastFloat64[N compare.Number](n N) float64 {
 	return float64(n)
 }
-func MapFloat32[N Numbers](n N) float32 {
+
+// CastFloat32 will cast n to a float32
+func CastFloat32[N compare.Number](n N) float32 {
 	return float32(n)
 }
 
-func MapInt[N Numbers](n N) int {
+// CastInt will cast n to a int
+func CastInt[N compare.Number](n N) int {
 	return int(n)
 }
-func MapInt8[N Numbers](n N) int8 {
+
+// CastInt8 will cast n to a int8
+func CastInt8[N compare.Number](n N) int8 {
 	return int8(n)
 }
-func MapInt16[N Numbers](n N) int16 {
+
+// CastInt16 will cast n to a int16
+func CastInt16[N compare.Number](n N) int16 {
 	return int16(n)
 }
-func MapInt32[N Numbers](n N) int32 {
+
+// CastInt32 will cast n to a int32
+func CastInt32[N compare.Number](n N) int32 {
 	return int32(n)
 }
-func MapInt64[N Numbers](n N) int64 {
+
+// CastInt64 will cast n to a int64
+func CastInt64[N compare.Number](n N) int64 {
 	return int64(n)
 }
 
-func MapUInt[N Numbers](n N) uint {
+// CastUInt will cast n to an uint
+func CastUInt[N compare.Number](n N) uint {
 	return uint(n)
 }
-func MapUInt8[N Numbers](n N) uint8 {
+
+// CastUInt8 will cast n to an uint8
+func CastUInt8[N compare.Number](n N) uint8 {
 	return uint8(n)
 }
-func MapUInt16[N Numbers](n N) uint16 {
+
+// CastUInt16 will cast n to an uint16
+func CastUInt16[N compare.Number](n N) uint16 {
 	return uint16(n)
 }
-func MapUInt32[N Numbers](n N) uint32 {
+
+// CastUInt32 will cast n to an uint32
+func CastUInt32[N compare.Number](n N) uint32 {
 	return uint32(n)
 }
-func MapUInt64[N Numbers](n N) uint64 {
+
+// CastUInt64 will cast n to an uint64
+func CastUInt64[N compare.Number](n N) uint64 {
 	return uint64(n)
 }
 
-func MapByte[N Numbers](n N) byte {
+// CastByte will cast n to an byte
+func CastByte[N compare.Number](n N) byte {
 	return byte(n)
 }

@@ -21,7 +21,7 @@ func main() {
 	fmt.Println("StdDev:", numberz.StdDev(ints...)) // Sample
 	fmt.Println()
 
-	floats := slicez.Map(ints, numberz.MapFloat64[int])
+	floats := slicez.Map(ints, numberz.CastFloat64[int])
 	floats = slicez.Map(floats, func(a float64) float64 {
 		return a + 0.5
 	})

@@ -42,3 +42,11 @@ type Complex interface {
 type Ordered interface {
 	Integer | Float | ~string
 }
+
+type Number interface {
+	~byte | Integer | Float
+}
+
+type SignedNumbers interface {
+	Signed | Float
+}

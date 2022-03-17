@@ -1,70 +1,63 @@
 package numberz
 
 import (
+	"github.com/modfin/go18exp/compare"
 	"github.com/modfin/go18exp/slicez"
 	"github.com/modfin/go18exp/slicez/pipe"
 	"math"
 	"sort"
 )
 
-func Min[N Numbers](a ...N) N {
-	if len(a) == 0 {
-		panic("no min of nothing")
-	}
-	min := a[0]
-	for _, v := range a {
-		if v < min {
-			min = v
-		}
-	}
-	return min
+// Min returns the minimum of the number supplied
+func Min[N compare.Number](a ...N) N {
+	return slicez.Min(a...)
 }
 
-func Max[N Numbers](a ...N) N {
-	if len(a) == 0 {
-		panic("no max of nothing")
-	}
-	max := a[0]
-	for _, v := range a {
-		if v > max {
-			max = v
-		}
-	}
-	return max
+// Max returns the maximum of the number supplied
+func Max[N compare.Number](a ...N) N {
+	return slicez.Max(a...)
 }
 
-func Range[N Numbers](a ...N) N {
+// Range returns the range of the number supplied
+func Range[N compare.Number](a ...N) N {
 	return Max(a...) - Min(a...)
 }
 
-func Sum[N Numbers](a ...N) N {
+// Sum returns the sum of the number supplied
+func Sum[N compare.Number](a ...N) N {
 	var zero N
 	return slicez.Fold(a, func(acc N, val N) N {
 		return acc + val
 	}, zero)
 }
 
-func VPow[N Numbers](a []N, pow N) []N {
-	return slicez.Map(a, func(a N) N {
+// VPow returns a vector containing the result of each element of "vector" to the power och "pow"
+func VPow[N compare.Number](vector []N, pow N) []N {
+	return slicez.Map(vector, func(a N) N {
 		return N(math.Pow(float64(a), float64(pow)))
 	})
 }
 
-func VMul[N Numbers](x []N, y []N) []N {
+// VMul will return a vector containing elements x and y multiplied such that x[i]*y[i] = returned[i]
+func VMul[N compare.Number](x []N, y []N) []N {
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
 	return slicez.Zip(x, y, func(a, b N) N {
 		return a * b
 	})
 }
-func VAdd[N Numbers](x []N, y []N) []N {
+
+// VAdd will return a vector containing elements x and y added such that x[i]+y[i] = returned[i]
+func VAdd[N compare.Number](x []N, y []N) []N {
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
 	return slicez.Zip(x, y, func(a, b N) N {
 		return a + b
 	})
 }
-func VSub[N Numbers](x []N, y []N) []N {
+
+// VSub will return a vector containing elements y subtracted from x such that x[i]-y[i] = returned[i]
+func VSub[N compare.Number](x []N, y []N) []N {
 	l := Min(len(y), len(y))
 	y, y = y[:l], y[:l]
 	return slicez.Zip(x, y, func(a, b N) N {
@@ -72,29 +65,31 @@ func VSub[N Numbers](x []N, y []N) []N {
 	})
 }
 
-func VDot[N Numbers](x []N, y []N) N {
+// VDot will return the dot product of two vectors
+func VDot[N compare.Number](x []N, y []N) N {
 	return Sum(VMul(x, y)...)
 }
 
-func Mean[N Numbers](a ...N) float64 {
-	if len(a) == 0 {
+// Mean will return the mean of a vector
+func Mean[N compare.Number](vector ...N) float64 {
+	if len(vector) == 0 {
 		var zero N
 		return float64(zero)
 	}
-	return float64(Sum(a...)) / float64(len(a))
+	return float64(Sum(vector...)) / float64(len(vector))
 }
 
-// MAD - Mean Absolute Deviation
-func MAD[N Numbers](n ...N) float64 {
-	mean := Mean(n...)
-	count := float64(len(n))
-	return slicez.Fold(n, func(accumulator float64, val N) float64 {
+// MAD will return the Mean Absolute Deviation of a vector
+func MAD[N compare.Number](vector ...N) float64 {
+	mean := Mean(vector...)
+	count := float64(len(vector))
+	return slicez.Fold(vector, func(accumulator float64, val N) float64 {
 		return accumulator + math.Abs(float64(val)-mean)/count
 	}, 0.0)
 }
 
-// VAR Variance
-func Var[N Numbers](samples ...N) float64 {
+// Var will return Variance of a sample
+func Var[N compare.Number](samples ...N) float64 {
 	avg := Mean(samples...)
 	partial := slicez.Map(samples, func(x N) float64 {
 		return math.Pow(float64(x)-avg, 2)
@@ -102,36 +97,41 @@ func Var[N Numbers](samples ...N) float64 {
 	return Sum(partial...) / float64(len(partial)-1)
 }
 
-func StdDev[N Numbers](samples ...N) float64 {
+// StdDev will return the sample standard deviation
+func StdDev[N compare.Number](samples ...N) float64 {
 	return math.Sqrt(Var(samples...))
 }
-func StdErr[N Numbers](n ...N) float64 {
+
+// StdErr will return the sample standard error
+func StdErr[N compare.Number](n ...N) float64 {
 	return StdDev(n...) / math.Sqrt(float64(len(n)))
 
 }
 
-// SNR Signal noise ratio
-func SNR[N Numbers](x ...N) float64 {
-	return Mean(x...) / StdDev(x...)
+// SNR will return the Signal noise ratio of the vector
+func SNR[N compare.Number](sample ...N) float64 {
+	return Mean(sample...) / StdDev(sample...)
 }
 
-func ZScore[N Numbers](x N, pop []N) float64 {
+// ZScore will return the z-score of vector
+func ZScore[N compare.Number](x N, pop []N) float64 {
 	return (float64(x) - Mean(pop...)) / StdDev(pop...)
 }
 
-func Skew[N Numbers](n ...N) float64 {
-	count := float64(len(n))
-	mean := Mean(n...)
-	sd := StdDev(n...)
+// Skew will return the skew of a sample
+func Skew[N compare.Number](sample ...N) float64 {
+	count := float64(len(sample))
+	mean := Mean(sample...)
+	sd := StdDev(sample...)
 	d := (count - 1) * math.Pow(sd, 3)
 
-	return slicez.Fold(n, func(accumulator float64, val N) float64 {
+	return slicez.Fold(sample, func(accumulator float64, val N) float64 {
 		return accumulator + math.Pow(float64(val)-mean, 3)/d
 	}, 0)
 }
 
-// Corr Correlation
-func Corr[N Numbers](x []N, y []N) float64 {
+// Corr returns the correlation between two vectors
+func Corr[N compare.Number](x []N, y []N) float64 {
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
 
@@ -155,8 +155,8 @@ func Corr[N Numbers](x []N, y []N) float64 {
 	return t / (math.Sqrt(n1 * n2))
 }
 
-// Cov Covariance
-func Cov[N Numbers](x []N, y []N) float64 {
+// Cov returns the co-variance between two vectors
+func Cov[N compare.Number](x []N, y []N) float64 {
 
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
@@ -177,11 +177,13 @@ func Cov[N Numbers](x []N, y []N) float64 {
 	return t / float64(l)
 }
 
-func R2[N Numbers](x []N, y []N) float64 {
+// R2 returns the r^2 between two vectors
+func R2[N compare.Number](x []N, y []N) float64 {
 	return math.Pow(Corr(x, y), 2)
 }
 
-func LinReg[N Numbers](x []N, y []N) (intercept, slope float64) {
+// LinReg returns the liniar regression of two verctors such that y = slope*x + intercept
+func LinReg[N compare.Number](x []N, y []N) (intercept, slope float64) {
 	l := Min(len(x), len(y))
 	x, y = x[:l], y[:l]
 
@@ -196,13 +198,15 @@ func LinReg[N Numbers](x []N, y []N) (intercept, slope float64) {
 	return intercept, slope
 }
 
-func FTest[N Numbers](x []N, y []N) float64 {
+// FTest returns the F-Test of two vectors
+func FTest[N compare.Number](x []N, y []N) float64 {
 	return Var(x...) / Var(y...)
 }
 
-func Median[N Numbers](n ...N) float64 {
-	l := len(n)
-	middle := pipe.Of(n).
+// Median returns the median of a vector
+func Median[N compare.Number](vector ...N) float64 {
+	l := len(vector)
+	middle := pipe.Of(vector).
 		SortFunc(func(i, j N) bool {
 			return i < j
 		}).
@@ -215,18 +219,20 @@ func Median[N Numbers](n ...N) float64 {
 	return float64(middle[len(middle)/2])
 }
 
-type modecount[N Numbers] struct {
+type modecount[N compare.Number] struct {
 	val N
 	c   int
 }
 
-func Mode[N Numbers](nums ...N) N {
-	return Modes(nums...)[0]
+// Mode returns the mode of a vector
+func Mode[N compare.Number](vector ...N) N {
+	return Modes(vector...)[0]
 }
 
-func Modes[N Numbers](nums ...N) []N {
+// Modes return the modes of all numbers in the vector
+func Modes[N compare.Number](vector ...N) []N {
 	m := map[N]int{}
-	for _, n := range nums {
+	for _, n := range vector {
 		m[n] = m[n] + 1
 	}
 
@@ -253,13 +259,13 @@ func Modes[N Numbers](nums ...N) []N {
 	)
 }
 
-// GCD Greatest common divisor
-func GCD[I compare.Integer](ints ...I) (gcd I) {
-	if len(ints) == 0 {
+// GCD returns the Greatest common divisor of a vector
+func GCD[I compare.Integer](vector ...I) (gcd I) {
+	if len(vector) == 0 {
 		return gcd
 	}
-	gcd = ints[0]
-	for _, b := range ints[1:] {
+	gcd = vector[0]
+	for _, b := range vector[1:] {
 		for b != 0 {
 			t := b
 			b = gcd % b
@@ -269,33 +275,36 @@ func GCD[I compare.Integer](ints ...I) (gcd I) {
 	return gcd
 }
 
-// LCM Least Common Multiple
-func LCM[I compare.Integer](a, b I, integers ...I) I {
+// LCM return the Least Common Multiple of a vector
+func LCM[I compare.Integer](a, b I, vector ...I) I {
 	result := a * b / GCD(a, b)
 
-	for i := 0; i < len(integers); i++ {
-		result = LCM(result, integers[i])
+	for i := 0; i < len(vector); i++ {
+		result = LCM(result, vector[i])
 	}
 	return result
 }
 
-func Percentile[N Numbers](score N, n ...N) float64 {
-	count := pipe.Of(n).Filter(func(n N) bool { return n < score }).Count()
-	return float64(count) / float64(len(n))
+// Percentile return "score" percentile of a vector
+func Percentile[N compare.Number](score N, vector ...N) float64 {
+	count := pipe.Of(vector).Filter(func(n N) bool { return n < score }).Count()
+	return float64(count) / float64(len(vector))
 }
 
-func BitOR[I compare.Integer](a []I) (i I) {
-	if len(a) == 0 {
+// BitOR returns the bit wise OR between elements in a vector
+func BitOR[I compare.Integer](vector []I) (i I) {
+	if len(vector) == 0 {
 		return i
 	}
-	if len(a) == 1 {
-		return a[0]
+	if len(vector) == 1 {
+		return vector[0]
 	}
-	return slicez.Fold(a[1:], func(accumulator I, val I) I {
+	return slicez.Fold(vector[1:], func(accumulator I, val I) I {
 		return accumulator | val
-	}, a[0])
+	}, vector[0])
 }
 
+// BitAND returns the bit wise AND between elements in a vector
 func BitAND[I compare.Integer](a []I) (i I) {
 	if len(a) == 0 {
 		return i
@@ -308,6 +317,7 @@ func BitAND[I compare.Integer](a []I) (i I) {
 	}, a[0])
 }
 
+// BitXOR returns the bit wise XOR between elements in a vector
 func BitXOR[I compare.Integer](a []I) (i I) {
 	if len(a) == 0 {
 		return i
