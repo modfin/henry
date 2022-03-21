@@ -748,20 +748,22 @@ slicez.Zip(a, b, c, func(i int, s string, b bool) string {
 
 ## Chanz
 
+The `chanz` package contains generic utility functions and algorithms for channels
+
+
 There are often 4 versions of the same function in the chanz package. They are simply shorthands for common configurations.
 Examples of this is, `Map`, `Map1`, `MapN`, `MapUntil`.
 
 * `Map` returns a channel of size `0` and will read from the input chan until it is closed
 * `Map1` returns a channel of size `1` and will read from the input chan until it is closed
 * `MapN` returns a channel of size `N` and will read from the input chan until it is closed
-* `MapUntil` returns a channel of size `N` and will read from the input chan until it is closed or the input `done` channel is closed 
+* `MapUntil` returns a channel of size `N` and will read from the input chan until it is closed or until the input `done` channel is closed 
 
 ### SomeDone
 Takes N channels as input and returns one channel. If any of the input channels is closed, the output channel is closed. This 
 is used for control structure.
 
 ```go 
-
 done1 := make(chan, interface{})
 done2 := make(chan, interface{})
 
@@ -784,7 +786,6 @@ Takes N channels as input and returns one channel. When all input channels is cl
 is used for control structure.
 
 ```go 
-
 done1 := make(chan, interface{})
 done2 := make(chan, interface{})
 
@@ -1005,26 +1006,108 @@ Takes a slice of channels and returns a slice casted to write channels
 
 
 ## Mapz
+The `mapz` package contains generic utility functions and algorithms for maps
 
 ### Clear
+Deletes every entry in a map
+
+```go 
+m := map[int]int{1:1, 2:2}
+mapz.Clear(m)
+// map[int]int{}
+```
 
 ### Clone
+Creates a clone of a map
+```go 
+m := map[int]int{1:1, 2:2}
+mapz.Clone(m)
+// map[int]int{1:1, 2:2}
+```
 
 ### Copy
+Copies one map into another
+
+```go
+src := map[int]int{1:1, 2:2}
+dst := map[int]int{1:0, 3:3}
+mapz.Copy(dst, src)
+//  map[int]int{1:1, 2:2, 3:3}
+```
 
 ### DeleteFunc
+Will remove all entries from a map where the del function returns true
+
+```go
+m := map[int]int{1:1, 2:2, 3:3}
+mapz.DeleteFunc(m, func(k, v int) bool { return k == 2 })
+//  map[int]int{1:1, 3:3}
+```
 
 ### DeleteValue
+Deletes a value and the associated key from a map
+```go
+m := map[int]int{1:1, 2:800, 3:3}
+mapz.DeleteValue(m, 800)
+//  map[int]int{1:1, 3:3}
+```
 
 ### Equal
+Returns true if a map i equal
+
+```go 
+m1 := map[int]int{1:1, 3:3}
+m2 := map[int]int{1:1, 3:3}
+mapz.Equal(m1, m2)
+// true
+```
+
 
 ### EqualFunc
+Returns true if a map i equal using the equality function to test it 
+```go 
+m1 := map[int]int{1:1, 3:3}
+m2 := map[int]int{1:1, 3:6}
+mapz.EqualFunc(m1, m2, func(a, b int) bool {return a % 3 == b % 3})
+// true
+```
 
 ### Keys
+Returns a slice of all keys in the map
+
+```go 
+m := map[int]int{1:1, 3:3}
+mapz.Keys(m)
+// []int{1,3}
+```
+
 
 ### Merge
+Merges multiple maps into one map
+```go
+m1 := map[int]int{1:1, 3:3, 4:800}
+m2 := map[int]int{2:2, 4:4}
+mapz.Merge(m1, m2)
+// map[int]int{1:1, 2:2, 3:3, 4:4}
+```
 
 ### Remap
+Remaps a map in terms of its keys and values
+
+```go 
+m := map[int]int{2:2, 4:4}
+mapz.Remap(m, func(k, v int) (k2, v2 string){
+    return fmt.Sprint(k), fmt.Sprint(v*2)
+})
+// map[string]string{"2":"4", "4":"8"}
+```
 
 ### Values
+Returns a slice of all values in the map
+```go 
+m := map[int]int{2:6, 4:12}
+mapz.Values(m)
+// []int{6,12}
+```
+
 
