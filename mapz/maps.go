@@ -79,7 +79,7 @@ func Merge[K comparable, V any](maps ...map[K]V) map[K]V {
 }
 
 // Remap manipulates a map keys and values and transforms it to a map of another types.
-func Remap[K comparable, V any, K2, V2 any](in map[K]V, mapper func(K, V) (K2, V2)) map[K2]V2 {
+func Remap[K comparable, V any, K2 comparable, V2 any](in map[K]V, mapper func(K, V) (K2, V2)) map[K2]V2 {
 	result := map[K2]V2{}
 
 	for k, v := range in {
