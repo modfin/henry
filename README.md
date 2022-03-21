@@ -34,6 +34,8 @@ pets := slicez.Sort([]string{"Dog", "Lizard", "Cat"})
 
 ## Slicez
 
+The `slicez` package contains generic utility functions and algorithms for slices
+
 ### Clone
 
 Produces a copy of a given slice
@@ -476,7 +478,8 @@ slicez.Min(s...)
 ```
 
 ### None
-Returns true if no element match the needle 
+
+Returns true if no element match the needle
 
 ```go 
 s := []int{1,2,3}
@@ -484,8 +487,8 @@ slicez.None(s, 0)
 // true
 ```
 
-
 ### NoneFunc
+
 Returns true if no element returns true from the function
 
 ```go 
@@ -495,6 +498,7 @@ slicez.NoneFunc(s, func(i int) bool { return i < 1 })
 ```
 
 ### Nth
+
 Returns the N:th element in a slice, zero value if empty and regards the slice as a modulo group
 
 ```go 
@@ -507,8 +511,8 @@ slicez.Nth(s, -1)
 // 3
 ```
 
-
 ### Partition
+
 Returns two slices which represents the partitions
 
 ```go 
@@ -517,17 +521,18 @@ slicez.Partition(s, func(i int) bool { return i % 2 == 0})
 // []int{2,4}, []int{1,3}
 ```
 
-
 ### Reject
+
 Reject is the complement to Filter and excludes items
+
 ```go 
 s := []int{1,2,3,4}
 slicez.Reject(s, func(i int) bool { return i % 2 == 0})
 // []int{1,3}
 ```
 
-
 ### Reverse
+
 Reverses a slice
 
 ```go 
@@ -537,6 +542,7 @@ slicez.Reverse(s)
 ```
 
 ### Sample
+
 Returns a random sample of size N from the slice
 
 ```go 
@@ -548,6 +554,7 @@ slicez.Sample(s, 2)
 ### Search
 
 ### Shuffle
+
 Returns a shuffled version of the slice
 
 ```go 
@@ -557,6 +564,7 @@ slicez.Shuffle(s)
 ```
 
 ### Some
+
 Returns true there exist an element in the slice that is equal to the needle, an alias for Contains
 
 ```go 
@@ -565,8 +573,8 @@ slicez.Some(s, 4)
 //true
 ```
 
-
 ### SomeFunc
+
 Returns true if there is an element in the slice for which the predicate function returns true
 
 ```go 
@@ -575,9 +583,10 @@ slicez.SomeFunc(s, func(i int) bool { return i > 4})
 //true
 ```
 
-
 ### Sort
+
 Sorts a slice
+
 ```go 
 s := []int{3,2,1}
 slicez.Sort(s)
@@ -585,7 +594,9 @@ slicez.Sort(s)
 ```
 
 ### SortFunc
+
 Sorts a slice with a comparator
+
 ```go 
 s := []int{1,2,3}
 slicez.SortFunc(s, func(a, b int) bool { return b < a })
@@ -593,6 +604,7 @@ slicez.SortFunc(s, func(a, b int) bool { return b < a })
 ```
 
 ### Tail
+
 Returns the tail of a slice
 
 ```go 
@@ -602,7 +614,9 @@ slicez.Tail(s)
 ```
 
 ### Take
+
 Returns the N first element of a slice
+
 ```go 
 s := []int{1,2,3,4}
 slicez.Take(s, 2)
@@ -610,7 +624,9 @@ slicez.Take(s, 2)
 ```
 
 ### TakeRight
+
 Returns the N last element of a slice
+
 ```go 
 s := []int{1,2,3,4}
 slicez.TakeRight(s, 2)
@@ -618,7 +634,9 @@ slicez.TakeRight(s, 2)
 ```
 
 ### TakeWhile
+
 Returns the first element of a slice that as long as function returns t
+
 ```go 
 s := []int{1,2,3,4}
 slicez.TakeRight(s, func(i int) bool { return i < 3})
@@ -626,15 +644,17 @@ slicez.TakeRight(s, func(i int) bool { return i < 3})
 ```
 
 ### TakeRightWhile
+
 Returns the last element of a slice that as long as function returns t
+
 ```go 
 s := []int{1,2,3,4}
 slicez.TakeWhileRight(s, func(i int) bool { return i > 2})
 // []int{3, 4}
 ```
 
-
 ### Union
+
 Returs the union of a slices
 
 ```go 
@@ -645,7 +665,9 @@ slicez.Union(a, b)
 ```
 
 ### UnionBy
+
 Returs the union of a slices using a function for equality
+
 ```go 
 a := []int{1,5}
 b := []int{2,4}
@@ -654,7 +676,9 @@ slicez.UnionBy(func(i int) bool { return i % 2 == 0 } a, b)
 ```
 
 ### Uniq
+
 Returns a slice of uniq elements
+
 ```go 
 a := []int{1,2,3,1,3,4}
 slicez.Uniq(a)
@@ -662,7 +686,9 @@ slicez.Uniq(a)
 ```
 
 ### UniqBy
+
 Returns a slice of uniq elements, where equality is determined through the function
+
 ```go 
 a := []int{1,2,3,1,3,4}
 slicez.UniqBy(a, func(i int) bool { return i % 2 == 0 })
@@ -670,6 +696,7 @@ slicez.UniqBy(a, func(i int) bool { return i % 2 == 0 })
 ```
 
 ### Unzip
+
 Takes a slice and unzips it into two slices
 
 ```go 
@@ -680,9 +707,10 @@ slicez.Unzip(s, func(i int) (bool, int){
 // []bool{false, true}, []int{1,2}
 ```
 
-
 ### Unzip2
+
 Takes a slice and unzips it into three slices
+
 ```go 
 s := []int{-2,-1,2}
 slicez.Unzip(s, func(i int) (bool, bool, int){
@@ -691,8 +719,8 @@ slicez.Unzip(s, func(i int) (bool, bool, int){
 // []bool{false, false, true}, []bool{true, false, true}, []int{2, 1,2}
 ```
 
-
 ### Zip
+
 Takes 2 slices and zips them into one slice
 
 ```go 
@@ -705,6 +733,7 @@ slicez.Zip(a,b, func(i int, s string) string {
 ```
 
 ### Zip2
+
 Takes 3 slices and zips them into one slice
 
 ```go 
@@ -717,148 +746,263 @@ slicez.Zip(a, b, c, func(i int, s string, b bool) string {
 // []string{"true1a", "false2b", "true3c"}
 ```
 
-
 ## Chanz
 
-### Collect
+There are often 4 versions of the same function in the chanz package. They are simply shorthands for common configurations.
+Examples of this is, `Map`, `Map1`, `MapN`, `MapUntil`.
 
-### CollectUntil
-
-### Compact
-
-### Compact1
-
-### CompactN
-
-### CompactUntil
-
-### Concat
-
-### Concat1
-
-### ConcatN
-
-### ConcatUntil
-
-### Drop
-
-### Drop1
-
-### DropAll
-
-### DropN
-
-### DropUntil
-
-### DropWhile
-
-### DropWhile1
-
-### DropWhileN
-
-### DropWhileUntil
-
-### FanOut
-
-### FanOut1
-
-### FanOutN
-
-### FanOutUntil
-
-### Filter
-
-### Filter1
-
-### FilterN
-
-### FilterUntil
-
-### Flatten
-
-### Flatten1
-
-### FlattenN
-
-### FlattenUntil
-
-### Generate
-
-### Generate1
-
-### GenerateN
-
-### GenerateUntil
-
-### Map
-
-### Map1
-
-### MapN
-
-### MapUntil
-
-### Merge
-
-### Merge1
-
-### MergeN
-
-### MergeUntil
-
-### Partition
-
-### Partition1
-
-### PartitionN
-
-### PartitionUntil
-
-### Peek
-
-### Peek1
-
-### PeekN
-
-### PeekUntil
-
-### Readers
+* `Map` returns a channel of size `0` and will read from the input chan until it is closed
+* `Map1` returns a channel of size `1` and will read from the input chan until it is closed
+* `MapN` returns a channel of size `N` and will read from the input chan until it is closed
+* `MapUntil` returns a channel of size `N` and will read from the input chan until it is closed or the input `done` channel is closed 
 
 ### SomeDone
+Takes N channels as input and returns one channel. If any of the input channels is closed, the output channel is closed. This 
+is used for control structure.
 
-### Take
+```go 
 
-### Take1
+done1 := make(chan, interface{})
+done2 := make(chan, interface{})
 
-### TakeN
+done := chanz.SomeDone(done1, done2)
 
-### TakeUntil
+go func(){
+   time.Sleep(time.Second)
+    close(done1)
+    time.Sleep(time.Second)
+    close(done2)
+}
 
-### TakeWhile
+<- done // will read in 1 secound
+```
 
-### TakeWhile1
 
-### TakeWhileN
 
-### TakeWhileUntil
+### EveryDone
+Takes N channels as input and returns one channel. When all input channels is closed, the output channel will be closed.  This
+is used for control structure.
 
-### Unzip
+```go 
 
-### Unzip1
+done1 := make(chan, interface{})
+done2 := make(chan, interface{})
 
-### UnzipN
+done := chanz.SomeDone(done1, done2)
 
-### UnzipUntil
+go func(){
+    time.Sleep(time.Second)
+    close(done1)
+    time.Sleep(time.Second)
+    close(done2)
+}
+
+<- done // will read in 2 seconds
+```
+
+
+### Collect, CollectUntil
+Will collect all read items into a slice and return it
+
+```go 
+in := chanz.Generate(1,2,3,4,5)
+chanz.Collect(in)
+// []int{1,2,3,4,5}
+```
+
+
+### Compact, Compact1, CompactN, CompactUntil
+Will remove consecutive duplicates from the channel
+
+```go 
+in := chanz.Generate(1,1,3,2,2,5,1)
+w := chanz.Compact(in)
+chanz.Collect(w)
+// []int{1,3,2,5,1}
+```
+
+
+
+
+### Concat, Concat1, ConcatN, ConcatUntil
+Will concatenate channels
+
+```go 
+in1 := chanz.Generate(1,2,3)
+in2 := chanz.Generate(4,5,6)
+w := chanz.Concat(in1, in2)
+chanz.Collect(w)
+// []int{1,2,3,4,5,6}
+```
+
+### Drop, Drop1, DropAll, DropN, DropUntil
+Drops the first N entries of the channel
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+w := chanz.Drop(in, 2)
+chanz.Collect(w)
+// []int{3, 4, 5, 6}
+```
+
+
+
+### DropWhile, DropWhile1, DropWhileN, DropWhileUntil
+Drops the first entries of the channel until function returns true
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6,1)
+w := chanz.DropWhile(in, func(i int) bool { return i < 3})
+chanz.Collect(w)
+// []int{3, 4, 5, 6, 1}
+```
+
+### FanOut, FanOut1, FanOutN, FanOutUntil
+Takes an input channel and fans it out to multiple output channels
+```go
+in := chanz.Generate(1,2,3,4,5,6)
+chans := chanz.FanOut(in, 2)
+go chanz.Collect(chans[0])
+chanz.Collect(chans[1])
+// []int{1,2,3,4,5,6}
+// []int{1,2,3,4,5,6}
+```
+
+### Filter, Filter1, FilterN, FilterUntil
+Filters the items read onto the output chan
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+even := chanz.Filter(in, func(i int) bool { return i % 2 == 0})
+chanz.Collect(even)
+// []int{2,4,6}
+```
+
+### Flatten, Flatten1, FlattenN, FlattenUntil
+Flattens a channel that produces slices
+
+```go 
+in := chanz.Generate([]int{1,2,3}, []int{4,5,6})
+w := chanz.Flatten(in)
+chanz.Collect(w)
+// []int{1,2,3,4,5,6}
+```
+
+
+
+### Generate, Generate1, GenerateN, GenerateUntil
+Takes elements, creates a channel and writes the elements to it
+```go
+w := chanz.Generate(1,2,3,4)
+chanz.Collect(w)
+// []int{1,2,3,4}
+```
+
+
+### Map, Map1, MapN, MapUntil
+Maps element from one channel to another
+
+```go 
+in := chanz.Generate(1,2,3,4)
+w := chanz.Map(in, func(i int) string { return fmt.Sprint(i) })
+chanz.Collect(w)
+// []string{"1","2","3","4"}
+```
+
+
+### Merge, Merge1, MergeN, MergeUntil
+Merge will take N chans and merge them onto one channel (in a non-particular order)
+
+```go 
+in1 := chanz.Generate(1,2,3)
+in2 := chanz.Generate(4,5,6)
+w := chanz.Merge(in1, in2)
+chanz.Collect(w)
+// []int{4,1,5,6,2,3}
+```
+
+
+
+### Partition, Partition1, PartitionN, PartitionUntil
+Partition a channel into to two channels
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+even, odd := chanz.Partition(in, func(i int) bool { return i % 2 == 0})
+go chanz.Collect(even)
+chanz.Collect(odd)
+// []int{2,4,6}
+// []int{1,3,5}
+```
+
+
+### Peek, Peek1, PeekN, PeekUntil
+Will produce a channel that runs a function for each item
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+in := chanz.Peek(in, func(i int){ fmt.Print(i)})
+chanz.Collect(in)
+// 123456
+// []int{1,2,3,4,5,6}
+```
+
+
+### Take, Take1, TakeN, TakeUntil
+Will take the first N items from the channel
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+w := chanz.Take(in, 2)
+chanz.Collect(w)
+// []int{1,2}
+```
+
+### TakeWhile, TakeWhile1, TakeWhileN, TakeWhileUntil
+
+Will take the first items from the channel until the predicate function returns false
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+w := chanz.TakeWhile(in, func(i int) bool{ return i < 3})
+chanz.Collect(w)
+// []int{1,2}
+```
+
+### Unzip, Unzip1, UnzipN, UnzipUntil
+Takes one chan and unzips it into two
+
+```go 
+in := chanz.Generate(-2, -1, 1, 2)
+possitive, value := chanz.Unzip(in, func(i int) (bool, int) {
+    return i > 0, Math.Abs(i)
+})
+go chanz.Collect(possitive)
+chanz.Collect(value)
+// []bool{false, false, true, true}
+// []int{2,1,1,2}
+```
+
+### Zip, Zip1, ZipN, ZipUntil
+Takes two channels and zips them into one channel 
+
+```go 
+in1 := chanz.Generate(1,2,3)
+in2 := chanz.Generate("a","b","c")
+x := chanz.Unzip(in1, in2, func(i int, s string) string {
+    return fmt.Sprint(i,s)
+})
+chanz.Collect(w)
+// []string{"1a", "2b", "3c"}
+```
+
+
+### Readers
+Takes a slice of channels and returns a slice casted to read channels
 
 ### Writers
+Takes a slice of channels and returns a slice casted to write channels
 
-### Zip
 
-### Zip1
-
-### ZipN
-
-### ZipUntil
 
 ## Mapz
 
@@ -883,98 +1027,4 @@ slicez.Zip(a, b, c, func(i int, s string, b bool) string {
 ### Remap
 
 ### Values
-
-## Numberz
-
-### BitAND
-
-### BitOR
-
-### BitXOR
-
-### Corr
-
-### Cov
-
-### FTest
-
-### GCD
-
-### LCM
-
-### LinReg
-
-### MAD
-
-### MapAbs
-
-### MapByte
-
-### MapFloat32
-
-### MapFloat64
-
-### MapInt
-
-### MapInt16
-
-### MapInt32
-
-### MapInt64
-
-### MapInt8
-
-### MapNegate
-
-### MapUInt
-
-### MapUInt16
-
-### MapUInt32
-
-### MapUInt64
-
-### MapUInt8
-
-### Max
-
-### Mean
-
-### Median
-
-### Min
-
-### Mode
-
-### Modes
-
-### Percentile
-
-### R2
-
-### Range
-
-### SNR
-
-### Skew
-
-### StdDev
-
-### StdErr
-
-### Sum
-
-### VAdd
-
-### VDot
-
-### VMul
-
-### VPow
-
-### VSub
-
-### Var
-
-### ZScore
 
