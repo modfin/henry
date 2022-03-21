@@ -763,6 +763,28 @@ func DropAll[A any](c <-chan A, async bool) {
 	dropper()
 }
 
+// DropBuffer will drop everything in the channels buffer ()
+func DropBuffer[A any](c <-chan A, async bool) {
+	dropper := func() {
+		l := len(c)
+		for i := 0; i < l; i++ {
+			select {
+			case _, open := <-c:
+				if !open {
+					return
+				}
+			default:
+				return
+			}
+		}
+	}
+	if async {
+		go dropper()
+		return
+	}
+	dropper()
+}
+
 // EveryDone returns a channel that closes when all channels from the input arguments are closed
 func EveryDone(done ...<-chan interface{}) <-chan interface{} {
 
