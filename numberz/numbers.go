@@ -1,9 +1,8 @@
 package numberz
 
 import (
-	"github.com/modfin/go18exp/compare"
-	"github.com/modfin/go18exp/slicez"
-	"github.com/modfin/go18exp/slicez/pipe"
+	"github.com/modfin/henry/compare"
+	"github.com/modfin/henry/slicez"
 	"math"
 	"sort"
 )
@@ -206,17 +205,17 @@ func FTest[N compare.Number](x []N, y []N) float64 {
 // Median returns the median of a vector
 func Median[N compare.Number](vector ...N) float64 {
 	l := len(vector)
-	middle := pipe.Of(vector).
-		SortFunc(func(i, j N) bool {
-			return i < j
-		}).
-		Drop(l/2 - 1).
-		DropRight(l/2 - 1).
-		Slice()
-	if len(middle) == 2 {
-		return Mean(middle...)
+
+	inter := slicez.SortFunc(vector, func(i, j N) bool {
+		return i < j
+	})
+	inter = slicez.Drop(inter, l/2-1)
+	inter = slicez.DropRight(inter, l/2-1)
+
+	if len(inter) == 2 {
+		return Mean(inter...)
 	}
-	return float64(middle[len(middle)/2])
+	return float64(inter[len(inter)/2])
 }
 
 type modecount[N compare.Number] struct {
@@ -244,15 +243,16 @@ func Modes[N compare.Number](vector ...N) []N {
 		return counts[i].c > counts[j].c
 	})
 	max := counts[0].c
+
+	inter := slicez.TakeWhile(counts, func(a modecount[N]) bool {
+		return a.c == max
+	})
+	inter = slicez.SortFunc(inter, func(a, b modecount[N]) bool {
+		return a.val < b.val
+	})
+
 	return slicez.Map(
-		pipe.Of(counts).
-			TakeWhile(func(a modecount[N]) bool {
-				return a.c == max
-			}).
-			SortFunc(func(a, b modecount[N]) bool {
-				return a.val < b.val
-			}).
-			Slice(),
+		inter,
 		func(a modecount[N]) N {
 			return a.val
 		},
@@ -287,7 +287,7 @@ func LCM[I compare.Integer](a, b I, vector ...I) I {
 
 // Percentile return "score" percentile of a vector
 func Percentile[N compare.Number](score N, vector ...N) float64 {
-	count := pipe.Of(vector).Filter(func(n N) bool { return n < score }).Count()
+	count := len(slicez.Filter(vector, func(n N) bool { return n < score }))
 	return float64(count) / float64(len(vector))
 }
 

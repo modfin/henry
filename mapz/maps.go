@@ -67,6 +67,29 @@ func Copy[K comparable, V any](dst, src map[K]V) {
 	}
 }
 
+// Merge multiple maps from left to right into a new map.
+func Merge[K comparable, V any](maps ...map[K]V) map[K]V {
+	out := map[K]V{}
+	for _, m := range maps {
+		for k, v := range m {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// Remap manipulates a map keys and values and transforms it to a map of another types.
+func Remap[K comparable, V any, K2, V2 any](in map[K]V, mapper func(K, V) (K2, V2)) map[K2]V2 {
+	result := map[K2]V2{}
+
+	for k, v := range in {
+		k2, v2 := mapper(k, v)
+		result[k2] = v2
+	}
+
+	return result
+}
+
 // DeleteValue will remove all instances where the needle matches a value in the map
 func DeleteValue[K comparable, V comparable](m map[K]V, needle V) {
 	DeleteFunc(m, func(_ K, v V) bool {

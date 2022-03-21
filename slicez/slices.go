@@ -2,8 +2,8 @@ package slicez
 
 import (
 	"errors"
-	"github.com/modfin/go18exp/compare"
-	"github.com/modfin/go18exp/slicez/sort"
+	"github.com/modfin/henry/compare"
+	"github.com/modfin/henry/slicez/sort"
 	"math/rand"
 	"time"
 )

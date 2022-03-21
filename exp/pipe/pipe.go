@@ -1,7 +1,7 @@
 package pipe
 
 import (
-	"github.com/modfin/go18exp/slicez"
+	"github.com/modfin/henry/slicez"
 )
 
 func Of[A any](a []A) Pipe[A] {

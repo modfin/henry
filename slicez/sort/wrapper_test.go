@@ -1,7 +1,7 @@
 package sort
 
 import (
-	"github.com/modfin/go18exp/compare"
+	"github.com/modfin/henry/compare"
 	"reflect"
 	"testing"
 )

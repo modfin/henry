@@ -1,7 +1,7 @@
 package chanz
 
 import (
-	"github.com/modfin/go18exp/slicez"
+	"github.com/modfin/henry/slicez"
 	"sync"
 )
 

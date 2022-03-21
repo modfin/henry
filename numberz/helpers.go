@@ -1,6 +1,6 @@
 package numberz
 
-import "github.com/modfin/go18exp/compare"
+import "github.com/modfin/henry/compare"
 
 // Negate will return -1*n
 func Negate[N compare.Number](n N) N {

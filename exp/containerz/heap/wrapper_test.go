@@ -1,7 +1,7 @@
 package heap
 
 import (
-	"github.com/modfin/go18exp/compare"
+	"github.com/modfin/henry/compare"
 	"testing"
 )
 

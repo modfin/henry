@@ -2,7 +2,7 @@ package slicez
 
 import (
 	"fmt"
-	"github.com/modfin/go18exp/compare"
+	"github.com/modfin/henry/compare"
 	"reflect"
 	"strconv"
 	"testing"

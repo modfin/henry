@@ -2,8 +2,8 @@ package chanz
 
 import (
 	"fmt"
-	"github.com/modfin/go18exp/compare"
-	"github.com/modfin/go18exp/slicez"
+	"github.com/modfin/henry/compare"
+	"github.com/modfin/henry/slicez"
 	"math/rand"
 	"strconv"
 	"sync"
