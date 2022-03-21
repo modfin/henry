@@ -1122,7 +1122,7 @@ chanz.Collect(w)
 // []int{1,2,3,4,5,6}
 ```
 
-### Drop, Drop1, DropAll, DropN, DropUntil
+### Drop, Drop1, DropN, DropUntil
 Drops the first N entries of the channel
 
 ```go 
@@ -1133,7 +1133,6 @@ chanz.Collect(w)
 ```
 
 
-
 ### DropWhile, DropWhile1, DropWhileN, DropWhileUntil
 Drops the first entries of the channel until function returns true
 
@@ -1142,6 +1141,27 @@ in := chanz.Generate(1,2,3,4,5,6,1)
 w := chanz.DropWhile(in, func(i int) bool { return i < 3})
 chanz.Collect(w)
 // []int{3, 4, 5, 6, 1}
+```
+
+
+### DropAll
+Drops all elements until closed
+
+```go 
+in := chanz.Generate(1,2,3,4,5,6)
+w := chanz.DropAll(in, false)
+chanz.Collect(w)
+// []int{}
+```
+
+### DropBuffer
+Drops all elements until closed
+
+```go 
+in := chanz.Generate1(1,2,3,4,5,6)
+w := chanz.DropBuffer(in, false)
+chanz.Collect(w)
+// []int{2,3,4,5,6}
 ```
 
 ### FanOut, FanOut1, FanOutN, FanOutUntil
