@@ -50,7 +50,7 @@ However, it is not given how to deal with them in a generic functional that make
 The suggested way of dealing with them is to wrap the result in a result type. This does have some implication in that 
 early returns might not be possible and might introduce some extra looping the check the result.
 
-** Example **
+**Example**
 ```go 
 package main
 
