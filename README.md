@@ -61,24 +61,24 @@ import (
 )
 
 func parsUrls(stringUrls []string) ([]*url.URL, error) {
-	urls := slicez.Map(stringUrls, func(u string) result.Result[*url.URL] {
-	    url
-		return result.From(url.Parse(u))
-	})
-	return result.Unwrap(urls)
+    urls := slicez.Map(stringUrls, func(u string) result.Result[*url.URL] {
+        url
+        return result.From(url.Parse(u))
+    })
+    return result.Unwrap(urls)
 }
 
 func main() {
-	stringUrls := []string{
-		"https://example.com",
-		"https://github.com",
-		"bad\n url",
-	}
-	urls, err := parsUrls(stringUrls)
-	fmt.Println("URLs", urls)
-	// URLs [https://example.com https://github.com]
-	
-	fmt.Println("Error", err)
+    stringUrls := []string{
+        "https://example.com",
+        "https://github.com",
+        "bad\n url",
+    }
+    urls, err := parsUrls(stringUrls)
+    fmt.Println("URLs", urls)
+    // URLs [https://example.com https://github.com]
+    
+    fmt.Println("Error", err)
     // Error parse "bad\n url": net/url: invalid control character in URL
 }
 
