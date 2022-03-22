@@ -46,8 +46,7 @@ upperPets := slicez.Map([]string{"Dog", "Lizard", "Cat"}, strings.ToUpper))
 
 #### Error handling
 In go errors is made visible and is a core construct for sound code, so we can't simply ignore them.
-However, it is not given how to deal with them in a generic functional that makes sense in go and with functions such as Map.
-The suggested way of dealing with them is to wrap the result in a result type. This does have some implication in that 
+One way of dealing with them is to wrap the result in a result type. This does have some implication in that 
 early returns might not be possible and might introduce some extra looping the check the result.
 
 **Example**
