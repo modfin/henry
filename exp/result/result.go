@@ -37,14 +37,17 @@ func (r Result[A]) Ok() bool {
 	return r.err == nil
 }
 
-func SliceOf[A any](slice []A) []Result[A] {
-	return slicez.Map(slice, Of[A])
-}
-
-func Of[A any](a A) Result[A] {
+func FromValue[A any](a A) Result[A] {
 	return Result[A]{
 		value: a,
 		err:   nil,
+	}
+}
+func FromError[A any](err error) Result[A] {
+	var z A
+	return Result[A]{
+		value: z,
+		err:   err,
 	}
 }
 
@@ -55,34 +58,34 @@ func From[A any](a A, err error) Result[A] {
 	}
 }
 
-func ValuesOfSlice[A any](results []Result[A]) []A {
-	vals := slicez.Filter(results, Ok[A])
-	return slicez.Map(vals, ValueOf[A])
+func Values[A any](results []Result[A]) []A {
+	vals := slicez.Filter(results, ok[A])
+	return slicez.Map(vals, value[A])
 }
 
-func ErrorsOfSlice[A any](results []Result[A]) []error {
-	errs := slicez.Filter(results, compare.NegateOf(Ok[A]))
-	return slicez.Map(errs, ErrorOf[A])
+func Errors[A any](results []Result[A]) []error {
+	errs := slicez.Filter(results, compare.NegateOf(ok[A]))
+	return slicez.Map(errs, err[A])
 }
 
-func ErrorOfSlice[A any](results []Result[A]) error {
-	r, found := slicez.Find(results, compare.NegateOf(Ok[A]))
+func Error[A any](results []Result[A]) error {
+	r, found := slicez.Find(results, compare.NegateOf(ok[A]))
 	if !found {
 		return nil
 	}
 	return r.err
 }
-func SliceOk[A any](results []Result[A]) bool {
-	return slicez.EveryFunc(results, Ok[A])
+
+func Unwrap[A any](results []Result[A]) ([]A, error) {
+	return Values(results), Error(results)
 }
 
-func ValueOf[A any](res Result[A]) A {
+func value[A any](res Result[A]) A {
 	return res.Value()
 }
-func Ok[A any](res Result[A]) bool {
+func ok[A any](res Result[A]) bool {
 	return res.Ok()
 }
-
-func ErrorOf[A any](res Result[A]) error {
+func err[A any](res Result[A]) error {
 	return res.Error()
 }
