@@ -62,8 +62,8 @@ import (
 
 func parsUrls(stringUrls []string) ([]*url.URL, error) {
     urls := slicez.Map(stringUrls, func(u string) result.Result[*url.URL] {
-        url
-        return result.From(url.Parse(u))
+        url, err := url.Parse(u)
+        return result.From(url, err)
     })
     return result.Unwrap(urls)
 }
