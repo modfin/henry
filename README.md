@@ -38,12 +38,52 @@ import (
 Then use the functions in the libraries such as
 
 ```go 
-pets := slicez.Sort([]string{"Dog", "Lizard", "Cat"}) 
-// []string{"Cat", ,"Dog", "Lizard"}
+upperPets := slicez.Map([]string{"Dog", "Lizard", "Cat"}, strings.ToUpper)) 
+// []string{"DOG", "LIZARD", "CAT"}
 
 ```
 
 
+#### Error handling
+In go errors is made visible and is a core construct for sound code, so we can't simply ignore them.
+However, it is not given how to deal with them in a generic functional that makes sense in go and with functions such as Map.
+The suggested way of dealing with them is to wrap the result in a result type. This does have some implication in that 
+early returns might not be possible and might introduce some extra looping the check the result.
+
+** Example **
+```go 
+package main
+
+import (
+	"fmt"
+	"github.com/modfin/henry/exp/result"
+	"github.com/modfin/henry/slicez"
+	"net/url"
+)
+
+func parsUrls(stringUrls []string) ([]*url.URL, error) {
+	urls := slicez.Map(stringUrls, func(u string) result.Result[*url.URL] {
+	    url
+		return result.From(url.Parse(u))
+	})
+	return result.Unwrap(urls)
+}
+
+func main() {
+	stringUrls := []string{
+		"https://example.com",
+		"https://github.com",
+		"bad\n url",
+	}
+	urls, err := parsUrls(stringUrls)
+	fmt.Println("URLs", urls)
+	// URLs [https://example.com https://github.com]
+	
+	fmt.Println("Error", err)
+    // Error parse "bad\n url": net/url: invalid control character in URL
+}
+
+```
 
 ## Content
 
