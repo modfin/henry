@@ -167,7 +167,11 @@ func CompareFunc[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
 
 // Concat will concatenate supplied slices in the given order into a new slice
 func Concat[A any](slices ...[]A) []A {
-	var ret []A
+	var capacity int
+	for _, s := range slices {
+		capacity += len(s)
+	}
+	var ret = make([]A, 0, capacity)
 	for _, slice := range slices {
 		ret = append(ret, slice...)
 	}
@@ -564,7 +568,11 @@ func Min[E compare.Ordered](slice ...E) E {
 
 // Flatten will flatten a 2d slice into a 1d slice
 func Flatten[A any](slice [][]A) []A {
-	var res []A
+	var capacity int
+	for _, s := range slice {
+		capacity += len(s)
+	}
+	var res = make([]A, 0, capacity)
 	for _, val := range slice {
 		res = append(res, val...)
 	}
@@ -663,7 +671,13 @@ func UnionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
 	}
-	var res []A
+	var maxCapacity = 0
+	for _, slice := range slices {
+		if len(slice) > maxCapacity {
+			maxCapacity = len(slice)
+		}
+	}
+	var res = make([]A, 0, maxCapacity)
 	var set = map[B]struct{}{}
 	for _, slice := range slices {
 		for _, e := range slice {
@@ -762,26 +776,18 @@ func ComplementBy[A any, B comparable](by func(a A) B, a, b []A) []A {
 
 // Zip will zip two slices, a and b, into one slice, c, using the zip function to combined elements
 func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) []C {
-	var i = len(aSlice)
-	var j = len(bSlice)
-	if j < i {
-		i = j
-	}
-	var cSlice []C
-	for k, a := range aSlice {
-		if k == j {
-			break
-		}
-		b := bSlice[k]
-		cSlice = append(cSlice, zipper(a, b))
+	var capacity = Min(len(aSlice), len(bSlice))
+	var cSlice = make([]C, 0, capacity)
+	for i := 0; i < capacity; i++ {
+		cSlice = append(cSlice, zipper(aSlice[i], bSlice[i]))
 	}
 	return cSlice
 }
 
 // Unzip will unzip a slice slices, c, into two slices, a and b, using the supplied unziper function
 func Unzip[A any, B any, C any](cSlice []C, unzipper func(c C) (a A, b B)) ([]A, []B) {
-	var aSlice []A
-	var bSlice []B
+	var aSlice = make([]A, 0, len(cSlice))
+	var bSlice = make([]B, 0, len(cSlice))
 	for _, c := range cSlice {
 		a, b := unzipper(c)
 		aSlice = append(aSlice, a)
@@ -793,28 +799,19 @@ func Unzip[A any, B any, C any](cSlice []C, unzipper func(c C) (a A, b B)) ([]A,
 
 // Zip2 will zip three slices, a, b and c, into one slice, d, using the zip function to combined elements
 func Zip2[A any, B any, C any, D any](aSlice []A, bSlice []B, cSlice []C, zipper func(a A, b B, c C) D) []D {
-	var i = len(aSlice)
-	var j = len(bSlice)
-	if j < i {
-		i = j
-	}
-	var dSlice []D
-	for k, a := range aSlice {
-		if k == j {
-			break
-		}
-		b := bSlice[k]
-		c := cSlice[k]
-		dSlice = append(dSlice, zipper(a, b, c))
+	var capacity = Min(len(aSlice), len(bSlice), len(cSlice))
+	var dSlice = make([]D, 0, capacity)
+	for i := 0; i < capacity; i++ {
+		dSlice = append(dSlice, zipper(aSlice[i], bSlice[i], cSlice[i]))
 	}
 	return dSlice
 }
 
 // Unzip2 will unzip a slice slices, d, into three slices, a, b and c, using the supplied unziper function
 func Unzip2[A any, B any, C any, D any](dSlice []D, unzipper func(d D) (a A, b B, c C)) ([]A, []B, []C) {
-	var aSlice []A
-	var bSlice []B
-	var cSlice []C
+	var aSlice = make([]A, 0, len(dSlice))
+	var bSlice = make([]B, 0, len(dSlice))
+	var cSlice = make([]C, 0, len(dSlice))
 	for _, d := range dSlice {
 		a, b, c := unzipper(d)
 		aSlice = append(aSlice, a)
@@ -822,5 +819,4 @@ func Unzip2[A any, B any, C any, D any](dSlice []D, unzipper func(d D) (a A, b B
 		cSlice = append(cSlice, c)
 	}
 	return aSlice, bSlice, cSlice
-
 }
