@@ -497,21 +497,23 @@ func SortFunc[A any](slice []A, less func(a, b A) bool) []A {
 }
 
 // Search given a slice data sorted in ascending order,
-// the call Search[int](data, func(e int) bool { return e >= 23 })
+// the call
+//		Search[int](data, func(e int) bool { return e >= 23 })
 // returns the smallest index i and element e such that e >= 23.
 func Search[A any](slice []A, f func(e A) bool) (index int, e A) {
 	return sort.Search(slice, f)
 }
 
-// Compact will remove any duplicate elements following each other in a slice, eg {1,1,2,1,2,2,2} => {1,2,1,2}
+// Compact will remove any duplicate elements following each other in a slice, eg
+//		{1,1,2,1,2,2,2} => {1,2,1,2}
 func Compact[A comparable](slice []A) []A {
 	return CompactFunc(slice, compare.Equal[A])
 }
 
 // CompactFunc will remove any duplicate elements following each other determined by the equal func.
 // eg removing duplicate whitespaces from a string might look like
-// CompactFunc([]rune("a    b"), func(a, b rune) {
-//     return a == ' ' && a == b
+//    CompactFunc([]rune("a    b"), func(a, b rune) {
+//     	return a == ' ' && a == b
 //    })
 // resulting in "a b"
 func CompactFunc[A any](slice []A, equal func(a, b A) bool) []A {
