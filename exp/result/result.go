@@ -37,6 +37,10 @@ func (r Result[A]) Ok() bool {
 	return r.err == nil
 }
 
+func (r Result[A]) Unwrap() (A, error) {
+	return r.value, r.err
+}
+
 func FromValue[A any](a A) Result[A] {
 	return Result[A]{
 		value: a,
