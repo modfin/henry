@@ -52,7 +52,7 @@ func NegateOf[A any](f func(A) bool) func(A) bool {
 	}
 }
 
-//Ternary is equivalent to "expression ? a : b" ternary notation and returns ifTrue if true and ifFalse if false
+// Ternary is equivalent to "expression ? a : b" ternary notation and returns ifTrue if true and ifFalse if false
 func Ternary[A any](boolean bool, ifTrue A, ifFalse A) A {
 	if boolean {
 		return ifTrue
