@@ -1,6 +1,7 @@
 package chanz
 
 import (
+	"context"
 	"fmt"
 	"github.com/modfin/henry/compare"
 	"github.com/modfin/henry/slicez"
@@ -375,6 +376,28 @@ func TestEveryDone(t *testing.T) {
 		default:
 		}
 	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Log("expected done to be closed by now")
+		t.Fail()
+	}
+
+}
+
+func TestEveryDoneContext(t *testing.T) {
+
+	num := 10
+	var doneChans []<-chan struct{}
+	ctx := context.Background()
+	for i := 0; i < num; i++ {
+		subCtx, cancel := context.WithCancel(ctx)
+		doneChans = append(doneChans, subCtx.Done())
+		cancel()
+	}
+
+	done := EveryDone(doneChans...)
 
 	select {
 	case <-done:
