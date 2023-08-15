@@ -786,7 +786,7 @@ func DropBuffer[A any](c <-chan A, async bool) {
 }
 
 // EveryDone returns a channel that closes when all channels from the input arguments are closed
-func EveryDone(done ...<-chan interface{}) <-chan interface{} {
+func EveryDone[T any](done ...<-chan T) <-chan T {
 
 	switch len(done) {
 	case 0:
@@ -795,7 +795,7 @@ func EveryDone(done ...<-chan interface{}) <-chan interface{} {
 		return done[0]
 	}
 
-	allDone := make(chan interface{})
+	allDone := make(chan T)
 	go func() {
 		defer close(allDone)
 		for _, d := range done {
@@ -807,7 +807,7 @@ func EveryDone(done ...<-chan interface{}) <-chan interface{} {
 }
 
 // SomeDone returns a channel that closes as soon as any channels from the input arguments are closed
-func SomeDone(done ...<-chan interface{}) <-chan interface{} {
+func SomeDone[T any](done ...<-chan T) <-chan T {
 	switch len(done) {
 	case 0:
 		return nil
@@ -815,7 +815,7 @@ func SomeDone(done ...<-chan interface{}) <-chan interface{} {
 		return done[0]
 	}
 
-	someDone := make(chan interface{})
+	someDone := make(chan T)
 	go func() {
 		defer close(someDone)
 		switch len(done) {
