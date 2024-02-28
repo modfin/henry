@@ -13,7 +13,7 @@ import (
 
 func TestGenerated(t *testing.T) {
 	var i int
-	for val := range GenerateN[int](0, 0, 1, 2, 3, 4) {
+	for val := range Generate(0, 1, 2, 3, 4) {
 		if val != i {
 			t.Logf("expected, %v, but got %v", i, val)
 			t.Fail()
@@ -47,7 +47,26 @@ func TestMap0(t *testing.T) {
 
 	res := []string{}
 	exp := []string{"1", "2", "3", "4"}
-	generated := GenerateN[int](0, 1, 2, 3, 4)
+	generated := Generate(1, 2, 3, 4)
+	mapped := Map[int, string](generated, func(a int) string {
+		return fmt.Sprintf("%d", a)
+	})
+
+	for s := range mapped {
+		res = append(res, s)
+	}
+
+	if !slicez.Equal(exp, res) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+
+}
+func TestMap2(t *testing.T) {
+
+	res := []string{}
+	exp := []string{"1", "2", "3", "4"}
+	generated := Generate[int](1, 2, 3, 4)
 	mapped := Map[int, string](generated, func(a int) string {
 		return fmt.Sprintf("%d", a)
 	})
@@ -84,9 +103,9 @@ func TestMerge(t *testing.T) {
 	var res []int
 	exp := []int{1, 2, 3, 4, 5, 6, 7, 8}
 
-	c1 := GenerateN(0, 1, 2, 3, 4, 5)
-	c2 := GenerateN(0, 6, 7, 8)
-	merged := MergeN(0, c1, c2)
+	c1 := Generate(0, 1, 2, 3, 4, 5)
+	c2 := Generate(0, 6, 7, 8)
+	merged := Merge(c1, c2)
 
 	for v := range merged {
 		res = append(res, v)
@@ -105,8 +124,8 @@ func TestFilter(t *testing.T) {
 	in := []int{1, 2, 3, 4, 5, 6, 7, 8}
 	exp := []int{2, 4, 6, 8}
 
-	s := GenerateN(0, in...)
-	f := FilterN(0, s, func(a int) bool {
+	s := Generate(in...)
+	f := Filter(s, func(a int) bool {
 		return a%2 == 0
 	})
 
@@ -359,9 +378,9 @@ func TestSomeDone(t *testing.T) {
 func TestEveryDone(t *testing.T) {
 
 	num := 10
-	dones := make([]chan interface{}, num)
+	dones := make([]chan struct{}, num)
 	for i := range dones {
-		dones[i] = make(chan interface{})
+		dones[i] = make(chan struct{})
 	}
 
 	done := EveryDone(Readers(dones...)...)
@@ -375,6 +394,60 @@ func TestEveryDone(t *testing.T) {
 		default:
 		}
 	}
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Log("expected done to be closed by now")
+		t.Fail()
+	}
+
+}
+
+func TestDropBuffer(t *testing.T) {
+	c := GenerateWith[int](Buffer(2))(1, 2, 3, 4, 5)
+	time.Sleep(100 * time.Millisecond)
+	DropBuffer(c, false)
+
+	res := Collect(c)
+
+	exp := []int{3, 4, 5}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestTakeBuffer(t *testing.T) {
+	c := GenerateWith[int](Buffer(2))(1, 2, 3, 4, 5)
+	time.Sleep(100 * time.Millisecond)
+	res1 := TakeBuffer(c)
+	res2 := Collect(c)
+
+	exp1 := []int{1, 2}
+	exp2 := []int{3, 4, 5}
+
+	if !slicez.Equal(res1, exp1) {
+		t.Logf("expected, %v, but got %v", exp1, res1)
+		t.Fail()
+	}
+	if !slicez.Equal(res2, exp2) {
+		t.Logf("expected, %v, but got %v", exp2, res2)
+		t.Fail()
+	}
+}
+
+func TestEveryDone2(t *testing.T) {
+
+	a := make(chan struct{})
+	b := make(chan interface{})
+	c := make(chan int)
+
+	done := EveryDone(Done(a), Done(b), Done(c))
+	close(a)
+	close(b)
+	close(c)
 
 	select {
 	case <-done:
