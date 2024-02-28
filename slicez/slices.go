@@ -253,16 +253,14 @@ func TakeWhile[A any](slice []A, take func(a A) bool) []A {
 
 // TakeRightWhile will produce a new slice containing all elements from the right until the "take" func returns false
 func TakeRightWhile[A any](slice []A, take func(a A) bool) []A {
-	var l = len(slice)
-	var res []A
-	for i := range slice {
-		i = l - i - 1
-		val := slice[i]
-		if !take(val) {
+	idx := len(slice) - 1
+	for ; 0 <= idx; idx-- {
+		if !take(slice[idx]) {
 			break
 		}
-		res = append([]A{val}, res...)
 	}
+	res := make([]A, len(slice)-1-idx)
+	copy(res, slice[idx+1:])
 	return res
 }
 
@@ -376,7 +374,7 @@ func DropRight[A any](slice []A, i int) []A {
 
 // Filter will produce a new slice only containing elements where the "include" function returns true
 func Filter[A any](slice []A, include func(a A) bool) []A {
-	var res []A
+	res := make([]A, 0, len(slice)/2)
 	for _, val := range slice {
 		if include(val) {
 			res = append(res, val)
@@ -666,8 +664,8 @@ func Uniq[A comparable](slice []A) []A {
 
 // UniqBy returns a slice with no duplicate entries using the by function to determine the key
 func UniqBy[A any, B comparable](slice []A, by func(a A) B) []A {
-	var res []A
-	var set = map[B]struct{}{}
+	set := make(map[B]struct{}, len(slice))
+	res := make([]A, 0, len(slice))
 	for _, e := range slice {
 		key := by(e)
 		_, exist := set[key]

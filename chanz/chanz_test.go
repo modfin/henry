@@ -1,6 +1,7 @@
 package chanz
 
 import (
+	"context"
 	"fmt"
 	"github.com/modfin/henry/compare"
 	"github.com/modfin/henry/slicez"
@@ -438,16 +439,18 @@ func TestTakeBuffer(t *testing.T) {
 	}
 }
 
-func TestEveryDone2(t *testing.T) {
+func TestEveryDoneContext(t *testing.T) {
 
-	a := make(chan struct{})
-	b := make(chan interface{})
-	c := make(chan int)
+	num := 10
+	var doneChans []<-chan struct{}
+	ctx := context.Background()
+	for i := 0; i < num; i++ {
+		subCtx, cancel := context.WithCancel(ctx)
+		doneChans = append(doneChans, subCtx.Done())
+		cancel()
+	}
 
-	done := EveryDone(Done(a), Done(b), Done(c))
-	close(a)
-	close(b)
-	close(c)
+	done := EveryDone(doneChans...)
 
 	select {
 	case <-done:

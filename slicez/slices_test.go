@@ -182,14 +182,33 @@ func TestJoin(t *testing.T) {
 }
 
 func TestTakeRight(t *testing.T) {
-
 	ints := []int{1, 2, 3}
-	exp := []int{2, 3}
-	res := TakeRight(ints, 2)
-	if !reflect.DeepEqual(res, exp) {
-		t.Fail()
-		t.Logf("expected, %v to equal %v\n", res, exp)
+	check := func(res []int, exp []int) {
+		if !reflect.DeepEqual(res, exp) {
+			t.Fail()
+			t.Logf("expected, %v to equal %v\n", res, exp)
+		}
 	}
+	t.Run("take zero", func(t *testing.T) {
+		res := TakeRight(ints, 0)
+		exp := []int{}
+		check(res, exp)
+	})
+	t.Run("take last", func(t *testing.T) {
+		res := TakeRight(ints, 1)
+		exp := []int{3}
+		check(res, exp)
+	})
+	t.Run("take two last", func(t *testing.T) {
+		res := TakeRight(ints, 2)
+		exp := []int{2, 3}
+		check(res, exp)
+	})
+	t.Run("take all", func(t *testing.T) {
+		res := TakeRight(ints, len(ints))
+		check(res, ints)
+	})
+
 }
 
 func TestTakeLeft(t *testing.T) {
