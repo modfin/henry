@@ -465,8 +465,11 @@ func TestGenerator(t *testing.T) {
 		yield(3)
 	}
 
-	for v := range Generator(generator) {
-		println(v)
+	res := Collect(Generator(generator))
+	exp := []int{1, 2, 3}
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
 	}
 
 }
