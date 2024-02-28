@@ -13,19 +13,19 @@ type settings struct {
 
 type Option func(s settings) settings
 
-func WithContext(ctx context.Context) Option {
+func ContextOp(ctx context.Context) Option {
 	return func(s settings) settings {
 		s.done = SomeDone(ctx.Done(), s.done)
 		return s
 	}
 }
-func Buffer(size int) Option {
+func BufferOp(size int) Option {
 	return func(s settings) settings {
 		s.buffer = size
 		return s
 	}
 }
-func WithDoneChan(done <-chan struct{}) Option {
+func DoneOp(done <-chan struct{}) Option {
 	return func(s settings) settings {
 		s.done = SomeDone(done, s.done)
 		return s
@@ -116,6 +116,33 @@ func Flatten[A any](in <-chan []A, options ...Option) <-chan A {
 func FlattenWith[A any](options ...Option) func(in <-chan []A) <-chan A {
 	return func(in <-chan []A) <-chan A {
 		return Flatten(in, options...)
+	}
+}
+
+func Generator[A any](gen func(func(A)), options ...Option) <-chan A {
+	var s settings
+	for _, o := range options {
+		s = o(s)
+	}
+	out := make(chan A, s.buffer)
+
+	yield := func(a A) {
+		select {
+		case <-s.done:
+			return
+		case out <- a:
+		}
+	}
+	go func() {
+		defer close(out)
+		gen(yield)
+	}()
+	return out
+}
+
+func GeneratorWith[A any](options ...Option) func(gen func(func(A))) <-chan A {
+	return func(gen func(func(A))) <-chan A {
+		return Generator(gen, options...)
 	}
 }
 

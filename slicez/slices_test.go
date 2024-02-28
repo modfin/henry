@@ -459,6 +459,27 @@ func TestFlatMap(t *testing.T) {
 	}
 }
 
+func TestAssociate(t *testing.T) {
+	type foo struct {
+		baz string
+		bar int
+	}
+	in := []foo{{baz: "apple", bar: 1}, {baz: "banana", bar: 2}}
+	m := Associate(in, func(a foo) (key string, value int) {
+		return a.baz, a.bar
+	})
+
+	exp := map[string]int{
+		"apple":  1,
+		"banana": 2,
+	}
+
+	if !reflect.DeepEqual(exp, m) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", exp, m)
+	}
+}
+
 func TestKeyBy(t *testing.T) {
 	a := []int{1, 2, 3}
 

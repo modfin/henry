@@ -1075,15 +1075,6 @@ mapz.Values(m)
 
 The `chanz` package contains generic utility functions and algorithms for channels
 
-
-There are often 4 versions of the same function in the chanz package. They are simply shorthands for common configurations.
-Examples of this is, `Map`, `Map1`, `MapN`, `MapUntil`.
-
-* `Map` returns a channel of size `0` and will read from the input chan until it is closed
-* `Map1` returns a channel of size `1` and will read from the input chan until it is closed
-* `MapN` returns a channel of size `N` and will read from the input chan until it is closed
-* `MapUntil` returns a channel of size `N` and will read from the input chan until it is closed or until the input `done` channel is closed 
-
 ### SomeDone
 Takes N channels as input and returns one channel. If any of the input channels is closed, the output channel is closed. This 
 is used for control structure.
@@ -1194,16 +1185,30 @@ chanz.Collect(w)
 ```
 
 ### DropBuffer
-Drops all elements until closed
+Drops all elements that is buffered in the chan
 
 ```go 
-in := chanz.Generate1(1,2,3,4,5,6)
-w := chanz.DropBuffer(in, false)
-chanz.Collect(w)
-// []int{2,3,4,5,6}
+in :=  chanz.GenerateWith[int](chanz.Buffer(2))(1,2,3,4,5,6)
+chanz.DropBuffer(in, false)
+chanz.Collect(in)
+// []int{3,4,5,6}
 ```
 
-### FanOut, FanOut1, FanOutN, FanOutUntil
+
+### TakeBuffer
+Take all elements that is buffered in the chan
+
+```go 
+in := chanz.GenerateWith[int](chanz.Buffer(2))(1,2,3,4,5,6)
+r := chanz.TakeBuffer(in)
+// []int{1,2}
+c := chanz.Collect(w)
+// []int{3,4,5,6}
+```
+
+
+
+### FanOut
 Takes an input channel and fans it out to multiple output channels
 ```go
 in := chanz.Generate(1,2,3,4,5,6)
@@ -1214,7 +1219,7 @@ chanz.Collect(chans[1])
 // []int{1,2,3,4,5,6}
 ```
 
-### Filter, Filter1, FilterN, FilterUntil
+### Filter
 Filters the items read onto the output chan
 
 ```go 
@@ -1224,7 +1229,7 @@ chanz.Collect(even)
 // []int{2,4,6}
 ```
 
-### Flatten, Flatten1, FlattenN, FlattenUntil
+### Flatten
 Flattens a channel that produces slices
 
 ```go 
@@ -1236,7 +1241,7 @@ chanz.Collect(w)
 
 
 
-### Generate, Generate1, GenerateN, GenerateUntil
+### Generate
 Takes elements, creates a channel and writes the elements to it
 ```go
 w := chanz.Generate(1,2,3,4)
@@ -1245,7 +1250,7 @@ chanz.Collect(w)
 ```
 
 
-### Map, Map1, MapN, MapUntil
+### Map
 Maps element from one channel to another
 
 ```go 
@@ -1256,7 +1261,7 @@ chanz.Collect(w)
 ```
 
 
-### Merge, Merge1, MergeN, MergeUntil
+### Merge
 Merge will take N chans and merge them onto one channel (in a non-particular order)
 
 ```go 
@@ -1269,7 +1274,7 @@ chanz.Collect(w)
 
 
 
-### Partition, Partition1, PartitionN, PartitionUntil
+### Partition
 Partition a channel into to two channels
 ```go 
 in := chanz.Generate(1,2,3,4,5,6)
@@ -1281,7 +1286,7 @@ chanz.Collect(odd)
 ```
 
 
-### Peek, Peek1, PeekN, PeekUntil
+### Peek
 Will produce a channel that runs a function for each item
 
 ```go 
@@ -1293,7 +1298,7 @@ chanz.Collect(in)
 ```
 
 
-### Take, Take1, TakeN, TakeUntil
+### Take
 Will take the first N items from the channel
 
 ```go 
@@ -1303,7 +1308,7 @@ chanz.Collect(w)
 // []int{1,2}
 ```
 
-### TakeWhile, TakeWhile1, TakeWhileN, TakeWhileUntil
+### TakeWhile
 
 Will take the first items from the channel until the predicate function returns false
 
@@ -1314,7 +1319,7 @@ chanz.Collect(w)
 // []int{1,2}
 ```
 
-### Unzip, Unzip1, UnzipN, UnzipUntil
+### Unzip
 Takes one chan and unzips it into two
 
 ```go 
@@ -1328,7 +1333,7 @@ chanz.Collect(value)
 // []int{2,1,1,2}
 ```
 
-### Zip, Zip1, ZipN, ZipUntil
+### Zip
 Takes two channels and zips them into one channel 
 
 ```go 

@@ -65,15 +65,15 @@ func LastIndexFunc[E any](s []E, f func(E) bool) int {
 	return -1
 }
 
-//Cut will cut a slice into a left and a right part at the first instance where the needle is found. The needle is not included
+// Cut will cut a slice into a left and a right part at the first instance where the needle is found. The needle is not included
 func Cut[E comparable](s []E, needle E) (left, right []E, found bool) {
 	return CutFunc(s, func(e E) bool {
 		return e == needle
 	})
 }
 
-//CutFunc will cut a slice into a left and a right part at the first instance where the on function returns true.
-//The element that makes the "on" function return true will not be included.
+// CutFunc will cut a slice into a left and a right part at the first instance where the on function returns true.
+// The element that makes the "on" function return true will not be included.
 func CutFunc[E any](s []E, on func(E) bool) (left, right []E, found bool) {
 	i := IndexFunc(s, on)
 	if i == -1 {
@@ -82,7 +82,7 @@ func CutFunc[E any](s []E, on func(E) bool) (left, right []E, found bool) {
 	return s[:i], s[i+1:], true
 }
 
-//Find will find the first instance of an element in a slice where the equal func returns true
+// Find will find the first instance of an element in a slice where the equal func returns true
 func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
 	i := IndexFunc(s, equal)
 	if i == -1 {
@@ -91,7 +91,7 @@ func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
 	return s[i], true
 }
 
-//FindLast will find the last instance of an element in a slice where the equal func returns true
+// FindLast will find the last instance of an element in a slice where the equal func returns true
 func FindLast[E any](s []E, equal func(E) bool) (e E, found bool) {
 	i := LastIndexFunc(s, equal)
 	if i == -1 {
@@ -100,7 +100,7 @@ func FindLast[E any](s []E, equal func(E) bool) (e E, found bool) {
 	return s[i], true
 }
 
-//Join will join a two-dimensional slice into a one dimensional slice with the glue slice between them.
+// Join will join a two-dimensional slice into a one dimensional slice with the glue slice between them.
 // Similar to strings.Join or bytes.Join
 func Join[E any](slices [][]E, glue []E) []E {
 	if len(slices) == 0 {
@@ -502,23 +502,28 @@ func SortFunc[A any](slice []A, less func(a, b A) bool) []A {
 
 // Search given a slice data sorted in ascending order,
 // the call
-//		Search[int](data, func(e int) bool { return e >= 23 })
+//
+//	Search[int](data, func(e int) bool { return e >= 23 })
+//
 // returns the smallest index i and element e such that e >= 23.
 func Search[A any](slice []A, f func(e A) bool) (index int, e A) {
 	return sort.Search(slice, f)
 }
 
 // Compact will remove any duplicate elements following each other in a slice, eg
-//		{1,1,2,1,2,2,2} => {1,2,1,2}
+//
+//	{1,1,2,1,2,2,2} => {1,2,1,2}
 func Compact[A comparable](slice []A) []A {
 	return CompactFunc(slice, compare.Equal[A])
 }
 
 // CompactFunc will remove any duplicate elements following each other determined by the equal func.
 // eg removing duplicate whitespaces from a string might look like
-//    CompactFunc([]rune("a    b"), func(a, b rune) {
-//     	return a == ' ' && a == b
-//    })
+//
+//	CompactFunc([]rune("a    b"), func(a, b rune) {
+//	 	return a == ' ' && a == b
+//	})
+//
 // resulting in "a b"
 func CompactFunc[A any](slice []A, equal func(a, b A) bool) []A {
 	if len(slice) == 0 {
@@ -609,6 +614,20 @@ func FoldRight[I any, A any](slice []I, combined func(accumulator A, val I) A, i
 		init = combined(init, slice[i])
 	}
 	return init
+}
+
+// SliceToMap will iterate over a slice turning each object into a key/value pair in a map
+func SliceToMap[E any, K comparable, V any](slice []E, mapper func(a E) (key K, value V)) map[K]V {
+	return Associate(slice, mapper)
+}
+
+// Associate will iterate over a slice turning each object into a key/value pair in a map
+func Associate[E any, K comparable, V any](slice []E, mapper func(a E) (key K, value V)) map[K]V {
+	return Fold(slice, func(acc map[K]V, e E) map[K]V {
+		k, v := mapper(e)
+		acc[k] = v
+		return acc
+	}, map[K]V{})
 }
 
 // KeyBy will iterate through the slice and create a map where the key function generates the key value pair.

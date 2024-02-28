@@ -405,7 +405,7 @@ func TestEveryDone(t *testing.T) {
 }
 
 func TestDropBuffer(t *testing.T) {
-	c := GenerateWith[int](Buffer(2))(1, 2, 3, 4, 5)
+	c := GenerateWith[int](BufferOp(2))(1, 2, 3, 4, 5)
 	time.Sleep(100 * time.Millisecond)
 	DropBuffer(c, false)
 
@@ -420,7 +420,7 @@ func TestDropBuffer(t *testing.T) {
 }
 
 func TestTakeBuffer(t *testing.T) {
-	c := GenerateWith[int](Buffer(2))(1, 2, 3, 4, 5)
+	c := GenerateWith[int](BufferOp(2))(1, 2, 3, 4, 5)
 	time.Sleep(100 * time.Millisecond)
 	res1 := TakeBuffer(c)
 	res2 := Collect(c)
@@ -454,6 +454,19 @@ func TestEveryDone2(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Log("expected done to be closed by now")
 		t.Fail()
+	}
+
+}
+
+func TestGenerator(t *testing.T) {
+	generator := func(yield func(int)) {
+		yield(1)
+		yield(2)
+		yield(3)
+	}
+
+	for v := range Generator(generator) {
+		println(v)
 	}
 
 }
