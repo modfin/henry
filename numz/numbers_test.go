@@ -1,4 +1,4 @@
-package numberz
+package numz
 
 import (
 	"fmt"

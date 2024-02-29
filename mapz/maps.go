@@ -33,8 +33,8 @@ func Equal[K, V comparable](m1, m2 map[K]V) bool {
 	return true
 }
 
-// EqualFunc returns true if all key are present in both maps and map to the same value, determined by the "eq" func
-func EqualFunc[K comparable, V1, V2 any](m1 map[K]V1, m2 map[K]V2, eq func(V1, V2) bool) bool {
+// EqualBy returns true if all key are present in both maps and map to the same value, determined by the "eq" func
+func EqualBy[K comparable, V1, V2 any](m1 map[K]V1, m2 map[K]V2, eq func(V1, V2) bool) bool {
 	if len(m1) != len(m2) {
 		return false
 	}
@@ -47,6 +47,7 @@ func EqualFunc[K comparable, V1, V2 any](m1 map[K]V1, m2 map[K]V2, eq func(V1, V
 }
 
 // Clear will delete all elements from a map
+// Warning mutates map
 func Clear[K comparable, V any](m map[K]V) {
 	for k := range m {
 		delete(m, k)
@@ -63,6 +64,7 @@ func Clone[K comparable, V any](m map[K]V) map[K]V {
 }
 
 // Copy will copy all entries in src into det
+// Warning mutates map
 func Copy[K comparable, V any](dst, src map[K]V) {
 	for k, v := range src {
 		dst[k] = v
@@ -80,15 +82,26 @@ func Merge[K comparable, V any](maps ...map[K]V) map[K]V {
 	return out
 }
 
-// DeleteValue will remove all instances where the needle matches a value in the map
-func DeleteValue[K comparable, V comparable](m map[K]V, needle V) {
-	DeleteFunc(m, func(_ K, v V) bool {
-		return needle == v
+// DeleteValues will remove all instances where the needle matches a value in the map
+// Warning mutates map, use Filter or Reject for immutable version
+func DeleteValues[K comparable, V comparable](m map[K]V, needles ...V) {
+	set := slicez.Set(needles)
+	Delete(m, func(_ K, v V) bool {
+		return set[v]
 	})
 }
 
-// DeleteFunc will remove all entries from a map where the del function returns true
-func DeleteFunc[K comparable, V any](m map[K]V, del func(K, V) bool) {
+// DeleteKeys will remove all instances where the needles matches a key in the map
+// Warning mutates map, use Filter or Reject for immutable version
+func DeleteKeys[K comparable, V any](m map[K]V, needles ...K) {
+	for _, needle := range needles {
+		delete(m, needle)
+	}
+}
+
+// Delete will remove all entries from a map where the del function returns true
+// Warning mutates map, , use Filter or Reject for immutable version
+func Delete[K comparable, V any](m map[K]V, del func(K, V) bool) {
 	for k, v := range m {
 		if del(k, v) {
 			delete(m, k)
@@ -104,7 +117,7 @@ func ValueOr[K comparable, V any](m map[K]V, key K, fallback V) V {
 	return value
 }
 
-func PickBy[K comparable, V any](m map[K]V, pick func(key K, val V) bool) map[K]V {
+func Filter[K comparable, V any](m map[K]V, pick func(key K, val V) bool) map[K]V {
 	res := map[K]V{}
 	for k, v := range m {
 		if pick(k, v) {
@@ -114,42 +127,34 @@ func PickBy[K comparable, V any](m map[K]V, pick func(key K, val V) bool) map[K]
 	return res
 }
 
-func PickByKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
-	set := slicez.Associate(keys, func(key K) (K, bool) {
-		return key, true
-	})
-	return PickBy(m, func(key K, _ V) bool {
+func FilterByKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
+	set := slicez.Set(keys)
+	return Filter(m, func(key K, _ V) bool {
 		return set[key]
 	})
 }
-func PickByValues[K comparable, V comparable](m map[K]V, values []V) map[K]V {
-	set := slicez.Associate(values, func(val V) (V, bool) {
-		return val, true
-	})
-	return PickBy(m, func(_ K, val V) bool {
+func FilterByValues[K comparable, V comparable](m map[K]V, values []V) map[K]V {
+	set := slicez.Set(values)
+	return Filter(m, func(_ K, val V) bool {
 		return set[val]
 	})
 }
 
-func OmitBy[K comparable, V any](m map[K]V, omit func(key K, val V) bool) map[K]V {
-	return PickBy(m, func(key K, val V) bool {
+func Reject[K comparable, V any](m map[K]V, omit func(key K, val V) bool) map[K]V {
+	return Filter(m, func(key K, val V) bool {
 		return !omit(key, val)
 	})
 }
 
-func OmitByKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
-	set := slicez.Associate(keys, func(key K) (K, bool) {
-		return key, true
-	})
-	return OmitBy(m, func(key K, _ V) bool {
+func RejectByKeys[K comparable, V any](m map[K]V, keys []K) map[K]V {
+	set := slicez.Set(keys)
+	return Reject(m, func(key K, _ V) bool {
 		return set[key]
 	})
 }
-func OmitByValues[K comparable, V comparable](m map[K]V, values []V) map[K]V {
-	set := slicez.Associate(values, func(val V) (V, bool) {
-		return val, true
-	})
-	return OmitBy(m, func(_ K, val V) bool {
+func RejectByValues[K comparable, V comparable](m map[K]V, values []V) map[K]V {
+	set := slicez.Set(values)
+	return Reject(m, func(_ K, val V) bool {
 		return set[val]
 	})
 }

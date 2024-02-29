@@ -13,19 +13,19 @@ type settings struct {
 
 type Option func(s settings) settings
 
-func ContextOp(ctx context.Context) Option {
+func OpContext(ctx context.Context) Option {
 	return func(s settings) settings {
 		s.done = SomeDone(ctx.Done(), s.done)
 		return s
 	}
 }
-func BufferOp(size int) Option {
+func OpBuffer(size int) Option {
 	return func(s settings) settings {
 		s.buffer = size
 		return s
 	}
 }
-func DoneOp(done <-chan struct{}) Option {
+func OpDone(done <-chan struct{}) Option {
 	return func(s settings) settings {
 		s.done = SomeDone(done, s.done)
 		return s
