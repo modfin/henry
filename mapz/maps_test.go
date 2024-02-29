@@ -143,7 +143,7 @@ func TestKeys(t *testing.T) {
 
 func TestDeleteValue(t *testing.T) {
 	m := map[int]int{1: 11, 3: 33}
-	DeleteValue(m, 33)
+	DeleteValues(m, 33)
 
 	if len(m) != 1 {
 		t.Log("Expected size of 1")
@@ -158,7 +158,7 @@ func TestDeleteValue(t *testing.T) {
 
 func TestDeleteFunc(t *testing.T) {
 	m := map[int]int{1: 11, 3: 33}
-	DeleteFunc(m, func(k int, v int) bool {
+	Delete(m, func(k int, v int) bool {
 		return k == 3
 	})
 
@@ -174,7 +174,7 @@ func TestDeleteFunc(t *testing.T) {
 }
 
 func TestPickByKeys(t *testing.T) {
-	m := PickByKeys(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []string{"foo", "baz"})
+	m := FilterByKeys(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []string{"foo", "baz"})
 	exp := map[string]int{"foo": 1, "baz": 3}
 	if !reflect.DeepEqual(m, exp) {
 		t.Log("Expected", exp, "got", m)
@@ -182,7 +182,7 @@ func TestPickByKeys(t *testing.T) {
 	}
 }
 func TestPickByValues(t *testing.T) {
-	m := PickByValues(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []int{23, 2})
+	m := FilterByValues(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []int{23, 2})
 	exp := map[string]int{"bar": 2}
 	if !reflect.DeepEqual(m, exp) {
 		t.Log("Expected", exp, "got", m)
@@ -190,7 +190,7 @@ func TestPickByValues(t *testing.T) {
 	}
 }
 func TestOmitByKeys(t *testing.T) {
-	m := OmitByKeys(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []string{"foo", "baz"})
+	m := RejectByKeys(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []string{"foo", "baz"})
 	exp := map[string]int{"bar": 2}
 	if !reflect.DeepEqual(m, exp) {
 		t.Log("Expected", exp, "got", m)
@@ -198,7 +198,7 @@ func TestOmitByKeys(t *testing.T) {
 	}
 }
 func TestOmitByValues(t *testing.T) {
-	m := OmitByValues(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []int{23, 2})
+	m := RejectByValues(map[string]int{"foo": 1, "bar": 2, "baz": 3}, []int{23, 2})
 	exp := map[string]int{"foo": 1, "baz": 3}
 	if !reflect.DeepEqual(m, exp) {
 		t.Log("Expected", exp, "got", m)

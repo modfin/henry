@@ -1,4 +1,4 @@
-package numberz
+package numz
 
 import (
 	"github.com/modfin/henry/compare"
@@ -206,7 +206,7 @@ func FTest[N compare.Number](x []N, y []N) float64 {
 func Median[N compare.Number](vector ...N) float64 {
 	l := len(vector)
 
-	inter := slicez.SortFunc(vector, func(i, j N) bool {
+	inter := slicez.SortBy(vector, func(i, j N) bool {
 		return i < j
 	})
 	inter = slicez.Drop(inter, l/2-1)
@@ -247,7 +247,7 @@ func Modes[N compare.Number](vector ...N) []N {
 	inter := slicez.TakeWhile(counts, func(a modecount[N]) bool {
 		return a.c == max
 	})
-	inter = slicez.SortFunc(inter, func(a, b modecount[N]) bool {
+	inter = slicez.SortBy(inter, func(a, b modecount[N]) bool {
 		return a.val < b.val
 	})
 

@@ -36,7 +36,7 @@ func TestPeek(t *testing.T) {
 
 	res := Collect(peeked)
 
-	if !slicez.EqualFunc(exp, res, func(e1 *wrap, e2 *wrap) bool {
+	if !slicez.EqualBy(exp, res, func(e1 *wrap, e2 *wrap) bool {
 		return e1.A == e2.A
 	}) {
 		t.Logf("expected, %v, but got %v", exp, res)
@@ -406,7 +406,7 @@ func TestEveryDone(t *testing.T) {
 }
 
 func TestDropBuffer(t *testing.T) {
-	c := GenerateWith[int](BufferOp(2))(1, 2, 3, 4, 5)
+	c := GenerateWith[int](OpBuffer(2))(1, 2, 3, 4, 5)
 	time.Sleep(100 * time.Millisecond)
 	DropBuffer(c, false)
 
@@ -421,7 +421,7 @@ func TestDropBuffer(t *testing.T) {
 }
 
 func TestTakeBuffer(t *testing.T) {
-	c := GenerateWith[int](BufferOp(2))(1, 2, 3, 4, 5)
+	c := GenerateWith[int](OpBuffer(2))(1, 2, 3, 4, 5)
 	time.Sleep(100 * time.Millisecond)
 	res1 := TakeBuffer(c)
 	res2 := Collect(c)

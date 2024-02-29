@@ -96,13 +96,13 @@ func (p Pipe[A]) FoldRight(combined func(accumulator A, val A) A, accumulator A)
 }
 
 func (p Pipe[A]) Every(predicate func(a A) bool) bool {
-	return slicez.EveryFunc(p.in, predicate)
+	return slicez.EveryBy(p.in, predicate)
 }
 func (p Pipe[A]) Some(predicate func(a A) bool) bool {
-	return slicez.SomeFunc(p.in, predicate)
+	return slicez.SomeBy(p.in, predicate)
 }
 func (p Pipe[A]) None(predicate func(a A) bool) bool {
-	return slicez.NoneFunc(p.in, predicate)
+	return slicez.NoneBy(p.in, predicate)
 }
 
 func (p Pipe[A]) Partition(predicate func(a A) bool) (satisfied, notSatisfied []A) {
@@ -116,11 +116,11 @@ func (p Pipe[A]) Shuffle() Pipe[A] {
 	return Of(slicez.Shuffle(p.in))
 }
 func (p Pipe[A]) SortFunc(less func(a, b A) bool) Pipe[A] {
-	return Of(slicez.SortFunc(p.in, less))
+	return Of(slicez.SortBy(p.in, less))
 }
 
 func (p Pipe[A]) Compact(equal func(a, b A) bool) Pipe[A] {
-	return Of(slicez.CompactFunc(p.in, equal))
+	return Of(slicez.CompactBy(p.in, equal))
 }
 
 func (p Pipe[A]) Count() int {

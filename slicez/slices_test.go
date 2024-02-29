@@ -249,7 +249,7 @@ func TestReject(t *testing.T) {
 func TestSome(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := true
-	res := SomeFunc(ints, func(a int) bool {
+	res := SomeBy(ints, func(a int) bool {
 		return a == 2
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -261,7 +261,7 @@ func TestSome(t *testing.T) {
 func TestSome2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := false
-	res := SomeFunc(ints, func(a int) bool {
+	res := SomeBy(ints, func(a int) bool {
 		return a == 5
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -294,7 +294,7 @@ func TestNone2(t *testing.T) {
 func TestEvery(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := true
-	res := EveryFunc(ints, func(a int) bool {
+	res := EveryBy(ints, func(a int) bool {
 		return a < 5
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -306,7 +306,7 @@ func TestEvery(t *testing.T) {
 func TestEvery2(t *testing.T) {
 	ints := []int{1, 2, 3}
 	exp := false
-	res := EveryFunc(ints, func(a int) bool {
+	res := EveryBy(ints, func(a int) bool {
 		return a < 3
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -375,10 +375,10 @@ func TestSort(t *testing.T) {
 		t.Logf("expected, %v to equal %v\n", res, exp)
 	}
 }
-func TestSortFunc(t *testing.T) {
+func TestSortBy(t *testing.T) {
 	ints := []int{3, 2, 1}
 	exp := []int{1, 2, 3}
-	res := SortFunc(ints, func(a, b int) bool {
+	res := SortBy(ints, func(a, b int) bool {
 		return a < b
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -390,7 +390,7 @@ func TestSortFunc(t *testing.T) {
 func TestCompact(t *testing.T) {
 	ints := []int{3, 2, 2, 1, 1, 1, 1, 1, 3, 3, 4, 5}
 	exp := []int{3, 2, 1, 3, 4, 5}
-	res := CompactFunc(ints, func(a, b int) bool {
+	res := CompactBy(ints, func(a, b int) bool {
 		return a == b
 	})
 	if !reflect.DeepEqual(res, exp) {
@@ -402,7 +402,7 @@ func TestCompact(t *testing.T) {
 func TestCompact2(t *testing.T) {
 	str := []byte("Remove   a  lot    of    white   spaces    !!")
 	exp := "Remove a lot of white spaces !!"
-	res := CompactFunc(str, func(a, b byte) bool {
+	res := CompactBy(str, func(a, b byte) bool {
 		return a == b && a == byte(' ')
 	})
 	resStr := string(res)
@@ -652,4 +652,107 @@ func TestFlatten(t *testing.T) {
 		t.Fail()
 	}
 
+}
+
+func TestInterleave(t *testing.T) {
+	type args[A any] struct {
+		slices [][]A
+	}
+	type testCase[A any] struct {
+		name string
+		args args[A]
+		want []A
+	}
+	tests := []testCase[int]{
+		{name: "basic",
+			args: struct{ slices [][]int }{slices: [][]int{[]int{1}, []int{2, 5, 8}, []int{3, 6}, []int{4, 7, 9, 10}}},
+			want: []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Interleave(tt.args.slices...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Interleave() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestReplace(t *testing.T) {
+	type args[E comparable] struct {
+		haystack    []E
+		needle      E
+		replacement E
+		n           int
+	}
+	type testCase[E comparable] struct {
+		name string
+		args args[E]
+		want []E
+	}
+	tests := []testCase[int]{
+		{
+			name: "none",
+			args: args[int]{[]int{1, 2, 1, 2, 1}, 3, 1, 2},
+			want: []int{1, 2, 1, 2, 1},
+		},
+		{
+			name: "first",
+			args: args[int]{[]int{1, 2, 2, 2, 1}, 2, 1, 1},
+			want: []int{1, 1, 2, 2, 1},
+		},
+		{
+			name: "two",
+			args: args[int]{[]int{1, 2, 1, 2, 1}, 2, 1, 2},
+			want: []int{1, 1, 1, 1, 1},
+		},
+		{
+			name: "all",
+			args: args[int]{[]int{1, 2, 2, 2, 1}, 2, 1, -1},
+			want: []int{1, 1, 1, 1, 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Replace(tt.args.haystack, tt.args.needle, tt.args.replacement, tt.args.n); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Replace() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestChunk(t *testing.T) {
+	type args[A any] struct {
+		slice []A
+		n     int
+	}
+	type testCase[A any] struct {
+		name string
+		args args[A]
+		want [][]A
+	}
+	tests := []testCase[int]{
+		{
+			name: "simple1",
+			args: args[int]{[]int{0, 1, 2, 3, 4, 5, 6}, -1},
+			want: [][]int{{0, 1, 2, 3, 4, 5, 6}},
+		},
+		{
+			name: "simple1",
+			args: args[int]{[]int{0, 1, 2, 3, 4, 5, 6}, 2},
+			want: [][]int{{0, 1}, {2, 3}, {4, 5}, {6}},
+		},
+		{
+			name: "simple2",
+			args: args[int]{[]int{0, 1, 2, 3, 4, 5, 6}, 3},
+			want: [][]int{{0, 1, 2}, {3, 4, 5}, {6}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Chunk(tt.args.slice, tt.args.n); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Chunk() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

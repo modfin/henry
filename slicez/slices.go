@@ -4,19 +4,21 @@ import (
 	"errors"
 	"github.com/modfin/henry/compare"
 	"github.com/modfin/henry/slicez/sort"
-	"math/rand"
+	r2 "math/rand"
 	"time"
 )
+
+var rand = r2.New(r2.NewSource(time.Now().UnixNano()))
 
 // Equal takes two slices of that is of the interface comparable. It returns true if they are of equal length and each
 // element in a[x] == b[x] for every element
 func Equal[A comparable](s1, s2 []A) bool {
-	return EqualFunc(s1, s2, compare.Equal[A])
+	return EqualBy(s1, s2, compare.Equal[A])
 }
 
-// EqualFunc takes two slices and an equality check function. It returns true if they are of equal length and each
+// EqualBy takes two slices and an equality check function. It returns true if they are of equal length and each
 // element in eq(a[x], b[x]) == true for every element
-func EqualFunc[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
+func EqualBy[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
@@ -31,13 +33,13 @@ func EqualFunc[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
 
 // Index finds the first index of an element in an array. It returns -1 if it is not present
 func Index[E comparable](s []E, needle E) int {
-	return IndexFunc(s, func(e E) bool {
+	return IndexBy(s, func(e E) bool {
 		return needle == e
 	})
 }
 
-// IndexFunc finds the first index of an element where the passed in function returns true. It returns -1 if it is not present
-func IndexFunc[E any](s []E, f func(E) bool) int {
+// IndexBy finds the first index of an element where the passed in function returns true. It returns -1 if it is not present
+func IndexBy[E any](s []E, f func(E) bool) int {
 	for i, v := range s {
 		if f(v) {
 			return i
@@ -48,13 +50,13 @@ func IndexFunc[E any](s []E, f func(E) bool) int {
 
 // LastIndex finds the last index of an element in an array. It returns -1 if it is not present
 func LastIndex[E comparable](s []E, needle E) int {
-	return LastIndexFunc(s, func(e E) bool {
+	return LastIndexBy(s, func(e E) bool {
 		return e == needle
 	})
 }
 
-// LastIndexFunc finds the last index of an element where the passed in function returns true. It returns -1 if it is not present
-func LastIndexFunc[E any](s []E, f func(E) bool) int {
+// LastIndexBy finds the last index of an element where the passed in function returns true. It returns -1 if it is not present
+func LastIndexBy[E any](s []E, f func(E) bool) int {
 	n := len(s)
 
 	for i := 0; i < n; i++ {
@@ -67,24 +69,45 @@ func LastIndexFunc[E any](s []E, f func(E) bool) int {
 
 // Cut will cut a slice into a left and a right part at the first instance where the needle is found. The needle is not included
 func Cut[E comparable](s []E, needle E) (left, right []E, found bool) {
-	return CutFunc(s, func(e E) bool {
+	return CutBy(s, func(e E) bool {
 		return e == needle
 	})
 }
 
-// CutFunc will cut a slice into a left and a right part at the first instance where the on function returns true.
+// CutBy will cut a slice into a left and a right part at the first instance where the on function returns true.
 // The element that makes the "on" function return true will not be included.
-func CutFunc[E any](s []E, on func(E) bool) (left, right []E, found bool) {
-	i := IndexFunc(s, on)
+func CutBy[E any](s []E, on func(E) bool) (left, right []E, found bool) {
+	i := IndexBy(s, on)
 	if i == -1 {
 		return s, nil, false
 	}
 	return s[:i], s[i+1:], true
 }
 
+// Replace replaces occurrences needle in haystack n times. It Replaces all for n < 0
+func Replace[E comparable](haystack []E, needle E, replacement E, n int) []E {
+	return Map(haystack, func(e E) E {
+		if n != 0 && e == needle {
+			n--
+			return replacement
+		}
+		return e
+	})
+}
+
+// ReplaceFirst replaces first occurrences needle in haystack.
+func ReplaceFirst[E comparable](haystack []E, needle E, replacement E) []E {
+	return Replace(haystack, needle, replacement, 1)
+}
+
+// ReplaceAll replaces all occurrences needle in haystack.
+func ReplaceAll[E comparable](haystack []E, needle E, replacement E) []E {
+	return Replace(haystack, needle, replacement, -1)
+}
+
 // Find will find the first instance of an element in a slice where the equal func returns true
 func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
-	i := IndexFunc(s, equal)
+	i := IndexBy(s, equal)
 	if i == -1 {
 		return e, false
 	}
@@ -93,7 +116,7 @@ func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
 
 // FindLast will find the last instance of an element in a slice where the equal func returns true
 func FindLast[E any](s []E, equal func(E) bool) (e E, found bool) {
-	i := LastIndexFunc(s, equal)
+	i := LastIndexBy(s, equal)
 	if i == -1 {
 		return e, false
 	}
@@ -128,9 +151,9 @@ func Contains[E comparable](s []E, needle E) bool {
 	return Index(s, needle) >= 0
 }
 
-// ContainsFunc returns true if the passed in func returns true on any of the element in the slice
-func ContainsFunc[E any](s []E, f func(e E) bool) bool {
-	return IndexFunc(s, f) >= 0
+// ContainsBy returns true if the passed in func returns true on any of the element in the slice
+func ContainsBy[E any](s []E, f func(e E) bool) bool {
+	return IndexBy(s, f) >= 0
 }
 
 // Clone will create a copy of the slice
@@ -144,11 +167,11 @@ func Clone[E any](s []E) []E {
 
 // Compare will compare two slices
 func Compare[E compare.Ordered](s1, s2 []E) int {
-	return CompareFunc(s1, s2, compare.Compare[E])
+	return CompareBy(s1, s2, compare.Compare[E])
 }
 
-// CompareFunc will compare two slices using a compare function
-func CompareFunc[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
+// CompareBy will compare two slices using a compare function
+func CompareBy[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
 	s2len := len(s2)
 	for i, v1 := range s1 {
 		if i >= s2len {
@@ -184,6 +207,16 @@ func Reverse[A any](slice []A) []A {
 	res := make([]A, l)
 	for i, val := range slice {
 		res[l-i-1] = val
+	}
+	return res
+}
+
+// RepeatBy creates a slice of i length and assign each element with result of the by function
+func RepeatBy[A any](i int, by func(i int) A) []A {
+	res := make([]A, 0, i)
+
+	for n := 0; n < i; n++ {
+		res = append(res, by(n))
 	}
 	return res
 }
@@ -392,12 +425,12 @@ func Reject[A any](slice []A, exclude func(a A) bool) []A {
 
 // Every returns true if every element in the slice is equal to the needle
 func Every[A comparable](slice []A, needle A) bool {
-	return EveryFunc(slice, compare.EqualOf[A](needle))
+	return EveryBy(slice, compare.EqualOf[A](needle))
 
 }
 
-// EveryFunc returns true if the predicate function returns true for every element in the slice
-func EveryFunc[A any](slice []A, predicate func(A) bool) bool {
+// EveryBy returns true if the predicate function returns true for every element in the slice
+func EveryBy[A any](slice []A, predicate func(A) bool) bool {
 	for _, val := range slice {
 		if !predicate(val) {
 			return false
@@ -408,11 +441,11 @@ func EveryFunc[A any](slice []A, predicate func(A) bool) bool {
 
 // Some returns true there exist an element in the slice that is equal to the needle, an alias for Contains
 func Some[A comparable](slice []A, needle A) bool {
-	return SomeFunc(slice, compare.EqualOf[A](needle))
+	return SomeBy(slice, compare.EqualOf[A](needle))
 }
 
-// SomeFunc returns true if there is an element in the slice for which the predicate function returns true
-func SomeFunc[A any](slice []A, predicate func(A) bool) bool {
+// SomeBy returns true if there is an element in the slice for which the predicate function returns true
+func SomeBy[A any](slice []A, predicate func(A) bool) bool {
 	for _, val := range slice {
 		if predicate(val) {
 			return true
@@ -423,15 +456,15 @@ func SomeFunc[A any](slice []A, predicate func(A) bool) bool {
 
 // None returns true if there is no element in the slice that matches the needle
 func None[A comparable](slice []A, needle A) bool {
-	return !SomeFunc(slice, compare.EqualOf[A](needle))
+	return !SomeBy(slice, compare.EqualOf[A](needle))
 }
 
-// NoneFunc returns true if there are no element in the slice for which the predicate function returns true
-func NoneFunc[A any](slice []A, predicate func(A) bool) bool {
-	return !SomeFunc(slice, predicate)
+// NoneBy returns true if there are no element in the slice for which the predicate function returns true
+func NoneBy[A any](slice []A, predicate func(A) bool) bool {
+	return !SomeBy(slice, predicate)
 }
 
-// Partition will partition a slice into to slices. One where every element for which the predicate function returns true
+// Partition will partition a slice into to two slices. One where every element for which the predicate function returns true
 // and where it returns false
 func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisfied []A) {
 	for _, a := range slice {
@@ -444,10 +477,64 @@ func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisf
 	return satisfied, notSatisfied
 }
 
+// PartitionBy will partition a slice into to a slice of slices.
+// Returns an array of elements split into groups.
+// The order of grouped values is determined by the order they occur in collection.
+// The grouping is generated from the results of running each element of collection through iteratee.
+func PartitionBy[A any, K comparable](slice []A, key func(a A) K) [][]A {
+	var order []K
+	m := make(map[K][]A)
+	for _, v := range slice {
+		k := key(v)
+		m[k] = append(m[k], v)
+		order = append(order, k)
+	}
+	return Map(Uniq(order), func(k K) []A {
+		return m[k]
+	})
+}
+
+// Chunk will make de-flatten a slice into chunks
+// eg slicez.Chunk([]int{0, 1, 2, 3, 4, 5, 6}, 2)
+// // [][]int{{0, 1}, {2, 3}, {4, 5}, {6}}
+func Chunk[A any](slice []A, n int) [][]A {
+	var i int
+	var c = n
+	return PartitionBy(slice, func(a A) int {
+		r := i
+		c--
+		if c == 0 {
+			c = n
+			i++
+		}
+		return r
+	})
+}
+
+// Interleave Round-robin alternating input slices and sequentially appending value at index into result.
+// interleaved := Interleave([]int{1}, []int{2, 5, 8}, []int{3, 6}, []int{4, 7, 9, 10})
+// []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+func Interleave[A any](slices ...[]A) []A {
+	var total int
+	var max int
+	for _, s := range slices {
+		total += len(s)
+		max = Max(max, len(s))
+	}
+	var res = make([]A, 0, total)
+	for i := 0; i < max; i++ {
+		for _, s := range slices {
+			if i < len(s) {
+				res = append(res, s[i])
+			}
+		}
+	}
+	return res
+}
+
 // Shuffle will return a new slice where the elements from the original slice is shuffled
 func Shuffle[A any](slice []A) []A {
 	var ret = append([]A{}, slice...)
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(ret), func(i, j int) {
 		ret[i], ret[j] = ret[j], ret[i]
 	})
@@ -468,7 +555,6 @@ func Sample[A any](slice []A, n int) []A {
 	}
 
 	idxs := map[int]struct{}{}
-	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < n; i++ {
 		var idx int
 		for {
@@ -488,11 +574,11 @@ func Sample[A any](slice []A, n int) []A {
 
 // Sort will return a new slice that is sorted in the natural order
 func Sort[A compare.Ordered](slice []A) []A {
-	return SortFunc(slice, compare.Less[A])
+	return SortBy(slice, compare.Less[A])
 }
 
-// SortFunc will return a new slice that is sorted using the supplied less function for natural ordering
-func SortFunc[A any](slice []A, less func(a, b A) bool) []A {
+// SortBy will return a new slice that is sorted using the supplied less function for natural ordering
+func SortBy[A any](slice []A, less func(a, b A) bool) []A {
 	var res = append([]A{}, slice...)
 	sort.Slice(res, less)
 	return res
@@ -512,18 +598,18 @@ func Search[A any](slice []A, f func(e A) bool) (index int, e A) {
 //
 //	{1,1,2,1,2,2,2} => {1,2,1,2}
 func Compact[A comparable](slice []A) []A {
-	return CompactFunc(slice, compare.Equal[A])
+	return CompactBy(slice, compare.Equal[A])
 }
 
-// CompactFunc will remove any duplicate elements following each other determined by the equal func.
+// CompactBy will remove any duplicate elements following each other determined by the equal func.
 // eg removing duplicate whitespaces from a string might look like
 //
-//	CompactFunc([]rune("a    b"), func(a, b rune) {
+//	CompactBy([]rune("a    b"), func(a, b rune) {
 //	 	return a == ' ' && a == b
 //	})
 //
 // resulting in "a b"
-func CompactFunc[A any](slice []A, equal func(a, b A) bool) []A {
+func CompactBy[A any](slice []A, equal func(a, b A) bool) []A {
 	if len(slice) == 0 {
 		return slice
 	}
@@ -554,7 +640,7 @@ func Max[E compare.Ordered](slice ...E) E {
 	return cur
 }
 
-// Min returns the smalest element of the slice
+// Min returns the smallest element of the slice
 func Min[E compare.Ordered](slice ...E) E {
 	var zero E
 	if slice == nil || len(slice) == 0 {
@@ -591,7 +677,7 @@ func Map[A any, B any](slice []A, f func(a A) B) []B {
 	return res
 }
 
-// FlatMap will map entries in one slice to enteris in another slice and then flatten the map
+// FlatMap will map entries in one slice to entries in another slice and then flatten the map
 func FlatMap[A any, B any](slice []A, f func(a A) []B) []B {
 	return Flatten(Map(slice, f))
 }
@@ -619,8 +705,8 @@ func SliceToMap[E any, K comparable, V any](slice []E, mapper func(a E) (key K, 
 	return Associate(slice, mapper)
 }
 
-// Associate will iterate over a slice turning each object into a key/value pair in a map
-func Associate[E any, K comparable, V any](slice []E, mapper func(a E) (key K, value V)) map[K]V {
+// Associate will iterate over a slice turning each object into a key/value pair in a map. Alias SliceToMap
+func Associate[E any, K comparable, V any](slice []E, mapper func(e E) (key K, value V)) map[K]V {
 	return Fold(slice, func(acc map[K]V, e E) map[K]V {
 		k, v := mapper(e)
 		acc[k] = v
@@ -628,12 +714,18 @@ func Associate[E any, K comparable, V any](slice []E, mapper func(a E) (key K, v
 	}, map[K]V{})
 }
 
+// Set will create a Set in the form of map[E]bool,
+// This can be used to lookup if a item was present in the slice or not
+func Set[E comparable](slice []E) map[E]bool {
+	return Associate(slice, func(a E) (key E, value bool) {
+		return a, true
+	})
+}
+
 // KeyBy will iterate through the slice and create a map where the key function generates the key value pair.
 // If multiple values generate the same key, it is the first value that is stored in the map
 func KeyBy[A any, B comparable](slice []A, key func(a A) B) map[B]A {
-
 	m := make(map[B]A)
-
 	for _, v := range slice {
 		k := key(v)
 		_, exist := m[k]
@@ -647,9 +739,7 @@ func KeyBy[A any, B comparable](slice []A, key func(a A) B) map[B]A {
 
 // GroupBy will iterate through the slice and create a map where entries are grouped into slices using the key function generates the key .
 func GroupBy[A any, B comparable](slice []A, key func(a A) B) map[B][]A {
-
 	m := make(map[B][]A)
-
 	for _, v := range slice {
 		k := key(v)
 		m[k] = append(m[k], v)
@@ -836,4 +926,30 @@ func Unzip2[A any, B any, C any, D any](dSlice []D, unzipper func(d D) (a A, b B
 		cSlice = append(cSlice, c)
 	}
 	return aSlice, bSlice, cSlice
+}
+
+// Zip3 will zip three slices, a, b and c, into one slice, d, using the zip function to combined elements
+func Zip3[A any, B any, C any, D any, E any](aSlice []A, bSlice []B, cSlice []C, dSlice []D, zipper func(a A, b B, c C, d D) E) []E {
+	var capacity = Min(len(aSlice), len(bSlice), len(cSlice), len(dSlice))
+	var eSlice = make([]E, 0, capacity)
+	for i := 0; i < capacity; i++ {
+		eSlice = append(eSlice, zipper(aSlice[i], bSlice[i], cSlice[i], dSlice[i]))
+	}
+	return eSlice
+}
+
+// Unzip3 will unzip a slice slices, d, into three slices, a, b and c, using the supplied unziper function
+func Unzip3[A any, B any, C any, D any, E any](eSlice []E, unzipper func(e E) (a A, b B, c C, d D)) ([]A, []B, []C, []D) {
+	var aSlice = make([]A, 0, len(eSlice))
+	var bSlice = make([]B, 0, len(eSlice))
+	var cSlice = make([]C, 0, len(eSlice))
+	var dSlice = make([]D, 0, len(eSlice))
+	for _, e := range eSlice {
+		a, b, c, d := unzipper(e)
+		aSlice = append(aSlice, a)
+		bSlice = append(bSlice, b)
+		cSlice = append(cSlice, c)
+		dSlice = append(dSlice, d)
+	}
+	return aSlice, bSlice, cSlice, dSlice
 }
