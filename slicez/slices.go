@@ -235,6 +235,11 @@ func Tail[A any](slice []A) []A {
 	return Drop(slice, 1)
 }
 
+// Initial gets all but the last element of the slice
+func Initial[A any](slice []A) []A {
+	return DropRight(slice, 1)
+}
+
 // Last will return the last element of the slice, or an error if the length of the slice is 0
 func Last[A any](slice []A) (A, error) {
 	if len(slice) > 0 {
@@ -265,10 +270,18 @@ func Nth[A any](slice []A, i int) A {
 	return slice[i]
 }
 
-// Each will apply the "apply" func on each element of the slice
-func Each[A any](slice []A, apply func(a A)) {
+// ForEach will apply the "apply" func on each element of the slice
+func ForEach[A any](slice []A, apply func(a A)) {
 	for _, a := range slice {
 		apply(a)
+	}
+}
+
+// ForEachRight will apply the "apply" func on each element of the slice
+func ForEachRight[A any](slice []A, apply func(a A)) {
+	length := len(slice)
+	for i := 0; i < length; i++ {
+		apply(slice[length-1-i])
 	}
 }
 
@@ -423,6 +436,14 @@ func Reject[A any](slice []A, exclude func(a A) bool) []A {
 	})
 }
 
+// Without creates a new slice excluding all given values.
+func Without[A comparable](slice []A, exclude ...A) []A {
+	set := Set(exclude)
+	return Reject(slice, func(a A) bool {
+		return set[a]
+	})
+}
+
 // Every returns true if every element in the slice is equal to the needle
 func Every[A comparable](slice []A, needle A) bool {
 	return EveryBy(slice, compare.EqualOf[A](needle))
@@ -481,15 +502,15 @@ func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisf
 // Returns an array of elements split into groups.
 // The order of grouped values is determined by the order they occur in collection.
 // The grouping is generated from the results of running each element of collection through iteratee.
-func PartitionBy[A any, K comparable](slice []A, key func(a A) K) [][]A {
-	var order []K
-	m := make(map[K][]A)
+func PartitionBy[A any, B comparable](slice []A, by func(a A) B) [][]A {
+	var order []B
+	m := make(map[B][]A)
 	for _, v := range slice {
-		k := key(v)
+		k := by(v)
 		m[k] = append(m[k], v)
 		order = append(order, k)
 	}
-	return Map(Uniq(order), func(k K) []A {
+	return Map(Uniq(order), func(k B) []A {
 		return m[k]
 	})
 }
@@ -549,7 +570,7 @@ func Sample[A any](slice []A, n int) []A {
 		n = len(slice)
 	}
 
-	if n > len(slice)/3 { // sqare root?
+	if n > len(slice)/3 { // should be square root, due to birthday paradox
 		ret = Shuffle(slice)
 		return ret[:n]
 	}
@@ -952,4 +973,30 @@ func Unzip3[A any, B any, C any, D any, E any](eSlice []E, unzipper func(e E) (a
 		dSlice = append(dSlice, d)
 	}
 	return aSlice, bSlice, cSlice, dSlice
+}
+
+func XOR[A comparable](slices ...[]A) []A {
+	return XORBy(compare.Identity[A], slices...)
+}
+
+func XORBy[A any, B comparable](by func(A) B, slices ...[]A) []A {
+	seen := map[B]int{}
+	var res []A
+	for _, slice := range slices {
+		for _, e := range slice {
+			k := by(e)
+			seen[k] = seen[k] + 1
+		}
+	}
+	for _, slice := range slices {
+		for _, e := range slice {
+			k := by(e)
+			if seen[k] > 1 {
+				continue
+			}
+			res = append(res, e)
+		}
+	}
+
+	return res
 }
