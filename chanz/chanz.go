@@ -173,16 +173,16 @@ func GenerateWith[A any](options ...Option) func(elements ...A) <-chan A {
 	}
 }
 
-// Merge will merge all input from input channels into one output channel.
+// FanIn will merge all input from input channels into one output channel.
 // It differs from Flattenin that it reads from all channels concurrently instead of synchronized
-func Merge[A any](cs ...<-chan A) <-chan A {
-	return MergeWith[A]()(cs...)
+func FanIn[A any](cs ...<-chan A) <-chan A {
+	return FanInWith[A]()(cs...)
 }
 
-// MergeWith will merge all input from input channels into one output channel. It differs from FlattenUntil in that it reads from all channels concurrently instead of synchronized
+// FanInWith will merge all input from input channels into one output channel. It differs from FlattenUntil in that it reads from all channels concurrently instead of synchronized
 // The return chan has a buffer of buffer size supplied in input Option, default is 0.
 // It will stop once "in", "done" channel is closed or the context.Done is closed, which is supplied in Option
-func MergeWith[A any](options ...Option) func(cs ...<-chan A) <-chan A {
+func FanInWith[A any](options ...Option) func(cs ...<-chan A) <-chan A {
 	return func(cs ...<-chan A) <-chan A {
 
 		var s settings
@@ -697,6 +697,33 @@ func DropBuffer[A any](c <-chan A, async bool) {
 		return
 	}
 	dropper()
+}
+
+func Buffer[A any](size int, in <-chan A, options ...Option) ([]A, bool) {
+	var s settings
+	for _, o := range options {
+		s = o(s)
+	}
+	var out = make([]A, 0, size)
+
+	for {
+
+		val, more := <-in
+		out = append(out, val)
+
+		if !more {
+			return out, false
+		}
+		if len(out) == size {
+			return out, true
+		}
+		select {
+		case <-s.done:
+			return out, true
+		default:
+		}
+	}
+
 }
 
 // Done takes a channel, c, that is ment to indicate that something is done and returns a chan struct{} that closes once c does

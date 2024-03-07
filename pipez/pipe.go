@@ -1,4 +1,4 @@
-package pipe
+package pipez
 
 import (
 	"github.com/modfin/henry/slicez"
@@ -19,7 +19,7 @@ func (p Pipe[A]) Slice() []A {
 }
 
 func (p Pipe[A]) Peek(apply func(a A)) Pipe[A] {
-	slicez.Each(p.in, apply)
+	slicez.ForEach(p.in, apply)
 	return p
 }
 
@@ -35,6 +35,9 @@ func (p Pipe[A]) Head() (A, error) {
 }
 func (p Pipe[A]) Last() (A, error) {
 	return slicez.Last(p.in)
+}
+func (p Pipe[A]) Initial() Pipe[A] {
+	return Of(slicez.Initial(p.in))
 }
 
 func (p Pipe[A]) Reverse() Pipe[A] {
@@ -125,4 +128,15 @@ func (p Pipe[A]) Compact(equal func(a, b A) bool) Pipe[A] {
 
 func (p Pipe[A]) Count() int {
 	return len(p.in)
+}
+
+func (p Pipe[A]) Zip(b []A, zipper func(a, b A) A) Pipe[A] {
+	return Of(slicez.Zip(p.in, b, zipper))
+}
+func (p Pipe[A]) Unzip(unzipper func(a A) (A, A)) ([]A, []A) {
+	return slicez.Unzip(p.in, unzipper)
+}
+
+func (p Pipe[A]) Interleave(a ...[]A) Pipe[A] {
+	return Of(slicez.Interleave[A](append([][]A{p.in}, a...)...))
 }

@@ -3,6 +3,7 @@ package slicez
 import (
 	"fmt"
 	"github.com/modfin/henry/compare"
+	"math"
 	"reflect"
 	"strconv"
 	"testing"
@@ -426,18 +427,6 @@ func TestMap(t *testing.T) {
 
 }
 
-//func TestMap2(t *testing.T) {
-//	ints := []int{1, 2, 3}
-//	exp := []float64{1.0, 2.0, 3.0}
-//
-//	res := Map(ints, numbers.MapFloat64[int])
-//	if !reflect.DeepEqual(res, exp) {
-//		t.Logf("expected, %v to equal %v", res, exp)
-//		t.Fail()
-//	}
-//
-//}
-
 func TestFoldLeft(t *testing.T) {
 
 	ints := []int{1, 2, 3}
@@ -752,6 +741,125 @@ func TestChunk(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Chunk(tt.args.slice, tt.args.n); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Chunk() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWithout(t *testing.T) {
+	type args[A comparable] struct {
+		slice   []A
+		exclude []A
+	}
+	type testCase[A comparable] struct {
+		name string
+		args args[A]
+		want []A
+	}
+	tests := []testCase[int]{
+		{
+			name: "simple",
+			args: args[int]{
+				slice:   []int{1, 2, 3, 4, 5, 3, 3, 2, 1},
+				exclude: []int{2, 3},
+			},
+			want: []int{1, 4, 5, 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Without(tt.args.slice, tt.args.exclude...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Without() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInitial(t *testing.T) {
+	type args[A any] struct {
+		slice []A
+	}
+	type testCase[A any] struct {
+		name string
+		args args[A]
+		want []A
+	}
+	tests := []testCase[int]{
+		{
+			name: "",
+			args: args[int]{
+				slice: []int{1, 2, 3, 4},
+			},
+			want: []int{1, 2, 3},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Initial(tt.args.slice); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Initial() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestXOR(t *testing.T) {
+	type args[A comparable] struct {
+		slices [][]A
+	}
+	type testCase[A comparable] struct {
+		name string
+		args args[A]
+		want []A
+	}
+	tests := []testCase[int]{
+		{
+			name: "simple",
+			args: args[int]{
+				slices: [][]int{{2, 1}, {2, 3}},
+			},
+			want: []int{1, 3},
+		},
+		{
+			name: "simple2",
+			args: args[int]{
+				slices: [][]int{{2, 1}, {2, 3}, {4, 5}, {5, 6}},
+			},
+			want: []int{1, 3, 4, 6},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := XOR(tt.args.slices...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("XOR() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestXORBy(t *testing.T) {
+	type args[A any, B comparable] struct {
+		by     func(A) B
+		slices [][]A
+	}
+	type testCase[A any, B comparable] struct {
+		name string
+		args args[A, B]
+		want []A
+	}
+	tests := []testCase[float64, float64]{
+		{
+			name: "floor",
+			args: args[float64, float64]{
+				by:     math.Floor,
+				slices: [][]float64{{2.1, 1.2}, {2.3, 3.4}},
+			},
+			want: []float64{1.2, 3.4},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := XORBy(tt.args.by, tt.args.slices...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("XORBy() = %v, want %v", got, tt.want)
 			}
 		})
 	}

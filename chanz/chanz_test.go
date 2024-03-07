@@ -106,7 +106,7 @@ func TestMerge(t *testing.T) {
 
 	c1 := Generate(0, 1, 2, 3, 4, 5)
 	c2 := Generate(0, 6, 7, 8)
-	merged := Merge(c1, c2)
+	merged := FanIn(c1, c2)
 
 	for v := range merged {
 		res = append(res, v)
