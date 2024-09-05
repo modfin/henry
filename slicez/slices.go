@@ -4,11 +4,8 @@ import (
 	"errors"
 	"github.com/modfin/henry/compare"
 	"github.com/modfin/henry/slicez/sort"
-	r2 "math/rand"
-	"time"
+	"math/rand"
 )
-
-var rand = r2.New(r2.NewSource(time.Now().UnixNano()))
 
 // Equal takes two slices of that is of the interface comparable. It returns true if they are of equal length and each
 // element in a[x] == b[x] for every element
