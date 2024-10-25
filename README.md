@@ -3,7 +3,7 @@
 > A collection of nice to have generic function and algorithms for slices, maps and channels
 
 [![GoDoc](https://godoc.org/github.com/modfin/henry?status.svg)](https://pkg.go.dev/github.com/modfin/henry)
-[![Go report](https://goreportcard.com/badge/github.com/modfin/henry)](https://goreportcard.com/report/github.com/modfin/henry)
+[![Go Report Card](https://goreportcard.com/badge/github.com/modfin/henry?cache)](https://goreportcard.com/report/github.com/modfin/henry)
 
 This project came about in the experimentation with go1.18 and generics with helper functions for slices. It now also includes
 algorithms and constructs for dealing with channels and maps as well
