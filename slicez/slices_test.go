@@ -2,12 +2,13 @@ package slicez
 
 import (
 	"fmt"
-	"github.com/modfin/henry/compare"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/modfin/henry/compare"
 )
 
 func TestCut(t *testing.T) {
@@ -1547,4 +1548,1845 @@ func TestRepeat(t *testing.T) {
 	if !reflect.DeepEqual(single, []int{42, 42, 42, 42}) {
 		t.Errorf("Repeat single element = %v, want [42, 42, 42, 42]", single)
 	}
+}
+
+// ============================================================================
+// MISSING FUNCTION TESTS
+// ============================================================================
+
+func TestTakeWhile(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     []int
+		predicate func(int) bool
+		expected  []int
+	}{
+		{
+			name:      "take while less than 4",
+			input:     []int{1, 2, 3, 4, 5},
+			predicate: func(n int) bool { return n < 4 },
+			expected:  []int{1, 2, 3},
+		},
+		{
+			name:      "empty slice",
+			input:     []int{},
+			predicate: func(n int) bool { return n < 4 },
+			expected:  nil,
+		},
+		{
+			name:      "nil slice",
+			input:     nil,
+			predicate: func(n int) bool { return n < 4 },
+			expected:  nil,
+		},
+		{
+			name:      "all satisfy predicate",
+			input:     []int{1, 2, 3},
+			predicate: func(n int) bool { return n > 0 },
+			expected:  []int{1, 2, 3},
+		},
+		{
+			name:      "none satisfy predicate",
+			input:     []int{5, 6, 7},
+			predicate: func(n int) bool { return n < 4 },
+			expected:  nil,
+		},
+		{
+			name:      "first element fails",
+			input:     []int{5, 1, 2, 3},
+			predicate: func(n int) bool { return n < 4 },
+			expected:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := TakeWhile(tt.input, tt.predicate)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("TakeWhile() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestNoneBy(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     []int
+		predicate func(int) bool
+		expected  bool
+	}{
+		{
+			name:      "no elements satisfy",
+			input:     []int{1, 2, 3},
+			predicate: func(n int) bool { return n < 0 },
+			expected:  true,
+		},
+		{
+			name:      "some elements satisfy",
+			input:     []int{1, 2, -3},
+			predicate: func(n int) bool { return n < 0 },
+			expected:  false,
+		},
+		{
+			name:      "empty slice",
+			input:     []int{},
+			predicate: func(n int) bool { return n < 0 },
+			expected:  true,
+		},
+		{
+			name:      "nil slice",
+			input:     nil,
+			predicate: func(n int) bool { return n < 0 },
+			expected:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := NoneBy(tt.input, tt.predicate)
+			if result != tt.expected {
+				t.Errorf("NoneBy() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestMax(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		expected int
+		isZero   bool
+	}{
+		{
+			name:     "basic max",
+			input:    []int{3, 1, 4, 1, 5, 9, 2, 6},
+			expected: 9,
+			isZero:   false,
+		},
+		{
+			name:     "single element",
+			input:    []int{42},
+			expected: 42,
+			isZero:   false,
+		},
+		{
+			name:     "two elements",
+			input:    []int{1, 2},
+			expected: 2,
+			isZero:   false,
+		},
+		{
+			name:     "all same",
+			input:    []int{5, 5, 5},
+			expected: 5,
+			isZero:   false,
+		},
+		{
+			name:     "negative numbers",
+			input:    []int{-10, -5, -20},
+			expected: -5,
+			isZero:   false,
+		},
+		{
+			name:     "mixed positive and negative",
+			input:    []int{-5, 0, 5},
+			expected: 5,
+			isZero:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Max(tt.input...)
+			if result != tt.expected {
+				t.Errorf("Max() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+
+	// Test empty slice (should return zero value)
+	t.Run("empty slice", func(t *testing.T) {
+		result := Max[int]()
+		if result != 0 {
+			t.Errorf("Max() with empty slice = %v, want 0", result)
+		}
+	})
+
+	// Test with strings
+	t.Run("strings", func(t *testing.T) {
+		result := Max("apple", "banana", "cherry")
+		if result != "cherry" {
+			t.Errorf("Max(strings) = %v, want cherry", result)
+		}
+	})
+}
+
+func TestMin(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		expected int
+	}{
+		{
+			name:     "basic min",
+			input:    []int{3, 1, 4, 1, 5, 9, 2, 6},
+			expected: 1,
+		},
+		{
+			name:     "single element",
+			input:    []int{42},
+			expected: 42,
+		},
+		{
+			name:     "two elements",
+			input:    []int{2, 1},
+			expected: 1,
+		},
+		{
+			name:     "all same",
+			input:    []int{5, 5, 5},
+			expected: 5,
+		},
+		{
+			name:     "negative numbers",
+			input:    []int{-10, -5, -20},
+			expected: -20,
+		},
+		{
+			name:     "mixed positive and negative",
+			input:    []int{-5, 0, 5},
+			expected: -5,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Min(tt.input...)
+			if result != tt.expected {
+				t.Errorf("Min() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+
+	// Test empty slice (should return zero value)
+	t.Run("empty slice", func(t *testing.T) {
+		result := Min[int]()
+		if result != 0 {
+			t.Errorf("Min() with empty slice = %v, want 0", result)
+		}
+	})
+
+	// Test with strings
+	t.Run("strings", func(t *testing.T) {
+		result := Min("cherry", "apple", "banana")
+		if result != "apple" {
+			t.Errorf("Min(strings) = %v, want apple", result)
+		}
+	})
+}
+
+func TestSearch(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         []int
+		predicate     func(int) bool
+		expectedIdx   int
+		expectedVal   int
+		expectedFound bool
+	}{
+		{
+			name:          "find first >= 23",
+			input:         []int{10, 20, 30, 40, 50},
+			predicate:     func(e int) bool { return e >= 23 },
+			expectedIdx:   2,
+			expectedVal:   30,
+			expectedFound: true,
+		},
+		{
+			name:          "find first >= 0",
+			input:         []int{10, 20, 30},
+			predicate:     func(e int) bool { return e >= 0 },
+			expectedIdx:   0,
+			expectedVal:   10,
+			expectedFound: true,
+		},
+		{
+			name:          "find insertion point for large value",
+			input:         []int{10, 20, 30},
+			predicate:     func(e int) bool { return e >= 100 },
+			expectedIdx:   3,
+			expectedVal:   0,
+			expectedFound: false,
+		},
+		{
+			name:          "empty slice",
+			input:         []int{},
+			predicate:     func(e int) bool { return e >= 10 },
+			expectedIdx:   0,
+			expectedVal:   0,
+			expectedFound: false,
+		},
+		{
+			name:          "single element - found",
+			input:         []int{42},
+			predicate:     func(e int) bool { return e >= 10 },
+			expectedIdx:   0,
+			expectedVal:   42,
+			expectedFound: true,
+		},
+		{
+			name:          "single element - not found",
+			input:         []int{5},
+			predicate:     func(e int) bool { return e >= 10 },
+			expectedIdx:   1,
+			expectedVal:   0,
+			expectedFound: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idx, val := Search(tt.input, tt.predicate)
+			if idx != tt.expectedIdx {
+				t.Errorf("Search() index = %v, want %v", idx, tt.expectedIdx)
+			}
+			found := idx < len(tt.input)
+			if found != tt.expectedFound {
+				t.Errorf("Search() found = %v, want %v", found, tt.expectedFound)
+			}
+			if found && val != tt.expectedVal {
+				t.Errorf("Search() value = %v, want %v", val, tt.expectedVal)
+			}
+		})
+	}
+}
+
+// ============================================================================
+// EDGE CASE TESTS
+// ============================================================================
+
+func TestNilVsEmptySlice(t *testing.T) {
+	// Test that nil and empty slices are handled correctly
+
+	// Equal - nil and empty both have length 0, so they're equal in terms of elements
+	t.Run("Equal nil vs empty", func(t *testing.T) {
+		var nilSlice []int
+		emptySlice := []int{}
+
+		// Both nil and empty have len=0, so they compare as equal
+		if !Equal(nilSlice, emptySlice) {
+			t.Error("Equal(nil, empty) should return true (both have len=0)")
+		}
+		if !Equal(nilSlice, nilSlice) {
+			t.Error("Equal(nil, nil) should return true")
+		}
+		if !Equal(emptySlice, emptySlice) {
+			t.Error("Equal(empty, empty) should return true")
+		}
+	})
+
+	// Clone - should preserve nil
+	t.Run("Clone preserves nil", func(t *testing.T) {
+		var nilSlice []int
+		cloned := Clone(nilSlice)
+		if cloned != nil {
+			t.Error("Clone(nil) should return nil")
+		}
+
+		emptySlice := []int{}
+		clonedEmpty := Clone(emptySlice)
+		if clonedEmpty == nil {
+			t.Error("Clone(empty) should return empty slice, not nil")
+		}
+		if len(clonedEmpty) != 0 {
+			t.Error("Clone(empty) should return slice with length 0")
+		}
+	})
+
+	// Drop - nil returns nil
+	t.Run("Drop nil", func(t *testing.T) {
+		var nilSlice []int
+		result := Drop(nilSlice, 1)
+		if result != nil {
+			t.Errorf("Drop(nil, 1) should return nil, got %v", result)
+		}
+	})
+
+	// Take - nil returns nil
+	t.Run("Take nil", func(t *testing.T) {
+		var nilSlice []int
+		result := Take(nilSlice, 1)
+		if result != nil {
+			t.Errorf("Take(nil, 1) should return nil, got %v", result)
+		}
+	})
+
+	// Filter - nil returns empty slice (not nil, since Filter creates a new slice)
+	t.Run("Filter nil", func(t *testing.T) {
+		var nilSlice []int
+		result := Filter(nilSlice, func(n int) bool { return true })
+		// Filter creates a new slice with make([]A, 0, len(slice)), so it returns [] not nil
+		if result == nil {
+			t.Error("Filter(nil) should return empty slice [], not nil")
+		}
+		if len(result) != 0 {
+			t.Errorf("Filter(nil) should return slice with length 0, got %d", len(result))
+		}
+	})
+
+	// Map - nil returns empty
+	t.Run("Map nil", func(t *testing.T) {
+		var nilSlice []int
+		result := Map(nilSlice, func(n int) string { return "" })
+		if result == nil {
+			t.Error("Map(nil) should return empty slice, not nil")
+		}
+		if len(result) != 0 {
+			t.Errorf("Map(nil) should return slice with length 0, got %d", len(result))
+		}
+	})
+
+	// Contains - nil returns false
+	t.Run("Contains nil", func(t *testing.T) {
+		var nilSlice []int
+		if Contains(nilSlice, 1) {
+			t.Error("Contains(nil, 1) should return false")
+		}
+	})
+
+	// Head - nil returns error
+	t.Run("Head nil", func(t *testing.T) {
+		var nilSlice []int
+		_, err := Head(nilSlice)
+		if err == nil {
+			t.Error("Head(nil) should return error")
+		}
+	})
+
+	// Last - nil returns error
+	t.Run("Last nil", func(t *testing.T) {
+		var nilSlice []int
+		_, err := Last(nilSlice)
+		if err == nil {
+			t.Error("Last(nil) should return error")
+		}
+	})
+}
+
+func TestNegativeIndices(t *testing.T) {
+	// Test negative index handling
+	slice := []int{1, 2, 3, 4, 5}
+
+	// Nth with negative indices
+	t.Run("Nth negative", func(t *testing.T) {
+		if Nth(slice, -1) != 5 {
+			t.Errorf("Nth(-1) should return last element")
+		}
+		if Nth(slice, -2) != 4 {
+			t.Errorf("Nth(-2) should return second to last")
+		}
+		if Nth(slice, -5) != 1 {
+			t.Errorf("Nth(-5) should return first element")
+		}
+	})
+}
+
+func TestBoundaryConditions(t *testing.T) {
+	// Test boundary conditions for various functions
+
+	slice := []int{1, 2, 3, 4, 5}
+
+	// Drop - boundary conditions
+	t.Run("Drop boundary", func(t *testing.T) {
+		// Drop 0 should return copy of slice
+		result := Drop(slice, 0)
+		if !Equal(result, slice) {
+			t.Error("Drop(slice, 0) should return copy of slice")
+		}
+
+		// Drop all elements
+		result = Drop(slice, 5)
+		if result != nil {
+			t.Error("Drop(slice, len) should return nil")
+		}
+
+		// Drop more than length
+		result = Drop(slice, 10)
+		if result != nil {
+			t.Error("Drop(slice, >len) should return nil")
+		}
+
+		// Drop negative
+		result = Drop(slice, -1)
+		if !Equal(result, slice) {
+			t.Error("Drop(slice, -1) should return copy of slice")
+		}
+	})
+
+	// Take - boundary conditions
+	t.Run("Take boundary", func(t *testing.T) {
+		// Take 0
+		result := Take(slice, 0)
+		if len(result) != 0 {
+			t.Error("Take(slice, 0) should return empty slice")
+		}
+
+		// Take all elements
+		result = Take(slice, 5)
+		if !Equal(result, slice) {
+			t.Error("Take(slice, len) should return copy of slice")
+		}
+
+		// Take more than length
+		result = Take(slice, 10)
+		if !Equal(result, slice) {
+			t.Error("Take(slice, >len) should return copy of slice")
+		}
+
+		// Take negative
+		result = Take(slice, -1)
+		if len(result) != 0 {
+			t.Error("Take(slice, -1) should return empty slice")
+		}
+	})
+
+	// DropRight - boundary conditions
+	t.Run("DropRight boundary", func(t *testing.T) {
+		// DropRight 0 should return copy of slice
+		result := DropRight(slice, 0)
+		if !Equal(result, slice) {
+			t.Error("DropRight(slice, 0) should return copy of slice")
+		}
+
+		// DropRight all elements
+		result = DropRight(slice, 5)
+		if result != nil {
+			t.Error("DropRight(slice, len) should return nil")
+		}
+	})
+
+	// TakeRight - boundary conditions
+	t.Run("TakeRight boundary", func(t *testing.T) {
+		// TakeRight 0
+		result := TakeRight(slice, 0)
+		if len(result) != 0 {
+			t.Error("TakeRight(slice, 0) should return empty slice")
+		}
+
+		// TakeRight all elements
+		result = TakeRight(slice, 5)
+		if !Equal(result, slice) {
+			t.Error("TakeRight(slice, len) should return copy of slice")
+		}
+
+		// TakeRight more than length
+		result = TakeRight(slice, 10)
+		if !Equal(result, slice) {
+			t.Error("TakeRight(slice, >len) should return copy of slice")
+		}
+	})
+}
+
+// ============================================================================
+// IMMUTABILITY VERIFICATION TESTS
+// ============================================================================
+
+func TestImmutability(t *testing.T) {
+	// Test that functions don't mutate the original slice
+
+	original := []int{1, 2, 3, 4, 5}
+	originalCopy := []int{1, 2, 3, 4, 5}
+
+	// Reverse
+	t.Run("Reverse immutability", func(t *testing.T) {
+		result := Reverse(original)
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Reverse mutated original slice")
+		}
+	})
+
+	// Sort
+	t.Run("Sort immutability", func(t *testing.T) {
+		unsorted := []int{3, 1, 4, 1, 5}
+		unsortedCopy := []int{3, 1, 4, 1, 5}
+		result := Sort(unsorted)
+		_ = result
+		if !Equal(unsorted, unsortedCopy) {
+			t.Error("Sort mutated original slice")
+		}
+	})
+
+	// Filter
+	t.Run("Filter immutability", func(t *testing.T) {
+		result := Filter(original, func(n int) bool { return n%2 == 0 })
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Filter mutated original slice")
+		}
+	})
+
+	// Map
+	t.Run("Map immutability", func(t *testing.T) {
+		result := Map(original, func(n int) int { return n * 2 })
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Map mutated original slice")
+		}
+	})
+
+	// Take
+	t.Run("Take immutability", func(t *testing.T) {
+		result := Take(original, 3)
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Take mutated original slice")
+		}
+	})
+
+	// Drop
+	t.Run("Drop immutability", func(t *testing.T) {
+		result := Drop(original, 2)
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Drop mutated original slice")
+		}
+	})
+
+	// Compact
+	t.Run("Compact immutability", func(t *testing.T) {
+		dups := []int{1, 1, 2, 2, 3}
+		dupsCopy := []int{1, 1, 2, 2, 3}
+		result := Compact(dups)
+		_ = result
+		if !Equal(dups, dupsCopy) {
+			t.Error("Compact mutated original slice")
+		}
+	})
+
+	// Replace
+	t.Run("Replace immutability", func(t *testing.T) {
+		result := Replace(original, 1, 99, -1)
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Replace mutated original slice")
+		}
+	})
+
+	// Without
+	t.Run("Without immutability", func(t *testing.T) {
+		result := Without(original, 1, 2)
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Without mutated original slice")
+		}
+	})
+
+	// Uniq
+	t.Run("Uniq immutability", func(t *testing.T) {
+		dups := []int{1, 2, 2, 3, 3, 3}
+		dupsCopy := []int{1, 2, 2, 3, 3, 3}
+		result := Uniq(dups)
+		_ = result
+		if !Equal(dups, dupsCopy) {
+			t.Error("Uniq mutated original slice")
+		}
+	})
+
+	// Shuffle - test that original is not modified
+	t.Run("Shuffle immutability", func(t *testing.T) {
+		result := Shuffle(original)
+		_ = result
+		if !Equal(original, originalCopy) {
+			t.Error("Shuffle mutated original slice")
+		}
+	})
+}
+
+// ============================================================================
+// PROPERTY-BASED TESTS (INVARIANTS)
+// ============================================================================
+
+func TestInvariants(t *testing.T) {
+	// Test mathematical invariants that should always hold
+
+	// Filter then Filter with same predicate should equal single Filter
+	t.Run("Filter idempotent", func(t *testing.T) {
+		data := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+		isEven := func(n int) bool { return n%2 == 0 }
+
+		once := Filter(data, isEven)
+		twice := Filter(once, isEven)
+
+		if !Equal(once, twice) {
+			t.Error("Filter is not idempotent")
+		}
+	})
+
+	// Map of identity should return same elements
+	t.Run("Map identity", func(t *testing.T) {
+		data := []int{1, 2, 3, 4, 5}
+		identity := func(n int) int { return n }
+
+		result := Map(data, identity)
+		if !Equal(result, data) {
+			t.Error("Map with identity function changed elements")
+		}
+	})
+
+	// Reverse of reverse is identity
+	t.Run("Reverse involution", func(t *testing.T) {
+		data := []int{1, 2, 3, 4, 5}
+		once := Reverse(data)
+		twice := Reverse(once)
+
+		if !Equal(twice, data) {
+			t.Error("Reverse(Reverse(x)) != x")
+		}
+	})
+
+	// Take(n) + Drop(n) = original (for n <= len)
+	t.Run("Take/Drop complement", func(t *testing.T) {
+		data := []int{1, 2, 3, 4, 5}
+		n := 3
+
+		taken := Take(data, n)
+		dropped := Drop(data, n)
+		combined := Concat(taken, dropped)
+
+		if !Equal(combined, data) {
+			t.Error("Take(n) + Drop(n) != original")
+		}
+	})
+
+	// Filter + Reject = original
+	t.Run("Filter/Reject complement", func(t *testing.T) {
+		data := []int{1, 2, 3, 4, 5, 6}
+		isEven := func(n int) bool { return n%2 == 0 }
+
+		filtered := Filter(data, isEven)
+		rejected := Reject(data, isEven)
+		combined := Concat(filtered, rejected)
+		sortedCombined := SortBy(combined, func(a, b int) bool { return a < b })
+
+		if !Equal(sortedCombined, data) {
+			t.Error("Filter + Reject elements don't match original")
+		}
+	})
+
+	// Uniq preserves all unique elements
+	t.Run("Uniq preserves elements", func(t *testing.T) {
+		data := []int{1, 2, 2, 3, 3, 3, 4, 4, 4, 4}
+		result := Uniq(data)
+
+		for _, v := range []int{1, 2, 3, 4} {
+			if !Contains(result, v) {
+				t.Errorf("Uniq lost element %d", v)
+			}
+		}
+	})
+
+	// Sort is idempotent
+	t.Run("Sort idempotent", func(t *testing.T) {
+		data := []int{3, 1, 4, 1, 5, 9, 2, 6}
+		once := Sort(data)
+		twice := Sort(once)
+
+		if !Equal(once, twice) {
+			t.Error("Sort is not idempotent")
+		}
+	})
+
+	// Contains(x, y) == Some(x, y)
+	t.Run("Contains equals Some", func(t *testing.T) {
+		data := []int{1, 2, 3, 4, 5}
+
+		for i := 1; i <= 5; i++ {
+			if Contains(data, i) != Some(data, i) {
+				t.Errorf("Contains and Some differ for element %d", i)
+			}
+		}
+		if Contains(data, 10) != Some(data, 10) {
+			t.Error("Contains and Some differ for non-existent element")
+		}
+	})
+
+	// Max >= all elements
+	t.Run("Max bounds", func(t *testing.T) {
+		data := []int{3, 1, 4, 1, 5, 9, 2, 6}
+		m := Max(data...)
+
+		for _, v := range data {
+			if v > m {
+				t.Errorf("Max %d is less than element %d", m, v)
+			}
+		}
+	})
+
+	// Min <= all elements
+	t.Run("Min bounds", func(t *testing.T) {
+		data := []int{3, 1, 4, 1, 5, 9, 2, 6}
+		m := Min(data...)
+
+		for _, v := range data {
+			if v < m {
+				t.Errorf("Min %d is greater than element %d", m, v)
+			}
+		}
+	})
+}
+
+// ============================================================================
+// COMPREHENSIVE EDGE CASE TESTS FOR EXISTING FUNCTIONS
+// ============================================================================
+
+func TestCutEdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         []int
+		needle        int
+		expectedLeft  []int
+		expectedRight []int
+		expectedFound bool
+	}{
+		{
+			name:          "empty slice",
+			input:         []int{},
+			needle:        1,
+			expectedLeft:  []int{},
+			expectedRight: nil,
+			expectedFound: false,
+		},
+		{
+			name:          "nil slice",
+			input:         nil,
+			needle:        1,
+			expectedLeft:  nil,
+			expectedRight: nil,
+			expectedFound: false,
+		},
+		{
+			name:          "single element - found",
+			input:         []int{1},
+			needle:        1,
+			expectedLeft:  []int{},
+			expectedRight: []int{},
+			expectedFound: true,
+		},
+		{
+			name:          "single element - not found",
+			input:         []int{1},
+			needle:        2,
+			expectedLeft:  []int{1},
+			expectedRight: nil,
+			expectedFound: false,
+		},
+		{
+			name:          "needle at start",
+			input:         []int{1, 2, 3},
+			needle:        1,
+			expectedLeft:  []int{},
+			expectedRight: []int{2, 3},
+			expectedFound: true,
+		},
+		{
+			name:          "needle at end",
+			input:         []int{1, 2, 3},
+			needle:        3,
+			expectedLeft:  []int{1, 2},
+			expectedRight: []int{},
+			expectedFound: true,
+		},
+		{
+			name:          "multiple occurrences - cuts at first",
+			input:         []int{1, 2, 1, 3},
+			needle:        1,
+			expectedLeft:  []int{},
+			expectedRight: []int{2, 1, 3},
+			expectedFound: true,
+		},
+		{
+			name:          "all same elements",
+			input:         []int{5, 5, 5},
+			needle:        5,
+			expectedLeft:  []int{},
+			expectedRight: []int{5, 5},
+			expectedFound: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			left, right, found := Cut(tt.input, tt.needle)
+			if !reflect.DeepEqual(left, tt.expectedLeft) {
+				t.Errorf("Cut() left = %v, want %v", left, tt.expectedLeft)
+			}
+			if !reflect.DeepEqual(right, tt.expectedRight) {
+				t.Errorf("Cut() right = %v, want %v", right, tt.expectedRight)
+			}
+			if found != tt.expectedFound {
+				t.Errorf("Cut() found = %v, want %v", found, tt.expectedFound)
+			}
+		})
+	}
+}
+
+func TestCutByEdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         []int
+		predicate     func(int) bool
+		expectedLeft  []int
+		expectedRight []int
+		expectedFound bool
+	}{
+		{
+			name:          "empty slice",
+			input:         []int{},
+			predicate:     func(n int) bool { return n > 2 },
+			expectedLeft:  []int{},
+			expectedRight: nil,
+			expectedFound: false,
+		},
+		{
+			name:          "nil slice",
+			input:         nil,
+			predicate:     func(n int) bool { return n > 2 },
+			expectedLeft:  nil,
+			expectedRight: nil,
+			expectedFound: false,
+		},
+		{
+			name:          "first element matches",
+			input:         []int{5, 1, 2},
+			predicate:     func(n int) bool { return n > 4 },
+			expectedLeft:  []int{},
+			expectedRight: []int{1, 2},
+			expectedFound: true,
+		},
+		{
+			name:          "no element matches",
+			input:         []int{1, 2, 3},
+			predicate:     func(n int) bool { return n > 10 },
+			expectedLeft:  []int{1, 2, 3},
+			expectedRight: nil,
+			expectedFound: false,
+		},
+		{
+			name:          "last element matches",
+			input:         []int{1, 2, 5},
+			predicate:     func(n int) bool { return n > 4 },
+			expectedLeft:  []int{1, 2},
+			expectedRight: []int{},
+			expectedFound: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			left, right, found := CutBy(tt.input, tt.predicate)
+			if !reflect.DeepEqual(left, tt.expectedLeft) {
+				t.Errorf("CutBy() left = %v, want %v", left, tt.expectedLeft)
+			}
+			if !reflect.DeepEqual(right, tt.expectedRight) {
+				t.Errorf("CutBy() right = %v, want %v", right, tt.expectedRight)
+			}
+			if found != tt.expectedFound {
+				t.Errorf("CutBy() found = %v, want %v", found, tt.expectedFound)
+			}
+		})
+	}
+}
+
+func TestIndexEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		needle   int
+		expected int
+	}{
+		{"empty slice", []int{}, 1, -1},
+		{"nil slice", nil, 1, -1},
+		{"single element - found", []int{1}, 1, 0},
+		{"single element - not found", []int{1}, 2, -1},
+		{"first element", []int{1, 2, 3}, 1, 0},
+		{"last element", []int{1, 2, 3}, 3, 2},
+		{"middle element", []int{1, 2, 3}, 2, 1},
+		{"multiple occurrences - first", []int{1, 2, 1, 3}, 1, 0},
+		{"not found", []int{1, 2, 3}, 4, -1},
+		{"all same - found", []int{5, 5, 5}, 5, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Index(tt.input, tt.needle)
+			if result != tt.expected {
+				t.Errorf("Index() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestLastIndexEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		needle   int
+		expected int
+	}{
+		{"empty slice", []int{}, 1, -1},
+		{"nil slice", nil, 1, -1},
+		{"single element - found", []int{1}, 1, 0},
+		{"single element - not found", []int{1}, 2, -1},
+		{"first element", []int{1, 2, 3}, 1, 0},
+		{"last element", []int{1, 2, 3}, 3, 2},
+		{"multiple occurrences - last", []int{1, 2, 1, 3}, 1, 2},
+		{"not found", []int{1, 2, 3}, 4, -1},
+		{"all same", []int{5, 5, 5}, 5, 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := LastIndex(tt.input, tt.needle)
+			if result != tt.expected {
+				t.Errorf("LastIndex() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestReplaceEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		needle   int
+		replace  int
+		n        int
+		expected []int
+	}{
+		{"empty slice", []int{}, 1, 9, -1, []int{}},
+		{"nil slice", nil, 1, 9, -1, []int{}},
+		{"single element - replace", []int{1}, 1, 9, -1, []int{9}},
+		{"single element - no match", []int{1}, 2, 9, -1, []int{1}},
+		{"replace first 0", []int{1, 1, 1}, 1, 9, 0, []int{1, 1, 1}},
+		{"replace first 1", []int{1, 1, 1}, 1, 9, 1, []int{9, 1, 1}},
+		{"replace first 2", []int{1, 1, 1}, 1, 9, 2, []int{9, 9, 1}},
+		{"replace all", []int{1, 1, 1}, 1, 9, -1, []int{9, 9, 9}},
+		{"replace more than exist", []int{1, 2}, 1, 9, 5, []int{9, 2}},
+		{"no matches", []int{1, 2, 3}, 4, 9, -1, []int{1, 2, 3}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Replace(tt.input, tt.needle, tt.replace, tt.n)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Replace() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFindEdgeCases(t *testing.T) {
+	tests := []struct {
+		name          string
+		input         []int
+		predicate     func(int) bool
+		expectedVal   int
+		expectedFound bool
+	}{
+		{"empty slice", []int{}, func(n int) bool { return n > 0 }, 0, false},
+		{"nil slice", nil, func(n int) bool { return n > 0 }, 0, false},
+		{"single - found", []int{5}, func(n int) bool { return n > 0 }, 5, true},
+		{"single - not found", []int{5}, func(n int) bool { return n > 10 }, 0, false},
+		{"first element", []int{5, 10, 15}, func(n int) bool { return n > 0 }, 5, true},
+		{"last element", []int{5, 10, 15}, func(n int) bool { return n > 12 }, 15, true},
+		{"no match", []int{1, 2, 3}, func(n int) bool { return n > 10 }, 0, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, found := Find(tt.input, tt.predicate)
+			if val != tt.expectedVal {
+				t.Errorf("Find() val = %v, want %v", val, tt.expectedVal)
+			}
+			if found != tt.expectedFound {
+				t.Errorf("Find() found = %v, want %v", found, tt.expectedFound)
+			}
+		})
+	}
+}
+
+func TestJoinEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]int
+		glue     []int
+		expected []int
+	}{
+		{"empty slices", [][]int{}, []int{0}, []int{}},
+		{"nil slices", nil, []int{0}, []int{}},
+		{"single empty slice", [][]int{{}}, []int{0}, nil},
+		{"single slice", [][]int{{1, 2, 3}}, []int{0}, []int{1, 2, 3}},
+		{"two slices", [][]int{{1, 2}, {3, 4}}, []int{0}, []int{1, 2, 0, 3, 4}},
+		{"empty glue", [][]int{{1, 2}, {3, 4}}, []int{}, []int{1, 2, 3, 4}},
+		{"empty middle slice", [][]int{{1, 2}, {}, {3, 4}}, []int{0}, []int{1, 2, 0, 0, 3, 4}},
+		{"all empty slices", [][]int{{}, {}}, []int{0}, []int{0}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Join(tt.input, tt.glue)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Join() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConcatEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]int
+		expected []int
+	}{
+		{"no slices", [][]int{}, []int{}},
+		{"nil slices", nil, []int{}},
+		{"single empty slice", [][]int{{}}, []int{}},
+		{"single slice", [][]int{{1, 2, 3}}, []int{1, 2, 3}},
+		{"two slices", [][]int{{1, 2}, {3, 4}}, []int{1, 2, 3, 4}},
+		{"empty middle slice", [][]int{{1, 2}, {}, {3, 4}}, []int{1, 2, 3, 4}},
+		{"all empty", [][]int{{}, {}}, []int{}},
+		{"nil in middle", [][]int{{1, 2}, nil, {3, 4}}, []int{1, 2, 3, 4}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Concat(tt.input...)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Concat() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestReverseEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		expected []int
+	}{
+		{"empty", []int{}, []int{}},
+		{"nil", nil, []int{}},
+		{"single", []int{1}, []int{1}},
+		{"two", []int{1, 2}, []int{2, 1}},
+		{"three", []int{1, 2, 3}, []int{3, 2, 1}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Reverse(tt.input)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Reverse() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestShuffleDeterministic(t *testing.T) {
+	// Shuffle with same seed should produce consistent results
+	// Note: We can only test that shuffle preserves length and elements
+
+	tests := []struct {
+		name  string
+		input []int
+	}{
+		{"empty", []int{}},
+		{"nil", nil},
+		{"single", []int{1}},
+		{"two", []int{1, 2}},
+		{"many", []int{1, 2, 3, 4, 5}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Shuffle(tt.input)
+
+			// Length preserved
+			if len(result) != len(tt.input) {
+				t.Errorf("Shuffle() len = %v, want %v", len(result), len(tt.input))
+			}
+
+			// All elements preserved (skip for nil/empty)
+			if len(tt.input) > 0 {
+				sortedResult := Sort(result)
+				sortedInput := Sort(tt.input)
+				if !reflect.DeepEqual(sortedResult, sortedInput) {
+					t.Errorf("Shuffle() elements changed")
+				}
+			}
+
+			// Nil input returns empty slice
+			if tt.input == nil && len(result) != 0 {
+				t.Errorf("Shuffle(nil) should return empty slice, got %v", result)
+			}
+		})
+	}
+}
+
+func TestSampleEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		n        int
+		expected int // expected length
+	}{
+		{"empty slice", []int{}, 3, 0},
+		{"nil slice", nil, 3, 0},
+		{"sample 0", []int{1, 2, 3}, 0, 0},
+		{"sample negative", []int{1, 2, 3}, -1, 0},
+		{"sample 1", []int{1, 2, 3}, 1, 1},
+		{"sample all", []int{1, 2, 3}, 3, 3},
+		{"sample more than len", []int{1, 2}, 5, 2},
+		{"single element", []int{42}, 1, 1},
+		{"sample more from single", []int{42}, 5, 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Sample(tt.input, tt.n)
+			if len(result) != tt.expected {
+				t.Errorf("Sample() len = %v, want %v", len(result), tt.expected)
+			}
+
+			// Verify all sampled elements are from input
+			for _, v := range result {
+				if !Contains(tt.input, v) {
+					t.Errorf("Sample() returned element %d not in input", v)
+				}
+			}
+		})
+	}
+}
+
+func TestFlattenEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]int
+		expected []int
+	}{
+		{"empty", [][]int{}, []int{}},
+		{"nil", nil, []int{}},
+		{"single empty", [][]int{{}}, []int{}},
+		{"single", [][]int{{1, 2, 3}}, []int{1, 2, 3}},
+		{"multiple", [][]int{{1, 2}, {3, 4}}, []int{1, 2, 3, 4}},
+		{"empty middle", [][]int{{1, 2}, {}, {3, 4}}, []int{1, 2, 3, 4}},
+		{"all empty", [][]int{{}, {}}, []int{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Flatten(tt.input)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Flatten() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestZipEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        []int
+		b        []string
+		expected []string
+	}{
+		{"empty a", []int{}, []string{"a", "b"}, []string{}},
+		{"empty b", []int{1, 2}, []string{}, []string{}},
+		{"both empty", []int{}, []string{}, []string{}},
+		{"a shorter", []int{1}, []string{"a", "b"}, []string{"1a"}},
+		{"b shorter", []int{1, 2}, []string{"a"}, []string{"1a"}},
+		{"same length", []int{1, 2}, []string{"a", "b"}, []string{"1a", "2b"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Zip(tt.a, tt.b, func(x int, y string) string {
+				return fmt.Sprintf("%d%s", x, y)
+			})
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Zip() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestUnzipEdgeCases(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     []string
+		expectedA []int
+		expectedB []string
+	}{
+		{"empty", []string{}, []int{}, []string{}},
+		{"nil", nil, []int{}, []string{}},
+		{"single", []string{"1a"}, []int{1}, []string{"a"}},
+		{"multiple", []string{"1a", "2b"}, []int{1, 2}, []string{"a", "b"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a, b := Unzip(tt.input, func(s string) (int, string) {
+				x, _ := strconv.Atoi(string(s[0]))
+				return x, string(s[1])
+			})
+			if !reflect.DeepEqual(a, tt.expectedA) {
+				t.Errorf("Unzip() a = %v, want %v", a, tt.expectedA)
+			}
+			if !reflect.DeepEqual(b, tt.expectedB) {
+				t.Errorf("Unzip() b = %v, want %v", b, tt.expectedB)
+			}
+		})
+	}
+}
+
+func TestUnionEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		inputs   [][]int
+		expected []int
+	}{
+		{"no slices", [][]int{}, []int{}},
+		{"single empty", [][]int{{}}, []int{}},
+		{"single slice", [][]int{{1, 2, 3}}, []int{1, 2, 3}},
+		{"two empty", [][]int{{}, {}}, []int{}},
+		{"with duplicates", [][]int{{1, 2}, {2, 3}}, []int{1, 2, 3}},
+		{"all same", [][]int{{1, 1}, {1, 1}}, []int{1}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Union(tt.inputs...)
+			// Sort both for comparison since Union doesn't guarantee order
+			sortedResult := Sort(result)
+			sortedExpected := Sort(tt.expected)
+			if !reflect.DeepEqual(sortedResult, sortedExpected) {
+				t.Errorf("Union() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestIntersectionEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		inputs   [][]int
+		expected []int
+	}{
+		{"no slices", [][]int{}, []int{}},
+		{"single empty", [][]int{{}}, []int{}},
+		{"no intersection", [][]int{{1, 2}, {3, 4}}, []int{}},
+		{"single element", [][]int{{1}, {1}}, []int{1}},
+		{"multiple elements", [][]int{{1, 2, 3}, {2, 3, 4}}, []int{2, 3}},
+		{"three slices", [][]int{{1, 2, 3}, {2, 3, 4}, {3, 4, 5}}, []int{3}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Intersection(tt.inputs...)
+			sortedResult := Sort(result)
+			sortedExpected := Sort(tt.expected)
+			if !reflect.DeepEqual(sortedResult, sortedExpected) {
+				t.Errorf("Intersection() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDifferenceEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		slices   [][]int
+		expected []int
+	}{
+		{"single slice - all in intersection", [][]int{{1, 2, 3}}, []int{}},
+		{"two identical - all in intersection", [][]int{{1, 2}, {1, 2}}, []int{}},
+		{"two - unique elements", [][]int{{1, 2, 3}, {2, 4, 5}}, []int{1, 3, 4, 5}},
+		{"three slices - nothing common", [][]int{{1, 2, 3, 4}, {2, 5}, {4, 6}}, []int{1, 2, 3, 4, 5, 6}},
+		{"three slices with common", [][]int{{1, 2, 3}, {2, 3, 4}, {3, 4, 5}}, []int{1, 2, 4, 5}},
+		{"with empty", [][]int{{1, 2}, {}}, []int{1, 2}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Difference(tt.slices...)
+			sortedResult := Sort(result)
+			sortedExpected := Sort(tt.expected)
+			if !reflect.DeepEqual(sortedResult, sortedExpected) {
+				t.Errorf("Difference() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestComplementEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		a        []int
+		b        []int
+		expected []int
+	}{
+		{"empty a", []int{}, []int{1, 2}, []int{1, 2}},
+		{"empty b", []int{1, 2}, []int{}, []int{}},
+		{"both empty", []int{}, []int{}, []int{}},
+		{"no complement", []int{1, 2}, []int{1, 2}, []int{}},
+		{"partial", []int{1, 2}, []int{1}, []int{}},
+		{"full", []int{1, 2}, []int{3, 4}, []int{3, 4}},
+		{"b larger", []int{1}, []int{1, 2, 3}, []int{2, 3}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Complement(tt.a, tt.b)
+			sortedResult := Sort(result)
+			sortedExpected := Sort(tt.expected)
+			if !reflect.DeepEqual(sortedResult, sortedExpected) {
+				t.Errorf("Complement() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGroupByEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		key      func(int) string
+		expected map[string][]int
+	}{
+		{"empty", []int{}, func(n int) string { return "key" }, map[string][]int{}},
+		{"nil", nil, func(n int) string { return "key" }, map[string][]int{}},
+		{"single", []int{1}, func(n int) string { return "odd" }, map[string][]int{"odd": {1}}},
+		{"multiple groups", []int{1, 2, 3, 4}, func(n int) string {
+			if n%2 == 0 {
+				return "even"
+			}
+			return "odd"
+		}, map[string][]int{"odd": {1, 3}, "even": {2, 4}}},
+		{"all same group", []int{1, 3, 5}, func(n int) string { return "odd" }, map[string][]int{"odd": {1, 3, 5}}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := GroupBy(tt.input, tt.key)
+			if len(result) != len(tt.expected) {
+				t.Errorf("GroupBy() len = %v, want %v", len(result), len(tt.expected))
+			}
+			for k, v := range tt.expected {
+				if !reflect.DeepEqual(result[k], v) {
+					t.Errorf("GroupBy()[%s] = %v, want %v", k, result[k], v)
+				}
+			}
+		})
+	}
+}
+
+func TestPartitionEdgeCases(t *testing.T) {
+	tests := []struct {
+		name              string
+		input             []int
+		predicate         func(int) bool
+		expectedSatisfied []int
+		expectedNot       []int
+	}{
+		{"empty", []int{}, func(n int) bool { return n > 0 }, []int{}, []int{}},
+		{"nil", nil, func(n int) bool { return n > 0 }, []int{}, []int{}},
+		{"all true", []int{1, 2, 3}, func(n int) bool { return n > 0 }, []int{1, 2, 3}, []int{}},
+		{"all false", []int{-1, -2, -3}, func(n int) bool { return n > 0 }, []int{}, []int{-1, -2, -3}},
+		{"mixed", []int{1, -2, 3, -4}, func(n int) bool { return n > 0 }, []int{1, 3}, []int{-2, -4}},
+		{"single true", []int{5}, func(n int) bool { return n > 0 }, []int{5}, []int{}},
+		{"single false", []int{-5}, func(n int) bool { return n > 0 }, []int{}, []int{-5}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			satisfied, notSatisfied := Partition(tt.input, tt.predicate)
+			if !reflect.DeepEqual(satisfied, tt.expectedSatisfied) {
+				t.Errorf("Partition() satisfied = %v, want %v", satisfied, tt.expectedSatisfied)
+			}
+			if !reflect.DeepEqual(notSatisfied, tt.expectedNot) {
+				t.Errorf("Partition() notSatisfied = %v, want %v", notSatisfied, tt.expectedNot)
+			}
+		})
+	}
+}
+
+func TestChunkEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		n        int
+		expected [][]int
+	}{
+		{"empty", []int{}, 2, nil},
+		{"nil", nil, 2, nil},
+		{"size 0", []int{1, 2, 3}, 0, [][]int{{1, 2, 3}}},
+		{"negative size", []int{1, 2, 3}, -1, [][]int{{1, 2, 3}}},
+		{"size 1", []int{1, 2, 3}, 1, [][]int{{1}, {2}, {3}}},
+		{"size 2", []int{1, 2, 3, 4}, 2, [][]int{{1, 2}, {3, 4}}},
+		{"uneven", []int{1, 2, 3}, 2, [][]int{{1, 2}, {3}}},
+		{"larger than slice", []int{1, 2}, 5, [][]int{{1, 2}}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Chunk(tt.input, tt.n)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Chunk() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestScanEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		init     int
+		expected []int
+	}{
+		{"empty", []int{}, 0, []int{0}},
+		{"nil", nil, 0, []int{0}},
+		{"single", []int{5}, 0, []int{0, 5}},
+		{"two elements", []int{1, 2}, 0, []int{0, 1, 3}},
+		{"with init", []int{1, 2, 3}, 10, []int{10, 11, 13, 16}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Scan(tt.input, func(acc, val int) int { return acc + val }, tt.init)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Scan() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSlidingWindowEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		n        int
+		expected [][]int
+	}{
+		{"empty", []int{}, 2, nil},
+		{"nil", nil, 2, nil},
+		{"n=0", []int{1, 2, 3}, 0, nil},
+		{"n negative", []int{1, 2, 3}, -1, nil},
+		{"n=1", []int{1, 2, 3}, 1, [][]int{{1}, {2}, {3}}},
+		{"n=2", []int{1, 2, 3}, 2, [][]int{{1, 2}, {2, 3}}},
+		{"n=len", []int{1, 2, 3}, 3, [][]int{{1, 2, 3}}},
+		{"n>len", []int{1, 2}, 3, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := SlidingWindow(tt.input, tt.n)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("SlidingWindow() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestTransposeEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    [][]int
+		expected [][]int
+	}{
+		{"empty matrix", [][]int{}, nil},
+		{"nil matrix", nil, nil},
+		{"single row", [][]int{{1, 2, 3}}, [][]int{{1}, {2}, {3}}},
+		{"single column", [][]int{{1}, {2}, {3}}, [][]int{{1, 2, 3}}},
+		{"2x2", [][]int{{1, 2}, {3, 4}}, [][]int{{1, 3}, {2, 4}}},
+		{"3x2", [][]int{{1, 2, 3}, {4, 5, 6}}, [][]int{{1, 4}, {2, 5}, {3, 6}}},
+		{"empty rows", [][]int{{}, {}}, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Transpose(tt.input)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Transpose() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRangeEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		start    int
+		end      int
+		expected []int
+	}{
+		{"start=end", 5, 5, []int{5}},
+		{"start>end", 5, 1, []int{}},
+		{"adjacent", 1, 2, []int{1, 2}},
+		{"negative range", -3, 2, []int{-3, -2, -1, 0, 1, 2}},
+		{"both negative", -5, -3, []int{-5, -4, -3}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Range(tt.start, tt.end)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Range(%d, %d) = %v, want %v", tt.start, tt.end, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestRangeStepEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		start    int
+		end      int
+		step     int
+		expected []int
+	}{
+		{"step=0", 1, 5, 0, []int{}},
+		{"wrong direction", 1, 5, -1, []int{}},
+		{"wrong direction negative", 5, 1, 1, []int{}},
+		{"step doesn't divide evenly", 1, 10, 3, []int{1, 4, 7, 10}},
+		{"single step", 1, 5, 5, []int{1}},
+		{"large step", 1, 5, 10, []int{1}},
+		{"negative step", 10, 0, -2, []int{10, 8, 6, 4, 2, 0}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := RangeStep(tt.start, tt.end, tt.step)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("RangeStep(%d, %d, %d) = %v, want %v", tt.start, tt.end, tt.step, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFillEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		n        int
+		value    int
+		expected []int
+	}{
+		{"n=0", 0, 42, []int{}},
+		{"n=1", 1, 42, []int{42}},
+		{"n=5", 5, 42, []int{42, 42, 42, 42, 42}},
+		{"negative n", -1, 42, []int{}},
+		{"large n", 1000, 42, nil}, // Don't check exact, just that it works
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Fill(tt.n, tt.value)
+			if tt.expected != nil && !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Fill(%d, %d) = %v, want %v", tt.n, tt.value, result, tt.expected)
+			}
+			// Just check length for large n
+			if tt.expected == nil && len(result) != 1000 {
+				t.Errorf("Fill(%d, %d) len = %v, want %v", tt.n, tt.value, len(result), 1000)
+			}
+		})
+	}
+}
+
+func TestRepeatEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		n        int
+		expected []int
+	}{
+		{"empty slice", []int{}, 3, []int{}},
+		{"nil slice", nil, 3, []int{}},
+		{"n=0", []int{1, 2}, 0, []int{}},
+		{"n=1", []int{1, 2}, 1, []int{1, 2}},
+		{"n=3", []int{1, 2}, 3, []int{1, 2, 1, 2, 1, 2}},
+		{"negative n", []int{1, 2}, -1, []int{}},
+		{"single element", []int{42}, 4, []int{42, 42, 42, 42}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Repeat(tt.input, tt.n)
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Errorf("Repeat() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestEveryEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		needle   int
+		expected bool
+	}{
+		{"empty", []int{}, 1, true},
+		{"nil", nil, 1, true},
+		{"all match", []int{5, 5, 5}, 5, true},
+		{"none match", []int{1, 2, 3}, 5, false},
+		{"some match", []int{5, 5, 6}, 5, false},
+		{"single match", []int{5}, 5, true},
+		{"single no match", []int{5}, 1, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Every(tt.input, tt.needle)
+			if result != tt.expected {
+				t.Errorf("Every() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSomeEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		needle   int
+		expected bool
+	}{
+		{"empty", []int{}, 1, false},
+		{"nil", nil, 1, false},
+		{"found", []int{1, 2, 3}, 2, true},
+		{"not found", []int{1, 2, 3}, 5, false},
+		{"single found", []int{5}, 5, true},
+		{"single not found", []int{5}, 1, false},
+		{"multiple occurrences", []int{2, 2, 2}, 2, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Some(tt.input, tt.needle)
+			if result != tt.expected {
+				t.Errorf("Some() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestNoneEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []int
+		needle   int
+		expected bool
+	}{
+		{"empty", []int{}, 1, true},
+		{"nil", nil, 1, true},
+		{"none found", []int{1, 2, 3}, 5, true},
+		{"found", []int{1, 2, 3}, 2, false},
+		{"single not found", []int{5}, 1, true},
+		{"single found", []int{5}, 5, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := None(tt.input, tt.needle)
+			if result != tt.expected {
+				t.Errorf("None() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestHeadTailLastInitialEdgeCases(t *testing.T) {
+	t.Run("Head", func(t *testing.T) {
+		// Empty
+		_, err := Head([]int{})
+		if err == nil {
+			t.Error("Head(empty) should return error")
+		}
+
+		// Single element
+		val, err := Head([]int{42})
+		if err != nil {
+			t.Error("Head(single) should not return error")
+		}
+		if val != 42 {
+			t.Errorf("Head() = %v, want 42", val)
+		}
+
+		// Multiple elements
+		val, err = Head([]int{1, 2, 3})
+		if val != 1 {
+			t.Errorf("Head() = %v, want 1", val)
+		}
+	})
+
+	t.Run("Tail", func(t *testing.T) {
+		// Empty
+		if Tail([]int{}) != nil {
+			t.Error("Tail(empty) should return nil")
+		}
+
+		// Single element
+		if Tail([]int{42}) != nil {
+			t.Error("Tail(single) should return nil")
+		}
+
+		// Multiple elements
+		result := Tail([]int{1, 2, 3})
+		if !reflect.DeepEqual(result, []int{2, 3}) {
+			t.Errorf("Tail() = %v, want [2, 3]", result)
+		}
+	})
+
+	t.Run("Last", func(t *testing.T) {
+		// Empty
+		_, err := Last([]int{})
+		if err == nil {
+			t.Error("Last(empty) should return error")
+		}
+
+		// Single element
+		val, err := Last([]int{42})
+		if err != nil {
+			t.Error("Last(single) should not return error")
+		}
+		if val != 42 {
+			t.Errorf("Last() = %v, want 42", val)
+		}
+
+		// Multiple elements
+		val, err = Last([]int{1, 2, 3})
+		if val != 3 {
+			t.Errorf("Last() = %v, want 3", val)
+		}
+	})
+
+	t.Run("Initial", func(t *testing.T) {
+		// Empty
+		if Initial([]int{}) != nil {
+			t.Error("Initial(empty) should return nil")
+		}
+
+		// Single element
+		if Initial([]int{42}) != nil {
+			t.Error("Initial(single) should return nil")
+		}
+
+		// Multiple elements
+		result := Initial([]int{1, 2, 3})
+		if !reflect.DeepEqual(result, []int{1, 2}) {
+			t.Errorf("Initial() = %v, want [1, 2]", result)
+		}
+	})
 }

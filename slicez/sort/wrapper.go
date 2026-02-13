@@ -45,8 +45,16 @@ func IsSorted[E any](data []E, less func(a, b E) bool) bool {
 // the call Search[int](data, func(e int) bool { return e >= 23 })
 // returns the smallest index i and element e such that e >= 23.
 func Search[E any](data []E, f func(e E) bool) (int, E) {
-	i := sort2.Search(len(data)-1, func(i int) bool {
+	if len(data) == 0 {
+		var zero E
+		return 0, zero
+	}
+	i := sort2.Search(len(data), func(i int) bool {
 		return f(data[i])
 	})
-	return i, data[i]
+	var zero E
+	if i < len(data) {
+		return i, data[i]
+	}
+	return i, zero
 }
