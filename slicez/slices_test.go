@@ -1124,3 +1124,207 @@ func TestSliceToMap(t *testing.T) {
 		t.Errorf("SliceToMap() = %v, want %v", result, expected)
 	}
 }
+
+func TestScanLeft(t *testing.T) {
+	// Running sums starting from 0
+	result := ScanLeft([]int{1, 2, 3}, func(acc, val int) int { return acc + val }, 0)
+	expected := []int{0, 1, 3, 6}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ScanLeft() = %v, want %v", result, expected)
+	}
+
+	// String concatenation
+	strings := ScanLeft([]string{"a", "b", "c"}, func(acc, val string) string { return acc + val }, "")
+	expectedStr := []string{"", "a", "ab", "abc"}
+	if !reflect.DeepEqual(strings, expectedStr) {
+		t.Errorf("ScanLeft() strings = %v, want %v", strings, expectedStr)
+	}
+}
+
+func TestScanRight(t *testing.T) {
+	// Running sums from right
+	result := ScanRight([]int{1, 2, 3}, func(acc, val int) int { return acc + val }, 0)
+	expected := []int{6, 5, 3, 0}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ScanRight() = %v, want %v", result, expected)
+	}
+}
+
+func TestScan(t *testing.T) {
+	// Scan is alias for ScanLeft
+	result := Scan([]int{1, 2, 3}, func(acc, val int) int { return acc + val }, 0)
+	expected := []int{0, 1, 3, 6}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Scan() = %v, want %v", result, expected)
+	}
+}
+
+func TestSlidingWindow(t *testing.T) {
+	result := SlidingWindow([]int{1, 2, 3, 4, 5}, 3)
+	expected := [][]int{{1, 2, 3}, {2, 3, 4}, {3, 4, 5}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("SlidingWindow() = %v, want %v", result, expected)
+	}
+
+	// Edge cases
+	if SlidingWindow([]int{1, 2}, 3) != nil {
+		t.Error("SlidingWindow with n > len should return nil")
+	}
+	if SlidingWindow([]int{1, 2, 3}, 0) != nil {
+		t.Error("SlidingWindow with n <= 0 should return nil")
+	}
+}
+
+func TestTranspose(t *testing.T) {
+	matrix := [][]int{{1, 2, 3}, {4, 5, 6}}
+	result := Transpose(matrix)
+	expected := [][]int{{1, 4}, {2, 5}, {3, 6}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Transpose() = %v, want %v", result, expected)
+	}
+
+	// Edge cases
+	if Transpose([][]int{}) != nil {
+		t.Error("Transpose of empty matrix should return nil")
+	}
+	if Transpose([][]int{{}}) != nil {
+		t.Error("Transpose of matrix with empty rows should return nil")
+	}
+}
+
+func TestIntersperse(t *testing.T) {
+	result := Intersperse([]int{1, 2, 3}, 0)
+	expected := []int{1, 0, 2, 0, 3}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Intersperse() = %v, want %v", result, expected)
+	}
+
+	// Edge cases
+	if !reflect.DeepEqual(Intersperse([]int{1}, 0), []int{1}) {
+		t.Error("Intersperse with single element should return clone")
+	}
+	if !reflect.DeepEqual(Intersperse([]int{}, 0), []int{}) {
+		t.Error("Intersperse with empty slice should return empty slice")
+	}
+}
+
+func TestSplitAt(t *testing.T) {
+	before, after := SplitAt([]int{1, 2, 3, 4, 5}, 2)
+	if !reflect.DeepEqual(before, []int{1, 2}) {
+		t.Errorf("SplitAt before = %v, want %v", before, []int{1, 2})
+	}
+	if !reflect.DeepEqual(after, []int{3, 4, 5}) {
+		t.Errorf("SplitAt after = %v, want %v", after, []int{3, 4, 5})
+	}
+
+	// Edge cases
+	b1, a1 := SplitAt([]int{1, 2, 3}, 0)
+	if len(b1) != 0 || !reflect.DeepEqual(a1, []int{1, 2, 3}) {
+		t.Error("SplitAt at index 0 should return empty before and full after")
+	}
+
+	b2, a2 := SplitAt([]int{1, 2, 3}, 5)
+	if !reflect.DeepEqual(b2, []int{1, 2, 3}) || len(a2) != 0 {
+		t.Error("SplitAt at index >= len should return full before and empty after")
+	}
+}
+
+func TestSpan(t *testing.T) {
+	init, rest := Span([]int{1, 2, 3, 4, 5}, func(n int) bool { return n < 4 })
+	if !reflect.DeepEqual(init, []int{1, 2, 3}) {
+		t.Errorf("Span init = %v, want %v", init, []int{1, 2, 3})
+	}
+	if !reflect.DeepEqual(rest, []int{4, 5}) {
+		t.Errorf("Span rest = %v, want %v", rest, []int{4, 5})
+	}
+
+	// All satisfy predicate
+	i1, r1 := Span([]int{1, 2, 3}, func(n int) bool { return n > 0 })
+	if !reflect.DeepEqual(i1, []int{1, 2, 3}) || len(r1) != 0 {
+		t.Error("Span when all satisfy should return full init and empty rest")
+	}
+
+	// None satisfy predicate
+	i2, r2 := Span([]int{4, 5, 6}, func(n int) bool { return n < 4 })
+	if len(i2) != 0 || !reflect.DeepEqual(r2, []int{4, 5, 6}) {
+		t.Error("Span when none satisfy should return empty init and full rest")
+	}
+}
+
+func TestMapIdx(t *testing.T) {
+	result := MapIdx([]string{"a", "b", "c"}, func(i int, s string) string {
+		return fmt.Sprintf("%d:%s", i, s)
+	})
+	expected := []string{"0:a", "1:b", "2:c"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("MapIdx() = %v, want %v", result, expected)
+	}
+}
+
+func TestFilterIdx(t *testing.T) {
+	// Keep elements at even indices with value > 10
+	result := FilterIdx([]int{5, 20, 15, 25, 10}, func(i int, n int) bool {
+		return i%2 == 0 && n > 10
+	})
+	expected := []int{15} // index 2, value 15
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("FilterIdx() = %v, want %v", result, expected)
+	}
+}
+
+func TestRejectIdx(t *testing.T) {
+	// Reject elements at even indices
+	result := RejectIdx([]int{1, 2, 3, 4, 5}, func(i int, n int) bool {
+		return i%2 == 0
+	})
+	expected := []int{2, 4} // elements at odd indices
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("RejectIdx() = %v, want %v", result, expected)
+	}
+}
+
+func TestIsAllUnique(t *testing.T) {
+	if !IsAllUnique([]int{1, 2, 3, 4, 5}) {
+		t.Error("IsAllUnique should return true for unique elements")
+	}
+	if IsAllUnique([]int{1, 2, 2, 3}) {
+		t.Error("IsAllUnique should return false for duplicates")
+	}
+	if !IsAllUnique([]string{"a", "b", "c"}) {
+		t.Error("IsAllUnique should work with strings")
+	}
+	if !IsAllUnique([]int{}) {
+		t.Error("IsAllUnique should return true for empty slice")
+	}
+}
+
+func TestIsSorted(t *testing.T) {
+	if !IsSorted([]int{1, 2, 3, 4, 5}) {
+		t.Error("IsSorted should return true for sorted slice")
+	}
+	if !IsSorted([]int{1, 2, 2, 3}) {
+		t.Error("IsSorted should return true for sorted slice with duplicates")
+	}
+	if IsSorted([]int{3, 2, 1}) {
+		t.Error("IsSorted should return false for reverse sorted slice")
+	}
+	if !IsSorted([]int{}) {
+		t.Error("IsSorted should return true for empty slice")
+	}
+	if !IsSorted([]int{42}) {
+		t.Error("IsSorted should return true for single element")
+	}
+}
+
+func TestIsSortedBy(t *testing.T) {
+	// Sort by length
+	strings := []string{"a", "bb", "ccc"}
+	if !IsSortedBy(strings, func(a, b string) bool { return len(a) < len(b) }) {
+		t.Error("IsSortedBy should return true when sorted by custom criteria")
+	}
+
+	// Not sorted by first character
+	if IsSortedBy([]string{"b", "a", "c"}, func(a, b string) bool { return a < b }) {
+		t.Error("IsSortedBy should return false when not sorted")
+	}
+}

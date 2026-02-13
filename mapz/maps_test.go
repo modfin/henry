@@ -352,3 +352,87 @@ func TestValueOr(t *testing.T) {
 		t.Error("Expected ValueOr to return fallback 100 for key 'c'")
 	}
 }
+
+func TestMapKeys(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2}
+	result := MapKeys(m, strings.ToUpper)
+	expected := map[string]int{"A": 1, "B": 2}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("MapKeys() = %v, want %v", result, expected)
+	}
+
+	// Empty map
+	empty := MapKeys(map[string]int{}, strings.ToUpper)
+	if len(empty) != 0 {
+		t.Error("MapKeys on empty map should return empty map")
+	}
+}
+
+func TestMapValues(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2}
+	result := MapValues(m, func(v int) int { return v * 2 })
+	expected := map[string]int{"a": 2, "b": 4}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("MapValues() = %v, want %v", result, expected)
+	}
+
+	// Empty map
+	empty := MapValues(map[string]int{}, func(v int) int { return v * 2 })
+	if len(empty) != 0 {
+		t.Error("MapValues on empty map should return empty map")
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	m := map[string]int{"counter": 0, "value": 10}
+
+	// Update existing key
+	updated := Update(m, "counter", func(v int) int { return v + 1 })
+	if !updated {
+		t.Error("Update should return true for existing key")
+	}
+	if m["counter"] != 1 {
+		t.Errorf("After Update, m[\"counter\"] = %d, want 1", m["counter"])
+	}
+
+	// Try to update non-existing key
+	notUpdated := Update(m, "missing", func(v int) int { return v + 1 })
+	if notUpdated {
+		t.Error("Update should return false for non-existing key")
+	}
+	if _, exists := m["missing"]; exists {
+		t.Error("Update should not add missing key")
+	}
+}
+
+func TestGetOrSet(t *testing.T) {
+	m := map[string]int{}
+	callCount := 0
+	compute := func() int {
+		callCount++
+		return 42
+	}
+
+	// First call - should compute
+	v1 := GetOrSet(m, "key", compute)
+	if v1 != 42 {
+		t.Errorf("GetOrSet first call = %d, want 42", v1)
+	}
+	if callCount != 1 {
+		t.Errorf("Compute function called %d times, expected 1", callCount)
+	}
+
+	// Second call - should return cached value
+	v2 := GetOrSet(m, "key", compute)
+	if v2 != 42 {
+		t.Errorf("GetOrSet second call = %d, want 42", v2)
+	}
+	if callCount != 1 {
+		t.Errorf("Compute function called %d times, expected 1 (cached)", callCount)
+	}
+
+	// Verify key was set
+	if m["key"] != 42 {
+		t.Errorf("m[\"key\"] = %d, want 42", m["key"])
+	}
+}

@@ -1054,3 +1054,243 @@ func XORBy[A any, B comparable](by func(A) B, slices ...[]A) []A {
 
 	return res
 }
+
+// ScanLeft returns all intermediate results of folding from left to right.
+// Like Fold but returns all accumulator values including the initial value.
+//
+// Example:
+//
+//	ScanLeft([]int{1, 2, 3}, func(acc, val int) int { return acc + val }, 0)
+//	// Returns []int{0, 1, 3, 6} (running sums)
+func ScanLeft[I any, A any](slice []I, combine func(accumulator A, val I) A, init A) []A {
+	result := make([]A, len(slice)+1)
+	result[0] = init
+	for i, val := range slice {
+		init = combine(init, val)
+		result[i+1] = init
+	}
+	return result
+}
+
+// ScanRight returns all intermediate results of folding from right to left.
+// Like ScanLeft but operates from right to left.
+//
+// Example:
+//
+//	ScanRight([]int{1, 2, 3}, func(acc, val int) int { return acc + val }, 0)
+//	// Returns []int{0, 3, 5, 6} (running sums from right)
+func ScanRight[I any, A any](slice []I, combine func(accumulator A, val I) A, init A) []A {
+	result := make([]A, len(slice)+1)
+	result[len(slice)] = init
+	for i := len(slice) - 1; i >= 0; i-- {
+		init = combine(init, slice[i])
+		result[i] = init
+	}
+	return result
+}
+
+// Scan is an alias for ScanLeft.
+func Scan[I any, A any](slice []I, combine func(accumulator A, val I) A, init A) []A {
+	return ScanLeft(slice, combine, init)
+}
+
+// SlidingWindow creates sliding windows of size n from the slice.
+// Returns a slice of slices where each inner slice has n consecutive elements.
+//
+// Example:
+//
+//	SlidingWindow([]int{1, 2, 3, 4, 5}, 3)
+//	// Returns [][]int{{1, 2, 3}, {2, 3, 4}, {3, 4, 5}}
+func SlidingWindow[A any](slice []A, n int) [][]A {
+	if n <= 0 || len(slice) < n {
+		return nil
+	}
+	result := make([][]A, 0, len(slice)-n+1)
+	for i := 0; i <= len(slice)-n; i++ {
+		window := make([]A, n)
+		copy(window, slice[i:i+n])
+		result = append(result, window)
+	}
+	return result
+}
+
+// Transpose transposes a matrix (slice of slices), swapping rows and columns.
+// Assumes all rows have the same length. Returns nil for empty input.
+//
+// Example:
+//
+//	Transpose([][]int{{1, 2, 3}, {4, 5, 6}})
+//	// Returns [][]int{{1, 4}, {2, 5}, {3, 6}}
+func Transpose[A any](matrix [][]A) [][]A {
+	if len(matrix) == 0 || len(matrix[0]) == 0 {
+		return nil
+	}
+	rows := len(matrix)
+	cols := len(matrix[0])
+
+	// Verify all rows have same length
+	for _, row := range matrix {
+		if len(row) != cols {
+			return nil // or panic, or handle differently
+		}
+	}
+
+	result := make([][]A, cols)
+	for i := 0; i < cols; i++ {
+		result[i] = make([]A, rows)
+		for j := 0; j < rows; j++ {
+			result[i][j] = matrix[j][i]
+		}
+	}
+	return result
+}
+
+// Intersperse inserts element between each element of the slice.
+// Returns a new slice with the element inserted between consecutive elements.
+//
+// Example:
+//
+//	Intersperse([]int{1, 2, 3}, 0)
+//	// Returns []int{1, 0, 2, 0, 3}
+func Intersperse[A any](slice []A, element A) []A {
+	if len(slice) <= 1 {
+		return Clone(slice)
+	}
+	result := make([]A, 0, len(slice)*2-1)
+	for i, v := range slice {
+		result = append(result, v)
+		if i < len(slice)-1 {
+			result = append(result, element)
+		}
+	}
+	return result
+}
+
+// SplitAt splits the slice at the given index.
+// Returns two slices: elements before index and elements from index onward.
+//
+// Example:
+//
+//	SplitAt([]int{1, 2, 3, 4, 5}, 2)
+//	// Returns ([]int{1, 2}, []int{3, 4, 5})
+func SplitAt[A any](slice []A, index int) (before, after []A) {
+	if index <= 0 {
+		return []A{}, Clone(slice)
+	}
+	if index >= len(slice) {
+		return Clone(slice), []A{}
+	}
+	return Clone(slice[:index]), Clone(slice[index:])
+}
+
+// Span splits the slice at the first element that does not satisfy the predicate.
+// Returns two slices: elements satisfying the predicate, and remaining elements.
+// More efficient than calling TakeWhile + DropWhile separately.
+//
+// Example:
+//
+//	Span([]int{1, 2, 3, 4, 5}, func(n int) bool { return n < 4 })
+//	// Returns ([]int{1, 2, 3}, []int{4, 5})
+func Span[A any](slice []A, predicate func(a A) bool) (init, rest []A) {
+	for i, a := range slice {
+		if !predicate(a) {
+			return Clone(slice[:i]), Clone(slice[i:])
+		}
+	}
+	return Clone(slice), []A{}
+}
+
+// MapIdx maps a function over the slice with index awareness.
+// The mapper function receives both the index and the element.
+//
+// Example:
+//
+//	MapIdx([]string{"a", "b", "c"}, func(i int, s string) string {
+//	    return fmt.Sprintf("%d:%s", i, s)
+//	})
+//	// Returns []string{"0:a", "1:b", "2:c"}
+func MapIdx[A any, B any](slice []A, mapper func(index int, a A) B) []B {
+	result := make([]B, len(slice))
+	for i, a := range slice {
+		result[i] = mapper(i, a)
+	}
+	return result
+}
+
+// FilterIdx filters elements with index awareness.
+// The predicate receives both the index and the element.
+//
+// Example:
+//
+//	FilterIdx([]int{10, 20, 30, 40}, func(i int, n int) bool {
+//	    return i%2 == 0 && n > 15
+//	})
+//	// Returns []int{30} (index 2 is even and value > 15)
+func FilterIdx[A any](slice []A, include func(index int, a A) bool) []A {
+	result := make([]A, 0, len(slice))
+	for i, a := range slice {
+		if include(i, a) {
+			result = append(result, a)
+		}
+	}
+	return result
+}
+
+// RejectIdx is the complement of FilterIdx, filtering out elements that satisfy the predicate.
+func RejectIdx[A any](slice []A, exclude func(index int, a A) bool) []A {
+	return FilterIdx(slice, func(i int, a A) bool {
+		return !exclude(i, a)
+	})
+}
+
+// IsAllUnique returns true if all elements in the slice are unique (no duplicates).
+// Uses a map for O(n) time complexity.
+//
+// Example:
+//
+//	IsAllUnique([]int{1, 2, 3})    // Returns true
+//	IsAllUnique([]int{1, 2, 2, 3}) // Returns false
+func IsAllUnique[A comparable](slice []A) bool {
+	seen := make(map[A]struct{}, len(slice))
+	for _, a := range slice {
+		if _, exists := seen[a]; exists {
+			return false
+		}
+		seen[a] = struct{}{}
+	}
+	return true
+}
+
+// IsSorted returns true if the slice is sorted in ascending order.
+// Uses the natural ordering of the elements.
+//
+// Example:
+//
+//	IsSorted([]int{1, 2, 3})    // Returns true
+//	IsSorted([]int{3, 2, 1})    // Returns false
+//	IsSorted([]int{1, 2, 2, 3}) // Returns true (allows duplicates)
+func IsSorted[A compare.Ordered](slice []A) bool {
+	for i := 1; i < len(slice); i++ {
+		if slice[i] < slice[i-1] {
+			return false
+		}
+	}
+	return true
+}
+
+// IsSortedBy returns true if the slice is sorted according to the provided comparison function.
+// The less function should return true if a should come before b.
+//
+// Example:
+//
+//	IsSortedBy([]string{"a", "bb", "ccc"}, func(a, b string) bool {
+//	    return len(a) < len(b)
+//	}) // Returns true (sorted by length)
+func IsSortedBy[A any](slice []A, less func(a, b A) bool) bool {
+	for i := 1; i < len(slice); i++ {
+		if less(slice[i], slice[i-1]) {
+			return false
+		}
+	}
+	return true
+}

@@ -222,3 +222,67 @@ func Invert[K, V comparable](m map[K]V) map[V]K {
 		return v, k
 	})
 }
+
+// MapKeys transforms the keys of a map while keeping the same values.
+// The mapper function receives only the key (unlike RemapKeys which receives both key and value).
+//
+// Example:
+//
+//	MapKeys(map[string]int{"a": 1, "b": 2}, strings.ToUpper)
+//	// Returns map[string]int{"A": 1, "B": 2}
+func MapKeys[K1 comparable, V any, K2 comparable](m map[K1]V, mapper func(K1) K2) map[K2]V {
+	result := make(map[K2]V, len(m))
+	for k, v := range m {
+		result[mapper(k)] = v
+	}
+	return result
+}
+
+// MapValues transforms the values of a map while keeping the same keys.
+// The mapper function receives only the value (unlike RemapValues which receives both key and value).
+//
+// Example:
+//
+//	MapValues(map[string]int{"a": 1, "b": 2}, func(v int) int { return v * 2 })
+//	// Returns map[string]int{"a": 2, "b": 4}
+func MapValues[K comparable, V1 any, V2 any](m map[K]V1, mapper func(V1) V2) map[K]V2 {
+	result := make(map[K]V2, len(m))
+	for k, v := range m {
+		result[k] = mapper(v)
+	}
+	return result
+}
+
+// Update updates the value at the given key if it exists.
+// The updater function receives the current value and returns the new value.
+// Returns true if the key was found and updated, false otherwise.
+//
+// Example:
+//
+//	m := map[string]int{"counter": 0}
+//	Update(m, "counter", func(v int) int { return v + 1 }) // m is now {"counter": 1}
+//	Update(m, "missing", func(v int) int { return v + 1 }) // no change, returns false
+func Update[K comparable, V any](m map[K]V, key K, updater func(V) V) bool {
+	if v, ok := m[key]; ok {
+		m[key] = updater(v)
+		return true
+	}
+	return false
+}
+
+// GetOrSet retrieves the value for the given key, or if the key doesn't exist,
+// computes the value using the provided function, sets it in the map, and returns it.
+//
+// Example:
+//
+//	m := map[string]int{}
+//	v1 := GetOrSet(m, "key", func() int { return expensiveComputation() })
+//	v2 := GetOrSet(m, "key", func() int { return 999 }) // Returns same value as v1, func not called
+func GetOrSet[K comparable, V any](m map[K]V, key K, compute func() V) V {
+	if v, ok := m[key]; ok {
+		return v
+	}
+	v := compute()
+	m[key] = v
+	return v
+}

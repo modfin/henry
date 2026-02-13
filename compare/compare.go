@@ -98,3 +98,58 @@ func Coalesce[T comparable](vals ...T) (t T) {
 	}
 	return t
 }
+
+// Greater returns true if a > b
+func Greater[E Ordered](a, b E) bool {
+	return a > b
+}
+
+// GreaterOrEqual returns true if a >= b
+func GreaterOrEqual[E Ordered](a, b E) bool {
+	return a >= b
+}
+
+// BetweenMode specifies whether bounds are inclusive or exclusive
+// for the Between function.
+type BetweenMode int
+
+const (
+	// BetweenInclusive includes both start and end bounds (start <= x <= end)
+	BetweenInclusive BetweenMode = iota
+	// BetweenExclusive excludes both start and end bounds (start < x < end)
+	BetweenExclusive
+	// BetweenLeftInclusive includes only start bound (start <= x < end)
+	BetweenLeftInclusive
+	// BetweenRightInclusive includes only end bound (start < x <= end)
+	BetweenRightInclusive
+)
+
+// Between returns true if value is between start and end.
+// By default, bounds are inclusive (start <= value <= end).
+// Use BetweenMode options to control inclusivity.
+//
+// Examples:
+//
+//	Between(5, 1, 10)                    // true (1 <= 5 <= 10)
+//	Between(1, 1, 10)                    // true (bounds inclusive)
+//	Between(1, 1, 10, BetweenExclusive)  // false (1 is not > 1)
+//	Between(10, 1, 10, BetweenRightInclusive) // true (10 <= 10)
+func Between[E Ordered](value, start, end E, mode ...BetweenMode) bool {
+	m := BetweenInclusive
+	if len(mode) > 0 {
+		m = mode[0]
+	}
+
+	switch m {
+	case BetweenInclusive:
+		return value >= start && value <= end
+	case BetweenExclusive:
+		return value > start && value < end
+	case BetweenLeftInclusive:
+		return value >= start && value < end
+	case BetweenRightInclusive:
+		return value > start && value <= end
+	default:
+		return value >= start && value <= end
+	}
+}

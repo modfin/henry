@@ -260,33 +260,99 @@ func TestNegateOf(t *testing.T) {
 }
 
 func TestCoalesce(t *testing.T) {
-	// With integers
-	result := Coalesce(0, 0, 42, 100)
-	if result != 42 {
-		t.Errorf("Expected first non-zero value 42, got %v", result)
+	// Test with integers
+	result := Coalesce(0, 0, 3, 4)
+	if result != 3 {
+		t.Errorf("Coalesce(0, 0, 3, 4) = %v, want 3", result)
 	}
 
-	// All zeros
-	result = Coalesce(0, 0, 0)
-	if result != 0 {
-		t.Errorf("Expected zero value 0, got %v", result)
-	}
-
-	// With strings
-	resultStr := Coalesce("", "", "hello", "world")
-	if resultStr != "hello" {
-		t.Errorf("Expected first non-empty string 'hello', got %v", resultStr)
-	}
-
-	// All empty strings
-	resultStr = Coalesce("", "", "")
-	if resultStr != "" {
-		t.Errorf("Expected empty string, got %v", resultStr)
-	}
-
-	// First is non-zero
+	// Test with first non-zero
 	result = Coalesce(1, 2, 3)
 	if result != 1 {
-		t.Errorf("Expected first value 1, got %v", result)
+		t.Errorf("Coalesce(1, 2, 3) = %v, want 1", result)
+	}
+
+	// Test with strings
+	strResult := Coalesce("", "", "third")
+	if strResult != "third" {
+		t.Errorf("Coalesce(\"\", \"\", \"third\") = %v, want \"third\"", strResult)
+	}
+
+	// Test with all zero values
+	zeroResult := Coalesce(0, 0, 0)
+	if zeroResult != 0 {
+		t.Errorf("Coalesce(0, 0, 0) = %v, want 0", zeroResult)
+	}
+}
+
+func TestGreater(t *testing.T) {
+	if !Greater(5, 3) {
+		t.Error("Expected Greater(5, 3) to be true")
+	}
+	if Greater(3, 5) {
+		t.Error("Expected Greater(3, 5) to be false")
+	}
+	if Greater(5, 5) {
+		t.Error("Expected Greater(5, 5) to be false")
+	}
+}
+
+func TestGreaterOrEqual(t *testing.T) {
+	if !GreaterOrEqual(5, 3) {
+		t.Error("Expected GreaterOrEqual(5, 3) to be true")
+	}
+	if !GreaterOrEqual(5, 5) {
+		t.Error("Expected GreaterOrEqual(5, 5) to be true")
+	}
+	if GreaterOrEqual(3, 5) {
+		t.Error("Expected GreaterOrEqual(3, 5) to be false")
+	}
+}
+
+func TestBetween(t *testing.T) {
+	// Inclusive (default)
+	if !Between(5, 1, 10) {
+		t.Error("Expected Between(5, 1, 10) to be true")
+	}
+	if !Between(1, 1, 10) {
+		t.Error("Expected Between(1, 1, 10) to be true (inclusive lower)")
+	}
+	if !Between(10, 1, 10) {
+		t.Error("Expected Between(10, 1, 10) to be true (inclusive upper)")
+	}
+	if Between(11, 1, 10) {
+		t.Error("Expected Between(11, 1, 10) to be false")
+	}
+
+	// Exclusive
+	if Between(1, 1, 10, BetweenExclusive) {
+		t.Error("Expected Between(1, 1, 10, BetweenExclusive) to be false")
+	}
+	if Between(10, 1, 10, BetweenExclusive) {
+		t.Error("Expected Between(10, 1, 10, BetweenExclusive) to be false")
+	}
+	if !Between(5, 1, 10, BetweenExclusive) {
+		t.Error("Expected Between(5, 1, 10, BetweenExclusive) to be true")
+	}
+
+	// Left inclusive only
+	if !Between(1, 1, 10, BetweenLeftInclusive) {
+		t.Error("Expected Between(1, 1, 10, BetweenLeftInclusive) to be true")
+	}
+	if Between(10, 1, 10, BetweenLeftInclusive) {
+		t.Error("Expected Between(10, 1, 10, BetweenLeftInclusive) to be false")
+	}
+
+	// Right inclusive only
+	if Between(1, 1, 10, BetweenRightInclusive) {
+		t.Error("Expected Between(1, 1, 10, BetweenRightInclusive) to be false")
+	}
+	if !Between(10, 1, 10, BetweenRightInclusive) {
+		t.Error("Expected Between(10, 1, 10, BetweenRightInclusive) to be true")
+	}
+
+	// Strings
+	if !Between("b", "a", "c") {
+		t.Error("Expected Between(\"b\", \"a\", \"c\") to be true")
 	}
 }
