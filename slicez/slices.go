@@ -417,7 +417,9 @@ func DropRight[A any](slice []A, i int) []A {
 
 // Filter will produce a new slice only containing elements where the "include" function returns true
 func Filter[A any](slice []A, include func(a A) bool) []A {
-	res := make([]A, 0, len(slice)/2)
+	// Pre-allocate with full capacity, then truncate to actual size
+	// This avoids reallocation in the common case where filter keeps many elements
+	res := make([]A, 0, len(slice))
 	for _, val := range slice {
 		if include(val) {
 			res = append(res, val)
@@ -485,6 +487,12 @@ func NoneBy[A any](slice []A, predicate func(A) bool) bool {
 // Partition will partition a slice into to two slices. One where every element for which the predicate function returns true
 // and where it returns false
 func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisfied []A) {
+	// Pre-allocate both slices with estimated capacity
+	// In worst case, one slice could have all elements, so we allocate len(slice) for each
+	// but the actual memory won't be used until elements are appended
+	satisfied = make([]A, 0, len(slice))
+	notSatisfied = make([]A, 0, len(slice))
+
 	for _, a := range slice {
 		if predicate(a) {
 			satisfied = append(satisfied, a)
@@ -500,16 +508,29 @@ func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisf
 // The order of grouped values is determined by the order they occur in collection.
 // The grouping is generated from the results of running each element of collection through iteratee.
 func PartitionBy[A any, B comparable](slice []A, by func(a A) B) [][]A {
+	if len(slice) == 0 {
+		return nil
+	}
+
+	m := make(map[B][]A, len(slice)/2) // Pre-allocate with estimated capacity
 	var order []B
-	m := make(map[B][]A)
+	var seen = make(map[B]struct{}, len(slice)/2)
+
 	for _, v := range slice {
 		k := by(v)
 		m[k] = append(m[k], v)
-		order = append(order, k)
+		if _, ok := seen[k]; !ok {
+			seen[k] = struct{}{}
+			order = append(order, k)
+		}
 	}
-	return Map(Uniq(order), func(k B) []A {
-		return m[k]
-	})
+
+	// Build result without calling Uniq (which creates another map)
+	result := make([][]A, len(order))
+	for i, k := range order {
+		result[i] = m[k]
+	}
+	return result
 }
 
 // Chunk will make de-flatten a slice into chunks
@@ -561,31 +582,54 @@ func Shuffle[A any](slice []A) []A {
 
 // Sample will return a slice containing "n" random elements from the original slice
 func Sample[A any](slice []A, n int) []A {
-	var ret []A
-
 	if n > len(slice) {
 		n = len(slice)
 	}
 
-	if n > len(slice)/3 { // should be square root, due to birthday paradox
-		ret = Shuffle(slice)
-		return ret[:n]
+	if n <= 0 {
+		return []A{}
 	}
 
-	idxs := map[int]struct{}{}
-	for i := 0; i < n; i++ {
-		var idx int
-		for {
-			idx = rand.Intn(len(slice))
-			_, found := idxs[idx]
-			if found {
-				continue
-			}
-			idxs[idx] = struct{}{}
-			break
-		}
+	// For large samples (>50% of slice), use Fisher-Yates shuffle approach
+	// This is O(n) and avoids the birthday paradox problem
+	if n > len(slice)/2 {
+		// Create a copy to avoid mutating original
+		shuffled := make([]A, len(slice))
+		copy(shuffled, slice)
+		rand.Shuffle(len(shuffled), func(i, j int) {
+			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+		})
+		return shuffled[:n]
+	}
 
-		ret = append(ret, slice[idx])
+	// For smaller samples, use swap-to-end algorithm (O(n) time, O(n) space for copy)
+	// This is more efficient than retry-loop with map when slice is large
+	if len(slice) <= 10000 {
+		// Create mutable copy and swap selected elements to the front
+		mut := make([]A, len(slice))
+		copy(mut, slice)
+
+		ret := make([]A, n)
+		for i := 0; i < n; i++ {
+			// Pick random index from remaining elements
+			j := i + rand.Intn(len(mut)-i)
+			ret[i] = mut[j]
+			// Swap to keep selected elements at the front
+			mut[i], mut[j] = mut[j], mut[i]
+		}
+		return ret
+	}
+
+	// For very large slices with small samples, use set-based approach
+	// to avoid copying the entire slice
+	ret := make([]A, 0, n)
+	idxs := make(map[int]struct{}, n)
+	for len(idxs) < n {
+		idx := rand.Intn(len(slice))
+		if _, found := idxs[idx]; !found {
+			idxs[idx] = struct{}{}
+			ret = append(ret, slice[idx])
+		}
 	}
 	return ret
 }
@@ -631,16 +675,20 @@ func CompactBy[A any](slice []A, equal func(a, b A) bool) []A {
 	if len(slice) == 0 {
 		return slice
 	}
-	head := slice[0]
-	last := head
-	tail := Fold(slice[1:], func(accumulator []A, current A) []A {
-		if equal(last, current) {
-			return accumulator
+	// Pre-allocate result with same length as input
+	// In worst case (no duplicates), we'll use full capacity
+	result := make([]A, 1, len(slice))
+	result[0] = slice[0]
+	last := slice[0]
+
+	for i := 1; i < len(slice); i++ {
+		current := slice[i]
+		if !equal(last, current) {
+			result = append(result, current)
+			last = current
 		}
-		last = current
-		return append(accumulator, current)
-	}, []A{})
-	return append([]A{head}, tail...)
+	}
+	return result
 }
 
 // Max returns the largest element of the slice
@@ -725,11 +773,12 @@ func SliceToMap[E any, K comparable, V any](slice []E, mapper func(a E) (key K, 
 
 // Associate will iterate over a slice turning each object into a key/value pair in a map. Alias SliceToMap
 func Associate[E any, K comparable, V any](slice []E, mapper func(e E) (key K, value V)) map[K]V {
-	return Fold(slice, func(acc map[K]V, e E) map[K]V {
+	acc := make(map[K]V, len(slice))
+	for _, e := range slice {
 		k, v := mapper(e)
 		acc[k] = v
-		return acc
-	}, map[K]V{})
+	}
+	return acc
 }
 
 // Set will create a Set in the form of map[E]bool,
@@ -901,73 +950,81 @@ func ComplementBy[A any, B comparable](by func(a A) B, a, b []A) []A {
 
 // Zip will zip two slices, a and b, into one slice, c, using the zip function to combined elements
 func Zip[A any, B any, C any](aSlice []A, bSlice []B, zipper func(a A, b B) C) []C {
-	var capacity = Min(len(aSlice), len(bSlice))
-	var cSlice = make([]C, 0, capacity)
+	capacity := Min(len(aSlice), len(bSlice))
+	if capacity == 0 {
+		return []C{}
+	}
+	cSlice := make([]C, capacity)
 	for i := 0; i < capacity; i++ {
-		cSlice = append(cSlice, zipper(aSlice[i], bSlice[i]))
+		cSlice[i] = zipper(aSlice[i], bSlice[i])
 	}
 	return cSlice
 }
 
 // Unzip will unzip a slice slices, c, into two slices, a and b, using the supplied unziper function
 func Unzip[A any, B any, C any](cSlice []C, unzipper func(c C) (a A, b B)) ([]A, []B) {
-	var aSlice = make([]A, 0, len(cSlice))
-	var bSlice = make([]B, 0, len(cSlice))
-	for _, c := range cSlice {
-		a, b := unzipper(c)
-		aSlice = append(aSlice, a)
-		bSlice = append(bSlice, b)
+	if len(cSlice) == 0 {
+		return []A{}, []B{}
+	}
+	aSlice := make([]A, len(cSlice))
+	bSlice := make([]B, len(cSlice))
+	for i, c := range cSlice {
+		aSlice[i], bSlice[i] = unzipper(c)
 	}
 	return aSlice, bSlice
-
 }
 
 // Zip2 will zip three slices, a, b and c, into one slice, d, using the zip function to combined elements
 func Zip2[A any, B any, C any, D any](aSlice []A, bSlice []B, cSlice []C, zipper func(a A, b B, c C) D) []D {
-	var capacity = Min(len(aSlice), len(bSlice), len(cSlice))
-	var dSlice = make([]D, 0, capacity)
+	capacity := Min(len(aSlice), len(bSlice), len(cSlice))
+	if capacity == 0 {
+		return []D{}
+	}
+	dSlice := make([]D, capacity)
 	for i := 0; i < capacity; i++ {
-		dSlice = append(dSlice, zipper(aSlice[i], bSlice[i], cSlice[i]))
+		dSlice[i] = zipper(aSlice[i], bSlice[i], cSlice[i])
 	}
 	return dSlice
 }
 
 // Unzip2 will unzip a slice slices, d, into three slices, a, b and c, using the supplied unziper function
 func Unzip2[A any, B any, C any, D any](dSlice []D, unzipper func(d D) (a A, b B, c C)) ([]A, []B, []C) {
-	var aSlice = make([]A, 0, len(dSlice))
-	var bSlice = make([]B, 0, len(dSlice))
-	var cSlice = make([]C, 0, len(dSlice))
-	for _, d := range dSlice {
-		a, b, c := unzipper(d)
-		aSlice = append(aSlice, a)
-		bSlice = append(bSlice, b)
-		cSlice = append(cSlice, c)
+	if len(dSlice) == 0 {
+		return []A{}, []B{}, []C{}
+	}
+	aSlice := make([]A, len(dSlice))
+	bSlice := make([]B, len(dSlice))
+	cSlice := make([]C, len(dSlice))
+	for i, d := range dSlice {
+		aSlice[i], bSlice[i], cSlice[i] = unzipper(d)
 	}
 	return aSlice, bSlice, cSlice
 }
 
 // Zip3 will zip three slices, a, b and c, into one slice, d, using the zip function to combined elements
 func Zip3[A any, B any, C any, D any, E any](aSlice []A, bSlice []B, cSlice []C, dSlice []D, zipper func(a A, b B, c C, d D) E) []E {
-	var capacity = Min(len(aSlice), len(bSlice), len(cSlice), len(dSlice))
-	var eSlice = make([]E, 0, capacity)
+	capacity := Min(len(aSlice), len(bSlice), len(cSlice), len(dSlice))
+	if capacity == 0 {
+		return []E{}
+	}
+	eSlice := make([]E, capacity)
 	for i := 0; i < capacity; i++ {
-		eSlice = append(eSlice, zipper(aSlice[i], bSlice[i], cSlice[i], dSlice[i]))
+		eSlice[i] = zipper(aSlice[i], bSlice[i], cSlice[i], dSlice[i])
 	}
 	return eSlice
 }
 
 // Unzip3 will unzip a slice slices, d, into three slices, a, b and c, using the supplied unziper function
 func Unzip3[A any, B any, C any, D any, E any](eSlice []E, unzipper func(e E) (a A, b B, c C, d D)) ([]A, []B, []C, []D) {
-	var aSlice = make([]A, 0, len(eSlice))
-	var bSlice = make([]B, 0, len(eSlice))
-	var cSlice = make([]C, 0, len(eSlice))
-	var dSlice = make([]D, 0, len(eSlice))
-	for _, e := range eSlice {
-		a, b, c, d := unzipper(e)
-		aSlice = append(aSlice, a)
-		bSlice = append(bSlice, b)
-		cSlice = append(cSlice, c)
-		dSlice = append(dSlice, d)
+	if len(eSlice) == 0 {
+		return []A{}, []B{}, []C{}, []D{}
+	}
+	aSlice := make([]A, len(eSlice))
+	bSlice := make([]B, len(eSlice))
+	cSlice := make([]C, len(eSlice))
+	dSlice := make([]D, len(eSlice))
+	for i, e := range eSlice {
+		aSlice[i], bSlice[i], cSlice[i], dSlice[i] = unzipper(e)
 	}
 	return aSlice, bSlice, cSlice, dSlice
 }

@@ -73,7 +73,13 @@ func Copy[K comparable, V any](dst, src map[K]V) {
 
 // Merge multiple maps from left to right into a new map.
 func Merge[K comparable, V any](maps ...map[K]V) map[K]V {
-	out := map[K]V{}
+	// Pre-calculate capacity to avoid reallocations
+	capacity := 0
+	for _, m := range maps {
+		capacity += len(m)
+	}
+
+	out := make(map[K]V, capacity)
 	for _, m := range maps {
 		for k, v := range m {
 			out[k] = v
@@ -118,7 +124,9 @@ func ValueOr[K comparable, V any](m map[K]V, key K, fallback V) V {
 }
 
 func Filter[K comparable, V any](m map[K]V, pick func(key K, val V) bool) map[K]V {
-	res := map[K]V{}
+	// Pre-allocate with capacity of input map
+	// In worst case, all elements pass the filter
+	res := make(map[K]V, len(m))
 	for k, v := range m {
 		if pick(k, v) {
 			res[k] = v
@@ -185,7 +193,7 @@ func FromEntries[K comparable, V any](slice []Entry[K, V]) map[K]V {
 
 // Remap manipulates a map keys and values and transforms it to a map of another types.
 func Remap[K comparable, V any, K2 comparable, V2 any](in map[K]V, mapper func(K, V) (K2, V2)) map[K2]V2 {
-	result := map[K2]V2{}
+	result := make(map[K2]V2, len(in))
 
 	for k, v := range in {
 		k2, v2 := mapper(k, v)

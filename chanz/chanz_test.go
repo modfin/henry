@@ -203,10 +203,14 @@ func TestPartition(t *testing.T) {
 	})
 
 	var resEven []int
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		resEven = Collect(even)
 	}()
 	resOdd := Collect(odd)
+	wg.Wait()
 
 	expEven := []int{2, 4, 6, 8}
 	if !slicez.Equal(expEven, resEven) {
@@ -334,11 +338,14 @@ func TestUnzip(t *testing.T) {
 
 	var ints []int
 	var strings []string
-
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		strings = Collect(sc)
 	}()
 	ints = Collect(ic)
+	wg.Wait()
 
 	iexp := []int{1, 2, 3}
 
@@ -352,7 +359,6 @@ func TestUnzip(t *testing.T) {
 		t.Logf("expected, %v, but got %v", sexp, strings)
 		t.Fail()
 	}
-
 }
 
 func TestSomeDone(t *testing.T) {
@@ -594,10 +600,14 @@ func TestPartitionWith(t *testing.T) {
 	})
 
 	var resEven []int
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		resEven = Collect(even)
 	}()
 	resOdd := Collect(odd)
+	wg.Wait()
 
 	expEven := []int{2, 4}
 	if !slicez.Equal(expEven, resEven) {
