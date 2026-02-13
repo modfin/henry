@@ -1421,39 +1421,6 @@ func TestDeduplicate(t *testing.T) {
 	}
 }
 
-func TestCycle(t *testing.T) {
-	slice := []int{1, 2, 3}
-	cycle := Cycle(slice)
-
-	if !reflect.DeepEqual(cycle, slice) {
-		t.Error("Cycle should return a clone of the original slice")
-	}
-
-	// Empty slice
-	if Cycle([]int{}) != nil {
-		t.Error("Cycle on empty slice should return nil")
-	}
-}
-
-func TestCycleValue(t *testing.T) {
-	slice := []int{1, 2, 3}
-
-	if CycleValue(slice, 0) != 1 {
-		t.Error("CycleValue at index 0 should return first element")
-	}
-	if CycleValue(slice, 3) != 1 {
-		t.Error("CycleValue at index 3 should cycle back to first")
-	}
-	if CycleValue(slice, 7) != 2 {
-		t.Error("CycleValue at index 7 (7 % 3 = 1) should return second element")
-	}
-
-	// Empty slice
-	if CycleValue([]int{}, 5) != 0 {
-		t.Error("CycleValue on empty slice should return zero value")
-	}
-}
-
 func TestFill(t *testing.T) {
 	result := Fill(5, 42)
 	expected := []int{42, 42, 42, 42, 42}

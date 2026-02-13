@@ -2,9 +2,10 @@ package slicez
 
 import (
 	"errors"
+	"math/rand"
+
 	"github.com/modfin/henry/compare"
 	"github.com/modfin/henry/slicez/sort"
-	"math/rand"
 )
 
 // Equal takes two slices of that is of the interface comparable. It returns true if they are of equal length and each
@@ -1387,39 +1388,6 @@ func Deduplicate[A comparable](slice []A) []A {
 		}
 	}
 	return result
-}
-
-// Cycle returns a slice that cycles through the input slice infinitely.
-// The returned slice can be indexed modulo the length of the input.
-// To get the nth cycled element: result[n % len(slice)]
-//
-// Example:
-//
-//	cycle := Cycle([]int{1, 2, 3})
-//	cycle[0] // 1, cycle[3] // 1, cycle[6] // 1
-//	cycle[1] // 2, cycle[4] // 2, cycle[7] // 2
-func Cycle[A any](slice []A) []A {
-	if len(slice) == 0 {
-		return nil
-	}
-	// Return a copy to prevent mutation of original
-	return Clone(slice)
-}
-
-// CycleValue returns the element at position index in a cycled slice.
-// Useful for getting values from an infinitely cycling sequence.
-//
-// Example:
-//
-//	CycleValue([]int{1, 2, 3}, 0)  // Returns 1
-//	CycleValue([]int{1, 2, 3}, 3)  // Returns 1 (cycles back)
-//	CycleValue([]int{1, 2, 3}, 7)  // Returns 2 (7 % 3 = 1)
-func CycleValue[A any](slice []A, index int) A {
-	if len(slice) == 0 {
-		var zero A
-		return zero
-	}
-	return slice[index%len(slice)]
 }
 
 // Fill creates a slice of length n filled with the given value.
