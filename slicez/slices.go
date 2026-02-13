@@ -8,14 +8,42 @@ import (
 	"github.com/modfin/henry/slicez/sort"
 )
 
-// Equal takes two slices of that is of the interface comparable. It returns true if they are of equal length and each
-// element in a[x] == b[x] for every element
+// Equal checks if two slices are equal.
+// Two slices are considered equal if they have the same length and
+// each element at the same index is equal (== comparison).
+//
+// Example:
+//
+//	slicez.Equal([]int{1, 2, 3}, []int{1, 2, 3})        // returns true
+//	slicez.Equal([]int{1, 2, 3}, []int{1, 2, 3, 4})    // returns false (different lengths)
+//	slicez.Equal([]string{"a", "b"}, []string{"a", "b"}) // returns true
+//	slicez.Equal([]int{1, 2}, []int{2, 1})             // returns false (different order)
 func Equal[A comparable](s1, s2 []A) bool {
 	return EqualBy(s1, s2, compare.Equal[A])
 }
 
-// EqualBy takes two slices and an equality check function. It returns true if they are of equal length and each
-// element in eq(a[x], b[x]) == true for every element
+// EqualBy checks if two slices are equal using a custom equality function.
+// It returns true if both slices have the same length and the equality function
+// returns true for every pair of elements at the same index.
+//
+// This is useful when comparing slices of different types, or when you need
+// custom comparison logic (e.g., case-insensitive string comparison).
+//
+// Example:
+//
+//	// Compare strings ignoring case
+//	s1 := []string{"hello", "world"}
+//	s2 := []string{"HELLO", "WORLD"}
+//	slicez.EqualBy(s1, s2, func(a, b string) bool {
+//	    return strings.EqualFold(a, b)
+//	}) // returns true
+//
+//	// Compare different types
+//	ints := []int{1, 2, 3}
+//	floats := []float64{1.0, 2.0, 3.0}
+//	slicez.EqualBy(ints, floats, func(i int, f float64) bool {
+//	    return float64(i) == f
+//	}) // returns true
 func EqualBy[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
 	if len(s1) != len(s2) {
 		return false
@@ -29,14 +57,35 @@ func EqualBy[E1, E2 any](s1 []E1, s2 []E2, eq func(E1, E2) bool) bool {
 	return true
 }
 
-// Index finds the first index of an element in an array. It returns -1 if it is not present
+// Index returns the index of the first occurrence of needle in s.
+// It returns -1 if needle is not found.
+// Uses == comparison for equality.
+//
+// Example:
+//
+//	slicez.Index([]int{1, 2, 3, 2, 1}, 2)        // returns 1 (first occurrence)
+//	slicez.Index([]string{"a", "b", "c"}, "b")    // returns 1
+//	slicez.Index([]int{1, 2, 3}, 4)             // returns -1 (not found)
 func Index[E comparable](s []E, needle E) int {
 	return IndexBy(s, func(e E) bool {
 		return needle == e
 	})
 }
 
-// IndexBy finds the first index of an element where the passed in function returns true. It returns -1 if it is not present
+// IndexBy returns the index of the first element where f returns true.
+// It returns -1 if no element satisfies the condition.
+//
+// Example:
+//
+//	// Find first even number
+//	slicez.IndexBy([]int{1, 3, 5, 6, 7}, func(n int) bool {
+//	    return n%2 == 0
+//	}) // returns 3
+//
+//	// Find first string longer than 3 characters
+//	slicez.IndexBy([]string{"a", "bb", "ccc", "dddd"}, func(s string) bool {
+//	    return len(s) > 3
+//	}) // returns 3
 func IndexBy[E any](s []E, f func(E) bool) int {
 	for i, v := range s {
 		if f(v) {
@@ -46,14 +95,35 @@ func IndexBy[E any](s []E, f func(E) bool) int {
 	return -1
 }
 
-// LastIndex finds the last index of an element in an array. It returns -1 if it is not present
+// LastIndex returns the index of the last occurrence of needle in s.
+// It returns -1 if needle is not found.
+// Uses == comparison for equality.
+//
+// Example:
+//
+//	slicez.LastIndex([]int{1, 2, 3, 2, 1}, 2)     // returns 3 (last occurrence)
+//	slicez.LastIndex([]string{"a", "b", "c", "b"}, "b") // returns 3
+//	slicez.LastIndex([]int{1, 2, 3}, 4)          // returns -1 (not found)
 func LastIndex[E comparable](s []E, needle E) int {
 	return LastIndexBy(s, func(e E) bool {
 		return e == needle
 	})
 }
 
-// LastIndexBy finds the last index of an element where the passed in function returns true. It returns -1 if it is not present
+// LastIndexBy returns the index of the last element where f returns true.
+// It returns -1 if no element satisfies the condition.
+//
+// Example:
+//
+//	// Find last even number
+//	slicez.LastIndexBy([]int{2, 4, 6, 7, 8}, func(n int) bool {
+//	    return n%2 == 0
+//	}) // returns 4
+//
+//	// Find last negative number
+//	slicez.LastIndexBy([]int{1, -2, 3, -4, 5}, func(n int) bool {
+//	    return n < 0
+//	}) // returns 3
 func LastIndexBy[E any](s []E, f func(E) bool) int {
 	n := len(s)
 
@@ -65,15 +135,40 @@ func LastIndexBy[E any](s []E, f func(E) bool) int {
 	return -1
 }
 
-// Cut will cut a slice into a left and a right part at the first instance where the needle is found. The needle is not included
+// Cut splits the slice at the first occurrence of needle.
+// It returns left (elements before needle), right (elements after needle), and a boolean
+// indicating if the needle was found. The needle itself is not included in either part.
+//
+// Example:
+//
+//	left, right, found := slicez.Cut([]int{1, 2, 3, 4, 5}, 3)
+//	// left = []int{1, 2}, right = []int{4, 5}, found = true
+//
+//	left, right, found := slicez.Cut([]string{"a", "b", "c"}, "d")
+//	// left = []string{"a", "b", "c"}, right = nil, found = false
 func Cut[E comparable](s []E, needle E) (left, right []E, found bool) {
 	return CutBy(s, func(e E) bool {
 		return e == needle
 	})
 }
 
-// CutBy will cut a slice into a left and a right part at the first instance where the on function returns true.
-// The element that makes the "on" function return true will not be included.
+// CutBy splits the slice at the first element where on returns true.
+// It returns left (elements before the match), right (elements after the match), and a boolean
+// indicating if a match was found. The matching element is not included in either part.
+//
+// Example:
+//
+//	// Cut at first number > 5
+//	left, right, found := slicez.CutBy([]int{1, 2, 6, 7, 8}, func(n int) bool {
+//	    return n > 5
+//	})
+//	// left = []int{1, 2}, right = []int{7, 8}, found = true
+//
+//	// Cut at first string starting with "c"
+//	left, right, found := slicez.CutBy([]string{"apple", "banana", "cherry"}, func(s string) bool {
+//	    return strings.HasPrefix(s, "c")
+//	})
+//	// left = []string{"apple", "banana"}, right = []string{}, found = true
 func CutBy[E any](s []E, on func(E) bool) (left, right []E, found bool) {
 	i := IndexBy(s, on)
 	if i == -1 {
@@ -82,7 +177,23 @@ func CutBy[E any](s []E, on func(E) bool) (left, right []E, found bool) {
 	return s[:i], s[i+1:], true
 }
 
-// Replace replaces occurrences needle in haystack n times. It Replaces all for n < 0
+// Replace replaces up to n occurrences of needle with replacement in haystack.
+// If n < 0, all occurrences are replaced.
+// Returns a new slice; the original is not modified.
+//
+// Example:
+//
+//	// Replace first 2 occurrences
+//	slicez.Replace([]int{1, 2, 1, 2, 1}, 1, 99, 2)
+//	// returns []int{99, 2, 99, 2, 1}
+//
+//	// Replace all occurrences (n < 0)
+//	slicez.Replace([]int{1, 2, 1, 2, 1}, 1, 99, -1)
+//	// returns []int{99, 2, 99, 2, 99}
+//
+//	// Replace first occurrence only
+//	slicez.Replace([]string{"a", "b", "a"}, "a", "z", 1)
+//	// returns []string{"z", "b", "a"}
 func Replace[E comparable](haystack []E, needle E, replacement E, n int) []E {
 	return Map(haystack, func(e E) E {
 		if n != 0 && e == needle {
@@ -93,17 +204,44 @@ func Replace[E comparable](haystack []E, needle E, replacement E, n int) []E {
 	})
 }
 
-// ReplaceFirst replaces first occurrences needle in haystack.
+// ReplaceFirst replaces the first occurrence of needle with replacement in haystack.
+// Returns a new slice; the original is not modified.
+//
+// Example:
+//
+//	slicez.ReplaceFirst([]int{1, 2, 1, 3}, 1, 99)
+//	// returns []int{99, 2, 1, 3}
 func ReplaceFirst[E comparable](haystack []E, needle E, replacement E) []E {
 	return Replace(haystack, needle, replacement, 1)
 }
 
-// ReplaceAll replaces all occurrences needle in haystack.
+// ReplaceAll replaces all occurrences of needle with replacement in haystack.
+// Returns a new slice; the original is not modified.
+//
+// Example:
+//
+//	slicez.ReplaceAll([]int{1, 2, 1, 3, 1}, 1, 99)
+//	// returns []int{99, 2, 99, 3, 99}
 func ReplaceAll[E comparable](haystack []E, needle E, replacement E) []E {
 	return Replace(haystack, needle, replacement, -1)
 }
 
-// Find will find the first instance of an element in a slice where the equal func returns true
+// Find returns the first element that satisfies the predicate function.
+// Returns the element and true if found, or the zero value and false if not found.
+//
+// Example:
+//
+//	// Find first number > 10
+//	val, found := slicez.Find([]int{1, 5, 12, 7, 15}, func(n int) bool {
+//	    return n > 10
+//	})
+//	// val = 12, found = true
+//
+//	// Find first string containing "e"
+//	val, found := slicez.Find([]string{"cat", "dog", "elephant"}, func(s string) bool {
+//	    return strings.Contains(s, "e")
+//	})
+//	// val = "elephant", found = true
 func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
 	i := IndexBy(s, equal)
 	if i == -1 {
@@ -112,7 +250,22 @@ func Find[E any](s []E, equal func(E) bool) (e E, found bool) {
 	return s[i], true
 }
 
-// FindLast will find the last instance of an element in a slice where the equal func returns true
+// FindLast returns the last element that satisfies the predicate function.
+// Returns the element and true if found, or the zero value and false if not found.
+//
+// Example:
+//
+//	// Find last even number
+//	val, found := slicez.FindLast([]int{1, 2, 3, 4, 5}, func(n int) bool {
+//	    return n%2 == 0
+//	})
+//	// val = 4, found = true
+//
+//	// Find last string starting with "a"
+//	val, found := slicez.FindLast([]string{"apple", "banana", "apricot", "cherry"}, func(s string) bool {
+//	    return strings.HasPrefix(s, "a")
+//	})
+//	// val = "apricot", found = true
 func FindLast[E any](s []E, equal func(E) bool) (e E, found bool) {
 	i := LastIndexBy(s, equal)
 	if i == -1 {
@@ -121,8 +274,24 @@ func FindLast[E any](s []E, equal func(E) bool) (e E, found bool) {
 	return s[i], true
 }
 
-// Join will join a two-dimensional slice into a one dimensional slice with the glue slice between them.
-// Similar to strings.Join or bytes.Join
+// Join concatenates multiple slices with glue inserted between each pair.
+// Similar to strings.Join but works with any slice type.
+// Returns an empty slice if slices is empty or nil.
+// If only one slice is provided, returns a copy of that slice.
+//
+// Example:
+//
+//	// Join with separator
+//	slicez.Join([][]int{{1, 2}, {3, 4}, {5, 6}}, []int{0, 0})
+//	// returns []int{1, 2, 0, 0, 3, 4, 0, 0, 5, 6}
+//
+//	// Join strings (like strings.Join but returns []string)
+//	slicez.Join([][]string{{"hello"}, {"world"}}, []string{" "})
+//	// returns []string{"hello", " ", "world"}
+//
+//	// Single slice
+//	slicez.Join([][]int{{1, 2, 3}}, []int{0})
+//	// returns []int{1, 2, 3}
 func Join[E any](slices [][]E, glue []E) []E {
 	if len(slices) == 0 {
 		return []E{}
@@ -144,17 +313,52 @@ func Join[E any](slices [][]E, glue []E) []E {
 	return b
 }
 
-// Contains returns true if the needle is present in the slice
+// Contains checks if needle exists in slice.
+// Uses == comparison for equality.
+// Returns false if slice is empty.
+//
+// Example:
+//
+//	slicez.Contains([]int{1, 2, 3}, 2)          // returns true
+//	slicez.Contains([]string{"a", "b"}, "c")     // returns false
+//	slicez.Contains([]int{}, 1)                  // returns false
 func Contains[E comparable](s []E, needle E) bool {
 	return Index(s, needle) >= 0
 }
 
-// ContainsBy returns true if the passed in func returns true on any of the element in the slice
+// ContainsBy checks if any element satisfies the predicate function.
+// Returns false if slice is empty or no element satisfies the condition.
+//
+// Example:
+//
+//	// Check if any number is even
+//	slicez.ContainsBy([]int{1, 3, 5, 6, 7}, func(n int) bool {
+//	    return n%2 == 0
+//	}) // returns true
+//
+//	// Check if any string is longer than 5 chars
+//	slicez.ContainsBy([]string{"a", "bb", "ccc"}, func(s string) bool {
+//	    return len(s) > 5
+//	}) // returns false
 func ContainsBy[E any](s []E, f func(e E) bool) bool {
 	return IndexBy(s, f) >= 0
 }
 
-// Clone will create a copy of the slice
+// Clone creates a copy of the slice.
+// Returns nil if the input slice is nil (preserves nil vs empty distinction).
+// The returned slice has the same elements but different backing array.
+//
+// Example:
+//
+//	original := []int{1, 2, 3}
+//	copy := slicez.Clone(original)
+//	copy[0] = 99
+//	// original is still []int{1, 2, 3}
+//	// copy is []int{99, 2, 3}
+//
+//	// Nil preservation
+//	var nilSlice []int
+//	result := slicez.Clone(nilSlice)  // result is nil, not []int{}
 func Clone[E any](s []E) []E {
 	// Preserve nil in case it matters.
 	if s == nil {
@@ -163,12 +367,38 @@ func Clone[E any](s []E) []E {
 	return append([]E{}, s...)
 }
 
-// Compare will compare two slices
+// Compare performs lexicographic comparison of two slices.
+// Returns -1 if s1 < s2, 0 if s1 == s2, and +1 if s1 > s2.
+// Comparison is done element by element using natural ordering.
+// If all elements are equal, the shorter slice is considered less.
+//
+// Example:
+//
+//	slicez.Compare([]int{1, 2, 3}, []int{1, 2, 4})  // returns -1
+//	slicez.Compare([]int{1, 2, 3}, []int{1, 2, 3})  // returns 0
+//	slicez.Compare([]int{1, 2, 3}, []int{1, 2})      // returns +1 (longer)
+//	slicez.Compare([]string{"a", "b"}, []string{"a", "c"}) // returns -1
 func Compare[E compare.Ordered](s1, s2 []E) int {
 	return CompareBy(s1, s2, compare.Compare[E])
 }
 
-// CompareBy will compare two slices using a compare function
+// CompareBy performs lexicographic comparison of two slices using a custom comparison function.
+// Returns -1 if s1 < s2, 0 if s1 == s2, and +1 if s1 > s2.
+// The comparison function should return negative if a < b, zero if a == b, positive if a > b.
+//
+// Example:
+//
+//	// Compare by length
+//	slicez.CompareBy([]string{"a", "bb"}, []string{"ccc", "d"}, func(a, b string) int {
+//	    return len(a) - len(b)
+//	}) // returns -1 (first string shorter overall)
+//
+//	// Compare different types
+//	slicez.CompareBy([]int{1, 2}, []float64{1.0, 2.0, 3.0}, func(i int, f float64) int {
+//	    if float64(i) < f { return -1 }
+//	    if float64(i) > f { return +1 }
+//	    return 0
+//	}) // returns -1 (second slice longer)
 func CompareBy[E1, E2 any](s1 []E1, s2 []E2, cmp func(E1, E2) int) int {
 	s2len := len(s2)
 	for i, v1 := range s1 {
