@@ -286,3 +286,76 @@ func GetOrSet[K comparable, V any](m map[K]V, key K, compute func() V) V {
 	m[key] = v
 	return v
 }
+
+// MergeWith merges multiple maps, using the merge function to resolve key conflicts.
+// When the same key exists in multiple maps, the merge function is called with all
+// values for that key to produce the final value.
+//
+// Example:
+//
+//	m1 := map[string]int{"a": 1, "b": 2}
+//	m2 := map[string]int{"b": 3, "c": 4}
+//	MergeWith(m1, m2, func(v1, v2 int) int { return v1 + v2 })
+//	// Returns map[string]int{"a": 1, "b": 5, "c": 4}
+func MergeWith[K comparable, V any](maps []map[K]V, merge func(values ...V) V) map[K]V {
+	if len(maps) == 0 {
+		return map[K]V{}
+	}
+
+	// Collect all values for each key
+	keyValues := make(map[K][]V)
+	capacity := 0
+	for _, m := range maps {
+		capacity += len(m)
+		for k, v := range m {
+			keyValues[k] = append(keyValues[k], v)
+		}
+	}
+
+	// Merge values for each key
+	result := make(map[K]V, capacity)
+	for k, values := range keyValues {
+		result[k] = merge(values...)
+	}
+	return result
+}
+
+// Difference returns a new map containing only the key-value pairs from m1
+// that are not present in m2 (keys in m1 but not in m2).
+//
+// Example:
+//
+//	m1 := map[string]int{"a": 1, "b": 2, "c": 3}
+//	m2 := map[string]int{"b": 20, "d": 4}
+//	Difference(m1, m2) // Returns map[string]int{"a": 1, "c": 3}
+func Difference[K comparable, V any](m1, m2 map[K]V) map[K]V {
+	result := make(map[K]V)
+	for k, v := range m1 {
+		if _, exists := m2[k]; !exists {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+// Intersection returns a new map containing only the key-value pairs
+// that exist in both m1 and m2. Values from m1 are used.
+//
+// Example:
+//
+//	m1 := map[string]int{"a": 1, "b": 2, "c": 3}
+//	m2 := map[string]int{"b": 20, "c": 30, "d": 4}
+//	Intersection(m1, m2) // Returns map[string]int{"b": 2, "c": 3}
+func Intersection[K comparable, V any](m1, m2 map[K]V) map[K]V {
+	result := make(map[K]V)
+	// Iterate over the smaller map for efficiency
+	if len(m1) > len(m2) {
+		m1, m2 = m2, m1
+	}
+	for k, v := range m1 {
+		if _, exists := m2[k]; exists {
+			result[k] = v
+		}
+	}
+	return result
+}

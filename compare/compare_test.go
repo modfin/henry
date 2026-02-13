@@ -356,3 +356,46 @@ func TestBetween(t *testing.T) {
 		t.Error("Expected Between(\"b\", \"a\", \"c\") to be true")
 	}
 }
+
+func TestClamp(t *testing.T) {
+	// Within range
+	if Clamp(50, 0, 100) != 50 {
+		t.Errorf("Clamp(50, 0, 100) = %d, want 50", Clamp(50, 0, 100))
+	}
+
+	// Below min
+	if Clamp(-10, 0, 100) != 0 {
+		t.Errorf("Clamp(-10, 0, 100) = %d, want 0", Clamp(-10, 0, 100))
+	}
+
+	// Above max
+	if Clamp(150, 0, 100) != 100 {
+		t.Errorf("Clamp(150, 0, 100) = %d, want 100", Clamp(150, 0, 100))
+	}
+
+	// At boundaries
+	if Clamp(0, 0, 100) != 0 {
+		t.Errorf("Clamp(0, 0, 100) = %d, want 0", Clamp(0, 0, 100))
+	}
+	if Clamp(100, 0, 100) != 100 {
+		t.Errorf("Clamp(100, 0, 100) = %d, want 100", Clamp(100, 0, 100))
+	}
+
+	// With negative range
+	if Clamp(-5, -10, 10) != -5 {
+		t.Errorf("Clamp(-5, -10, 10) = %d, want -5", Clamp(-5, -10, 10))
+	}
+
+	// Floats
+	if Clamp(1.5, 0.0, 1.0) != 1.0 {
+		t.Errorf("Clamp(1.5, 0.0, 1.0) = %f, want 1.0", Clamp(1.5, 0.0, 1.0))
+	}
+
+	// Strings
+	if Clamp("m", "a", "z") != "m" {
+		t.Errorf("Clamp(\"m\", \"a\", \"z\") = %s, want \"m\"", Clamp("m", "a", "z"))
+	}
+	if Clamp("A", "a", "z") != "a" {
+		t.Errorf("Clamp(\"A\", \"a\", \"z\") = %s, want \"a\"", Clamp("A", "a", "z"))
+	}
+}

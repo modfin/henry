@@ -1294,3 +1294,250 @@ func IsSortedBy[A any](slice []A, less func(a, b A) bool) bool {
 	}
 	return true
 }
+
+// GroupByEntry represents a single entry in a grouped result with preserved order.
+type GroupByEntry[K comparable, V any] struct {
+	Key    K
+	Values []V
+}
+
+// GroupByOrdered groups slice elements by a key function while preserving insertion order.
+// Unlike GroupBy which returns a map (with random iteration), this returns a slice
+// where the order of groups matches the order keys first appear in the input.
+//
+// Example:
+//
+//	words := []string{"apple", "banana", "avocado", "blueberry", "cherry"}
+//	GroupByOrdered(words, func(s string) string { return string(s[0]) })
+//	// Returns []GroupByEntry{{"a", ["apple", "avocado"]}, {"b", ["banana", "blueberry"]}, {"c", ["cherry"]}}
+func GroupByOrdered[A any, K comparable](slice []A, by func(A) K) []GroupByEntry[K, A] {
+	if len(slice) == 0 {
+		return nil
+	}
+
+	groups := make(map[K][]A, len(slice))
+	order := make([]K, 0, len(slice))
+	seen := make(map[K]struct{}, len(slice))
+
+	for _, v := range slice {
+		k := by(v)
+		groups[k] = append(groups[k], v)
+		if _, ok := seen[k]; !ok {
+			seen[k] = struct{}{}
+			order = append(order, k)
+		}
+	}
+
+	result := make([]GroupByEntry[K, A], len(order))
+	for i, k := range order {
+		result[i] = GroupByEntry[K, A]{Key: k, Values: groups[k]}
+	}
+	return result
+}
+
+// ChunkBy groups consecutive elements that satisfy the predicate.
+// The predicate receives consecutive elements (a, b) and should return true
+// if they should be grouped together.
+//
+// Example:
+//
+//	ChunkBy([]int{1, 1, 1, 2, 2, 3, 3, 3}, func(a, b int) bool { return a == b })
+//	// Returns [][]int{{1, 1, 1}, {2, 2}, {3, 3, 3}}
+//
+//	ChunkBy([]int{1, 2, 3, 2, 2, 1}, func(a, b int) bool { return a <= b })
+//	// Returns [][]int{{1, 2, 3}, {2, 2}, {1}}
+func ChunkBy[A any](slice []A, predicate func(a, b A) bool) [][]A {
+	if len(slice) == 0 {
+		return nil
+	}
+
+	var result [][]A
+	current := []A{slice[0]}
+
+	for i := 1; i < len(slice); i++ {
+		if predicate(slice[i-1], slice[i]) {
+			current = append(current, slice[i])
+		} else {
+			result = append(result, current)
+			current = []A{slice[i]}
+		}
+	}
+	result = append(result, current)
+	return result
+}
+
+// Deduplicate removes consecutive duplicate elements from a slice.
+// Unlike Uniq which removes all duplicates, this only removes consecutive duplicates.
+//
+// Example:
+//
+//	Deduplicate([]int{1, 1, 2, 2, 2, 3, 3}) // Returns []int{1, 2, 3}
+//	Deduplicate([]int{1, 2, 1, 2, 1})      // Returns []int{1, 2, 1, 2, 1}
+func Deduplicate[A comparable](slice []A) []A {
+	if len(slice) == 0 {
+		return []A{}
+	}
+
+	result := make([]A, 1, len(slice))
+	result[0] = slice[0]
+
+	for i := 1; i < len(slice); i++ {
+		if slice[i] != slice[i-1] {
+			result = append(result, slice[i])
+		}
+	}
+	return result
+}
+
+// Cycle returns a slice that cycles through the input slice infinitely.
+// The returned slice can be indexed modulo the length of the input.
+// To get the nth cycled element: result[n % len(slice)]
+//
+// Example:
+//
+//	cycle := Cycle([]int{1, 2, 3})
+//	cycle[0] // 1, cycle[3] // 1, cycle[6] // 1
+//	cycle[1] // 2, cycle[4] // 2, cycle[7] // 2
+func Cycle[A any](slice []A) []A {
+	if len(slice) == 0 {
+		return nil
+	}
+	// Return a copy to prevent mutation of original
+	return Clone(slice)
+}
+
+// CycleValue returns the element at position index in a cycled slice.
+// Useful for getting values from an infinitely cycling sequence.
+//
+// Example:
+//
+//	CycleValue([]int{1, 2, 3}, 0)  // Returns 1
+//	CycleValue([]int{1, 2, 3}, 3)  // Returns 1 (cycles back)
+//	CycleValue([]int{1, 2, 3}, 7)  // Returns 2 (7 % 3 = 1)
+func CycleValue[A any](slice []A, index int) A {
+	if len(slice) == 0 {
+		var zero A
+		return zero
+	}
+	return slice[index%len(slice)]
+}
+
+// Fill creates a slice of length n filled with the given value.
+//
+// Example:
+//
+//	Fill(5, 42)    // Returns []int{42, 42, 42, 42, 42}
+//	Fill(3, "x")   // Returns []string{"x", "x", "x"}
+func Fill[A any](n int, value A) []A {
+	if n <= 0 {
+		return []A{}
+	}
+	result := make([]A, n)
+	for i := range result {
+		result[i] = value
+	}
+	return result
+}
+
+// Range creates a slice of integers from start to end (inclusive).
+//
+// Example:
+//
+//	Range(1, 5)   // Returns []int{1, 2, 3, 4, 5}
+//	Range(5, 1)   // Returns []int{} (empty when start > end)
+//	Range(3, 3)   // Returns []int{3}
+func Range(start, end int) []int {
+	if start > end {
+		return []int{}
+	}
+	n := end - start + 1
+	result := make([]int, n)
+	for i := 0; i < n; i++ {
+		result[i] = start + i
+	}
+	return result
+}
+
+// RangeFrom creates a slice of n integers starting from start.
+//
+// Example:
+//
+//	RangeFrom(0, 5)   // Returns []int{0, 1, 2, 3, 4}
+//	RangeFrom(10, 3)  // Returns []int{10, 11, 12}
+//	RangeFrom(5, 0)   // Returns []int{} (empty when n <= 0)
+func RangeFrom(start, n int) []int {
+	if n <= 0 {
+		return []int{}
+	}
+	result := make([]int, n)
+	for i := 0; i < n; i++ {
+		result[i] = start + i
+	}
+	return result
+}
+
+// RangeStep creates a slice from start to end with a step value.
+//
+// Example:
+//
+//	RangeStep(0, 10, 2)   // Returns []int{0, 2, 4, 6, 8, 10}
+//	RangeStep(10, 0, -2)  // Returns []int{10, 8, 6, 4, 2, 0}
+//	RangeStep(0, 10, 3)   // Returns []int{0, 3, 6, 9}
+func RangeStep(start, end, step int) []int {
+	if step == 0 {
+		return []int{}
+	}
+	if (step > 0 && start > end) || (step < 0 && start < end) {
+		return []int{}
+	}
+
+	// Calculate number of steps
+	// For positive step: include values while value <= end
+	// For negative step: include values while value >= end
+	n := 0
+	if step > 0 {
+		if start <= end {
+			n = (end-start)/step + 1
+			// Check if last value exceeds end
+			if start+(n-1)*step > end {
+				n--
+			}
+		}
+	} else {
+		if start >= end {
+			n = (start-end)/(-step) + 1
+			// Check if last value is below end
+			if start+(n-1)*step < end {
+				n--
+			}
+		}
+	}
+
+	if n <= 0 {
+		return []int{}
+	}
+
+	result := make([]int, n)
+	for i := 0; i < n; i++ {
+		result[i] = start + i*step
+	}
+	return result
+}
+
+// Repeat repeats the slice n times and returns the concatenated result.
+//
+// Example:
+//
+//	Repeat([]int{1, 2}, 3)    // Returns []int{1, 2, 1, 2, 1, 2}
+//	Repeat([]string{"a"}, 5)   // Returns []string{"a", "a", "a", "a", "a"}
+//	Repeat([]int{1, 2}, 0)    // Returns []int{} (empty when n <= 0)
+func Repeat[A any](slice []A, n int) []A {
+	if n <= 0 || len(slice) == 0 {
+		return []A{}
+	}
+	result := make([]A, 0, len(slice)*n)
+	for i := 0; i < n; i++ {
+		result = append(result, slice...)
+	}
+	return result
+}

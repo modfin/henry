@@ -1175,6 +1175,14 @@ func TestSlidingWindow(t *testing.T) {
 	}
 }
 
+func TestSlidingWindow2(t *testing.T) {
+	result := SlidingWindow([]int{1, 2, 3, 4, 5}, 4)
+	expected := [][]int{{1, 2, 3, 4}, {2, 3, 4, 5}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("SlidingWindow() = %v, want %v", result, expected)
+	}
+}
+
 func TestTranspose(t *testing.T) {
 	matrix := [][]int{{1, 2, 3}, {4, 5, 6}}
 	result := Transpose(matrix)
@@ -1326,5 +1334,250 @@ func TestIsSortedBy(t *testing.T) {
 	// Not sorted by first character
 	if IsSortedBy([]string{"b", "a", "c"}, func(a, b string) bool { return a < b }) {
 		t.Error("IsSortedBy should return false when not sorted")
+	}
+}
+
+func TestGroupByOrdered(t *testing.T) {
+	words := []string{"apple", "banana", "avocado", "blueberry", "cherry"}
+	result := GroupByOrdered(words, func(s string) string { return string(s[0]) })
+
+	if len(result) != 3 {
+		t.Errorf("Expected 3 groups, got %d", len(result))
+	}
+
+	// Check order is preserved (a, b, c)
+	if result[0].Key != "a" || len(result[0].Values) != 2 {
+		t.Errorf("First group should be 'a' with 2 values, got %s with %d", result[0].Key, len(result[0].Values))
+	}
+	if result[1].Key != "b" || len(result[1].Values) != 2 {
+		t.Errorf("Second group should be 'b' with 2 values, got %s with %d", result[1].Key, len(result[1].Values))
+	}
+	if result[2].Key != "c" || len(result[2].Values) != 1 {
+		t.Errorf("Third group should be 'c' with 1 value, got %s with %d", result[2].Key, len(result[2].Values))
+	}
+
+	// Empty slice
+	if GroupByOrdered([]string{}, func(s string) string { return s }) != nil {
+		t.Error("GroupByOrdered on empty slice should return nil")
+	}
+}
+
+func TestChunkBy(t *testing.T) {
+	// Group by equality
+	result := ChunkBy([]int{1, 1, 1, 2, 2, 3, 3, 3}, func(a, b int) bool { return a == b })
+	expected := [][]int{{1, 1, 1}, {2, 2}, {3, 3, 3}}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ChunkBy() = %v, want %v", result, expected)
+	}
+
+	// Group by increasing sequence
+	result2 := ChunkBy([]int{1, 2, 3, 2, 2, 1}, func(a, b int) bool { return a <= b })
+	expected2 := [][]int{{1, 2, 3}, {2, 2}, {1}}
+	if !reflect.DeepEqual(result2, expected2) {
+		t.Errorf("ChunkBy() = %v, want %v", result2, expected2)
+	}
+
+	// Empty slice
+	if ChunkBy([]int{}, func(a, b int) bool { return a == b }) != nil {
+		t.Error("ChunkBy on empty slice should return nil")
+	}
+
+	// Single element
+	single := ChunkBy([]int{42}, func(a, b int) bool { return a == b })
+	if len(single) != 1 || !reflect.DeepEqual(single[0], []int{42}) {
+		t.Error("ChunkBy with single element should return one chunk")
+	}
+}
+
+func TestDeduplicate(t *testing.T) {
+	// Remove consecutive duplicates
+	result := Deduplicate([]int{1, 1, 2, 2, 2, 3, 3})
+	expected := []int{1, 2, 3}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Deduplicate() = %v, want %v", result, expected)
+	}
+
+	// Non-consecutive duplicates are preserved
+	result2 := Deduplicate([]int{1, 2, 1, 2, 1})
+	expected2 := []int{1, 2, 1, 2, 1}
+	if !reflect.DeepEqual(result2, expected2) {
+		t.Errorf("Deduplicate() = %v, want %v", result2, expected2)
+	}
+
+	// Empty slice
+	if !reflect.DeepEqual(Deduplicate([]int{}), []int{}) {
+		t.Error("Deduplicate on empty slice should return empty slice")
+	}
+
+	// Single element
+	if !reflect.DeepEqual(Deduplicate([]int{42}), []int{42}) {
+		t.Error("Deduplicate with single element should return same element")
+	}
+
+	// All same
+	result3 := Deduplicate([]int{5, 5, 5, 5})
+	if !reflect.DeepEqual(result3, []int{5}) {
+		t.Errorf("Deduplicate all same = %v, want [5]", result3)
+	}
+}
+
+func TestCycle(t *testing.T) {
+	slice := []int{1, 2, 3}
+	cycle := Cycle(slice)
+
+	if !reflect.DeepEqual(cycle, slice) {
+		t.Error("Cycle should return a clone of the original slice")
+	}
+
+	// Empty slice
+	if Cycle([]int{}) != nil {
+		t.Error("Cycle on empty slice should return nil")
+	}
+}
+
+func TestCycleValue(t *testing.T) {
+	slice := []int{1, 2, 3}
+
+	if CycleValue(slice, 0) != 1 {
+		t.Error("CycleValue at index 0 should return first element")
+	}
+	if CycleValue(slice, 3) != 1 {
+		t.Error("CycleValue at index 3 should cycle back to first")
+	}
+	if CycleValue(slice, 7) != 2 {
+		t.Error("CycleValue at index 7 (7 % 3 = 1) should return second element")
+	}
+
+	// Empty slice
+	if CycleValue([]int{}, 5) != 0 {
+		t.Error("CycleValue on empty slice should return zero value")
+	}
+}
+
+func TestFill(t *testing.T) {
+	result := Fill(5, 42)
+	expected := []int{42, 42, 42, 42, 42}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Fill() = %v, want %v", result, expected)
+	}
+
+	// Strings
+	strResult := Fill(3, "x")
+	strExpected := []string{"x", "x", "x"}
+	if !reflect.DeepEqual(strResult, strExpected) {
+		t.Errorf("Fill() strings = %v, want %v", strResult, strExpected)
+	}
+
+	// Zero or negative
+	if !reflect.DeepEqual(Fill(0, 42), []int{}) {
+		t.Error("Fill with n=0 should return empty slice")
+	}
+	if !reflect.DeepEqual(Fill(-5, 42), []int{}) {
+		t.Error("Fill with negative n should return empty slice")
+	}
+}
+
+func TestRange(t *testing.T) {
+	result := Range(1, 5)
+	expected := []int{1, 2, 3, 4, 5}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Range(1, 5) = %v, want %v", result, expected)
+	}
+
+	// Same start and end
+	result2 := Range(3, 3)
+	if !reflect.DeepEqual(result2, []int{3}) {
+		t.Errorf("Range(3, 3) = %v, want [3]", result2)
+	}
+
+	// Start > end
+	result3 := Range(5, 1)
+	if !reflect.DeepEqual(result3, []int{}) {
+		t.Errorf("Range(5, 1) = %v, want empty", result3)
+	}
+
+	// Negative numbers
+	result4 := Range(-3, 2)
+	expected4 := []int{-3, -2, -1, 0, 1, 2}
+	if !reflect.DeepEqual(result4, expected4) {
+		t.Errorf("Range(-3, 2) = %v, want %v", result4, expected4)
+	}
+}
+
+func TestRangeFrom(t *testing.T) {
+	result := RangeFrom(10, 5)
+	expected := []int{10, 11, 12, 13, 14}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("RangeFrom(10, 5) = %v, want %v", result, expected)
+	}
+
+	// Zero count
+	if !reflect.DeepEqual(RangeFrom(5, 0), []int{}) {
+		t.Error("RangeFrom with n=0 should return empty slice")
+	}
+
+	// Negative count
+	if !reflect.DeepEqual(RangeFrom(5, -3), []int{}) {
+		t.Error("RangeFrom with negative n should return empty slice")
+	}
+}
+
+func TestRangeStep(t *testing.T) {
+	// Positive step
+	result := RangeStep(0, 10, 2)
+	expected := []int{0, 2, 4, 6, 8, 10}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("RangeStep(0, 10, 2) = %v, want %v", result, expected)
+	}
+
+	// Negative step
+	result2 := RangeStep(10, 0, -2)
+	expected2 := []int{10, 8, 6, 4, 2, 0}
+	if !reflect.DeepEqual(result2, expected2) {
+		t.Errorf("RangeStep(10, 0, -2) = %v, want %v", result2, expected2)
+	}
+
+	// Step that doesn't land exactly on end
+	result3 := RangeStep(0, 10, 3)
+	expected3 := []int{0, 3, 6, 9}
+	if !reflect.DeepEqual(result3, expected3) {
+		t.Errorf("RangeStep(0, 10, 3) = %v, want %v", result3, expected3)
+	}
+
+	// Zero step
+	if !reflect.DeepEqual(RangeStep(0, 10, 0), []int{}) {
+		t.Error("RangeStep with step=0 should return empty slice")
+	}
+
+	// Incompatible direction
+	if !reflect.DeepEqual(RangeStep(0, 10, -1), []int{}) {
+		t.Error("RangeStep with wrong direction should return empty slice")
+	}
+}
+
+func TestRepeat(t *testing.T) {
+	result := Repeat([]int{1, 2}, 3)
+	expected := []int{1, 2, 1, 2, 1, 2}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Repeat() = %v, want %v", result, expected)
+	}
+
+	// Zero or negative repeats
+	if !reflect.DeepEqual(Repeat([]int{1, 2}, 0), []int{}) {
+		t.Error("Repeat with n=0 should return empty slice")
+	}
+	if !reflect.DeepEqual(Repeat([]int{1, 2}, -1), []int{}) {
+		t.Error("Repeat with negative n should return empty slice")
+	}
+
+	// Empty slice
+	if !reflect.DeepEqual(Repeat([]int{}, 5), []int{}) {
+		t.Error("Repeat with empty slice should return empty slice")
+	}
+
+	// Single element
+	single := Repeat([]int{42}, 4)
+	if !reflect.DeepEqual(single, []int{42, 42, 42, 42}) {
+		t.Errorf("Repeat single element = %v, want [42, 42, 42, 42]", single)
 	}
 }

@@ -436,3 +436,79 @@ func TestGetOrSet(t *testing.T) {
 		t.Errorf("m[\"key\"] = %d, want 42", m["key"])
 	}
 }
+
+func TestMergeWith(t *testing.T) {
+	m1 := map[string]int{"a": 1, "b": 2}
+	m2 := map[string]int{"b": 3, "c": 4}
+
+	// Sum values for duplicate keys
+	result := MergeWith([]map[string]int{m1, m2}, func(values ...int) int {
+		sum := 0
+		for _, v := range values {
+			sum += v
+		}
+		return sum
+	})
+
+	expected := map[string]int{"a": 1, "b": 5, "c": 4}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("MergeWith() = %v, want %v", result, expected)
+	}
+
+	// Empty maps slice
+	empty := MergeWith([]map[string]int{}, func(values ...int) int { return 0 })
+	if len(empty) != 0 {
+		t.Error("MergeWith with empty slice should return empty map")
+	}
+
+	// Single map
+	single := MergeWith([]map[string]int{{"x": 10}}, func(values ...int) int { return values[0] })
+	if !reflect.DeepEqual(single, map[string]int{"x": 10}) {
+		t.Error("MergeWith with single map should return that map")
+	}
+}
+
+func TestDifference(t *testing.T) {
+	m1 := map[string]int{"a": 1, "b": 2, "c": 3}
+	m2 := map[string]int{"b": 20, "d": 4}
+
+	result := Difference(m1, m2)
+	expected := map[string]int{"a": 1, "c": 3}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Difference() = %v, want %v", result, expected)
+	}
+
+	// Empty maps
+	if len(Difference(map[string]int{}, m2)) != 0 {
+		t.Error("Difference with empty first map should return empty map")
+	}
+	if !reflect.DeepEqual(Difference(m1, map[string]int{}), m1) {
+		t.Error("Difference with empty second map should return first map")
+	}
+}
+
+func TestIntersection(t *testing.T) {
+	m1 := map[string]int{"a": 1, "b": 2, "c": 3}
+	m2 := map[string]int{"b": 20, "c": 30, "d": 4}
+
+	result := Intersection(m1, m2)
+	// Values from m1 should be used
+	expected := map[string]int{"b": 2, "c": 3}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Intersection() = %v, want %v", result, expected)
+	}
+
+	// Empty maps
+	if len(Intersection(map[string]int{}, m2)) != 0 {
+		t.Error("Intersection with empty first map should return empty map")
+	}
+	if len(Intersection(m1, map[string]int{})) != 0 {
+		t.Error("Intersection with empty second map should return empty map")
+	}
+
+	// No intersection
+	noIntersect := Intersection(map[string]int{"a": 1}, map[string]int{"b": 2})
+	if len(noIntersect) != 0 {
+		t.Error("Intersection with no common keys should return empty map")
+	}
+}

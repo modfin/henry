@@ -153,3 +153,24 @@ func Between[E Ordered](value, start, end E, mode ...BetweenMode) bool {
 		return value >= start && value <= end
 	}
 }
+
+// Clamp constrains a value to be within the range [min, max].
+// If value is less than min, returns min.
+// If value is greater than max, returns max.
+// Otherwise returns the value unchanged.
+//
+// Example:
+//
+//	Clamp(50, 0, 100)   // Returns 50 (within range)
+//	Clamp(-10, 0, 100) // Returns 0 (clamped to min)
+//	Clamp(150, 0, 100) // Returns 100 (clamped to max)
+//	Clamp(5, 10, 20)   // Returns 10 (clamped to min)
+func Clamp[E Ordered](value, min, max E) E {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
