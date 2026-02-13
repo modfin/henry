@@ -7,12 +7,10 @@ package setz
 import "fmt"
 
 // Set represents a mathematical set of unique elements.
-// It is implemented as a wrapper around map[T]struct{} for O(1) operations.
+// It is implemented as a type alias of map[T]struct{} for O(1) operations.
 // The Set is mutable - methods like Add, Remove, and Clear modify the set.
 // Operations like Union, Intersection return new sets (immutable results).
-type Set[T comparable] struct {
-	data map[T]struct{}
-}
+type Set[T comparable] map[T]struct{}
 
 // New creates a new empty Set with optional initial elements.
 //
@@ -21,12 +19,10 @@ type Set[T comparable] struct {
 //	s := setz.New[int]()           // Empty set
 //	s := setz.New(1, 2, 3)         // Set with elements 1, 2, 3
 //	s := setz.New("a", "b", "c")     // Set of strings
-func New[T comparable](elements ...T) *Set[T] {
-	s := &Set[T]{
-		data: make(map[T]struct{}, len(elements)),
-	}
+func New[T comparable](elements ...T) Set[T] {
+	s := make(Set[T], len(elements))
 	for _, e := range elements {
-		s.data[e] = struct{}{}
+		s[e] = struct{}{}
 	}
 	return s
 }
@@ -37,7 +33,7 @@ func New[T comparable](elements ...T) *Set[T] {
 //
 //	s := setz.FromSlice([]int{1, 2, 2, 3, 3, 3})
 //	// s contains {1, 2, 3}
-func FromSlice[T comparable](slice []T) *Set[T] {
+func FromSlice[T comparable](slice []T) Set[T] {
 	return New(slice...)
 }
 
@@ -48,26 +44,24 @@ func FromSlice[T comparable](slice []T) *Set[T] {
 //
 //	m := map[string]struct{}{"a": {}, "b": {}}
 //	s := setz.FromMap(m)  // Set with "a", "b"
-func FromMap[T comparable](m map[T]struct{}) *Set[T] {
-	s := &Set[T]{
-		data: make(map[T]struct{}, len(m)),
-	}
+func FromMap[T comparable](m map[T]struct{}) Set[T] {
+	s := make(Set[T], len(m))
 	for k := range m {
-		s.data[k] = struct{}{}
+		s[k] = struct{}{}
 	}
 	return s
 }
 
 // Len returns the number of elements in the set.
-func (s *Set[T]) Len() int {
-	if s == nil || s.data == nil {
+func (s Set[T]) Len() int {
+	if s == nil {
 		return 0
 	}
-	return len(s.data)
+	return len(s)
 }
 
 // IsEmpty returns true if the set has no elements.
-func (s *Set[T]) IsEmpty() bool {
+func (s Set[T]) IsEmpty() bool {
 	return s.Len() == 0
 }
 
@@ -76,12 +70,12 @@ func (s *Set[T]) IsEmpty() bool {
 // Example:
 //
 //	s := setz.New[int]().Add(1, 2, 3).Add(4)
-func (s *Set[T]) Add(elements ...T) *Set[T] {
-	if s.data == nil {
-		s.data = make(map[T]struct{})
+func (s Set[T]) Add(elements ...T) Set[T] {
+	if s == nil {
+		s = make(Set[T])
 	}
 	for _, e := range elements {
-		s.data[e] = struct{}{}
+		s[e] = struct{}{}
 	}
 	return s
 }
@@ -91,20 +85,23 @@ func (s *Set[T]) Add(elements ...T) *Set[T] {
 // Example:
 //
 //	s := setz.New(1, 2, 3, 4).Remove(2, 3)  // s contains {1, 4}
-func (s *Set[T]) Remove(elements ...T) *Set[T] {
-	if s.data == nil {
+func (s Set[T]) Remove(elements ...T) Set[T] {
+	if s == nil {
 		return s
 	}
 	for _, e := range elements {
-		delete(s.data, e)
+		delete(s, e)
 	}
 	return s
 }
 
 // Clear removes all elements from the set.
-func (s *Set[T]) Clear() {
-	if s.data != nil {
-		s.data = make(map[T]struct{})
+func (s Set[T]) Clear() {
+	if s == nil {
+		return
+	}
+	for e := range s {
+		delete(s, e)
 	}
 }
 
@@ -115,16 +112,16 @@ func (s *Set[T]) Clear() {
 //	s := setz.New(1, 2, 3)
 //	s.Contains(2)  // true
 //	s.Contains(5)  // false
-func (s *Set[T]) Contains(element T) bool {
-	if s == nil || s.data == nil {
+func (s Set[T]) Contains(element T) bool {
+	if s == nil {
 		return false
 	}
-	_, exists := s.data[element]
+	_, exists := s[element]
 	return exists
 }
 
 // ContainsAll returns true if all elements are in the set.
-func (s *Set[T]) ContainsAll(elements ...T) bool {
+func (s Set[T]) ContainsAll(elements ...T) bool {
 	for _, e := range elements {
 		if !s.Contains(e) {
 			return false
@@ -135,46 +132,33 @@ func (s *Set[T]) ContainsAll(elements ...T) bool {
 
 // Pop removes and returns an arbitrary element from the set.
 // Returns the zero value and false if the set is empty.
-func (s *Set[T]) Pop() (T, bool) {
+func (s Set[T]) Pop() (T, bool) {
 	var zero T
 	if s.IsEmpty() {
 		return zero, false
 	}
-	for e := range s.data {
-		delete(s.data, e)
+	for e := range s {
+		delete(s, e)
 		return e, true
 	}
 	return zero, false
 }
 
 // ToSlice returns all elements as a slice (order not guaranteed).
-func (s *Set[T]) ToSlice() []T {
+func (s Set[T]) ToSlice() []T {
 	if s.IsEmpty() {
 		return []T{}
 	}
 	result := make([]T, 0, s.Len())
-	for e := range s.data {
+	for e := range s {
 		result = append(result, e)
 	}
 	return result
 }
 
-// ToMap returns the underlying map representation.
-// The returned map is a copy to prevent external mutation.
-func (s *Set[T]) ToMap() map[T]struct{} {
-	if s.IsEmpty() {
-		return map[T]struct{}{}
-	}
-	result := make(map[T]struct{}, s.Len())
-	for e := range s.data {
-		result[e] = struct{}{}
-	}
-	return result
-}
-
 // Copy returns a new set with the same elements.
-func (s *Set[T]) Copy() *Set[T] {
-	return FromMap(s.ToMap())
+func (s Set[T]) Copy() Set[T] {
+	return FromMap(s)
 }
 
 // Union returns a new set with all elements from both sets.
@@ -184,12 +168,10 @@ func (s *Set[T]) Copy() *Set[T] {
 //	s1 := setz.New(1, 2, 3)
 //	s2 := setz.New(3, 4, 5)
 //	s1.Union(s2)  // {1, 2, 3, 4, 5}
-func (s *Set[T]) Union(other *Set[T]) *Set[T] {
+func (s Set[T]) Union(other Set[T]) Set[T] {
 	result := s.Copy()
-	if other != nil {
-		for e := range other.data {
-			result.data[e] = struct{}{}
-		}
+	for e := range other {
+		result[e] = struct{}{}
 	}
 	return result
 }
@@ -198,11 +180,11 @@ func (s *Set[T]) Union(other *Set[T]) *Set[T] {
 //
 // Example:
 //
-//	s1 := setz.New(1, 2, 3)
-//	s2 := setz.New(2, 3, 4)
-//	s1.Intersection(s2)  // {2, 3}
-func (s *Set[T]) Intersection(other *Set[T]) *Set[T] {
-	if other == nil || s.IsEmpty() || other.IsEmpty() {
+//	s1 := setz.New(1, 2, 3, 4)
+//	s2 := setz.New(2, 3, 4, 5)
+//	s1.Intersection(s2)  // {2, 3, 4}
+func (s Set[T]) Intersection(other Set[T]) Set[T] {
+	if s.IsEmpty() || other.IsEmpty() {
 		return New[T]()
 	}
 
@@ -213,9 +195,9 @@ func (s *Set[T]) Intersection(other *Set[T]) *Set[T] {
 	}
 
 	result := New[T]()
-	for e := range small.data {
+	for e := range small {
 		if large.Contains(e) {
-			result.data[e] = struct{}{}
+			result[e] = struct{}{}
 		}
 	}
 	return result
@@ -225,18 +207,18 @@ func (s *Set[T]) Intersection(other *Set[T]) *Set[T] {
 //
 // Example:
 //
-//	s1 := setz.New(1, 2, 3)
+//	s1 := setz.New(1, 2, 3, 4)
 //	s2 := setz.New(2, 4)
 //	s1.Difference(s2)  // {1, 3}
-func (s *Set[T]) Difference(other *Set[T]) *Set[T] {
+func (s Set[T]) Difference(other Set[T]) Set[T] {
 	result := New[T]()
 	if s.IsEmpty() {
 		return result
 	}
 
-	for e := range s.data {
-		if other == nil || !other.Contains(e) {
-			result.data[e] = struct{}{}
+	for e := range s {
+		if _, exists := other[e]; !exists {
+			result[e] = struct{}{}
 		}
 	}
 	return result
@@ -250,20 +232,16 @@ func (s *Set[T]) Difference(other *Set[T]) *Set[T] {
 //	s1 := setz.New(1, 2, 3)
 //	s2 := setz.New(2, 3, 4)
 //	s1.SymmetricDifference(s2)  // {1, 4}
-func (s *Set[T]) SymmetricDifference(other *Set[T]) *Set[T] {
-	if other == nil {
-		return s.Copy()
-	}
-
+func (s Set[T]) SymmetricDifference(other Set[T]) Set[T] {
 	result := New[T]()
-	for e := range s.data {
-		if !other.Contains(e) {
-			result.data[e] = struct{}{}
+	for e := range s {
+		if _, exists := other[e]; !exists {
+			result[e] = struct{}{}
 		}
 	}
-	for e := range other.data {
-		if !s.Contains(e) {
-			result.data[e] = struct{}{}
+	for e := range other {
+		if _, exists := s[e]; !exists {
+			result[e] = struct{}{}
 		}
 	}
 	return result
@@ -277,15 +255,15 @@ func (s *Set[T]) SymmetricDifference(other *Set[T]) *Set[T] {
 //	s2 := setz.New(1, 2, 3)
 //	s1.IsSubset(s2)  // true
 //	s2.IsSubset(s1)  // false
-func (s *Set[T]) IsSubset(other *Set[T]) bool {
+func (s Set[T]) IsSubset(other Set[T]) bool {
 	if s.IsEmpty() {
 		return true
 	}
-	if other == nil || other.IsEmpty() {
+	if other.IsEmpty() {
 		return false
 	}
-	for e := range s.data {
-		if !other.Contains(e) {
+	for e := range s {
+		if _, exists := other[e]; !exists {
 			return false
 		}
 	}
@@ -299,8 +277,8 @@ func (s *Set[T]) IsSubset(other *Set[T]) bool {
 //	s1 := setz.New(1, 2, 3)
 //	s2 := setz.New(1, 2)
 //	s1.IsSuperset(s2)  // true
-func (s *Set[T]) IsSuperset(other *Set[T]) bool {
-	if other == nil || other.IsEmpty() {
+func (s Set[T]) IsSuperset(other Set[T]) bool {
+	if other.IsEmpty() {
 		return true
 	}
 	if s.IsEmpty() {
@@ -310,12 +288,12 @@ func (s *Set[T]) IsSuperset(other *Set[T]) bool {
 }
 
 // IsProperSubset returns true if s is a subset of other and s ≠ other.
-func (s *Set[T]) IsProperSubset(other *Set[T]) bool {
+func (s Set[T]) IsProperSubset(other Set[T]) bool {
 	return s.IsSubset(other) && s.Len() < other.Len()
 }
 
 // IsProperSuperset returns true if s is a superset of other and s ≠ other.
-func (s *Set[T]) IsProperSuperset(other *Set[T]) bool {
+func (s Set[T]) IsProperSuperset(other Set[T]) bool {
 	return s.IsSuperset(other) && s.Len() > other.Len()
 }
 
@@ -326,8 +304,8 @@ func (s *Set[T]) IsProperSuperset(other *Set[T]) bool {
 //	s1 := setz.New(1, 2)
 //	s2 := setz.New(3, 4)
 //	s1.IsDisjoint(s2)  // true
-func (s *Set[T]) IsDisjoint(other *Set[T]) bool {
-	if s.IsEmpty() || other == nil || other.IsEmpty() {
+func (s Set[T]) IsDisjoint(other Set[T]) bool {
+	if s.IsEmpty() || other.IsEmpty() {
 		return true
 	}
 
@@ -336,8 +314,8 @@ func (s *Set[T]) IsDisjoint(other *Set[T]) bool {
 		small, large = other, s
 	}
 
-	for e := range small.data {
-		if large.Contains(e) {
+	for e := range small {
+		if _, exists := large[e]; exists {
 			return false
 		}
 	}
@@ -345,55 +323,52 @@ func (s *Set[T]) IsDisjoint(other *Set[T]) bool {
 }
 
 // IsEqual returns true if s and other contain the same elements.
-func (s *Set[T]) IsEqual(other *Set[T]) bool {
-	if other == nil {
-		return s.IsEmpty()
+func (s Set[T]) IsEqual(other Set[T]) bool {
+	if s.Len() != other.Len() {
+		return false
 	}
-	return s.Len() == other.Len() && s.IsSubset(other)
+	return s.IsSubset(other)
 }
 
 // String returns a string representation of the set.
 // Note: Element order is not guaranteed.
-func (s *Set[T]) String() string {
+func (s Set[T]) String() string {
 	if s.IsEmpty() {
 		return "Set{}"
 	}
-	elements := s.ToSlice()
-	return fmt.Sprintf("Set%v", elements)
+	return fmt.Sprintf("Set%v", s.ToSlice())
 }
 
 // Filter returns a new set with elements that satisfy the predicate.
-func (s *Set[T]) Filter(predicate func(T) bool) *Set[T] {
+func (s Set[T]) Filter(predicate func(T) bool) Set[T] {
 	result := New[T]()
-	for e := range s.data {
+	for e := range s {
 		if predicate(e) {
-			result.data[e] = struct{}{}
+			result[e] = struct{}{}
 		}
 	}
 	return result
 }
 
 // Map returns a new set by applying a function to each element.
-func Map[T comparable, U comparable](s *Set[T], mapper func(T) U) *Set[U] {
+func Map[T comparable, U comparable](s Set[T], mapper func(T) U) Set[U] {
 	result := New[U]()
-	if s == nil || s.IsEmpty() {
+	if s.IsEmpty() {
 		return result
 	}
-	for e := range s.data {
-		result.Add(mapper(e))
+	for e := range s {
+		result[mapper(e)] = struct{}{}
 	}
 	return result
 }
 
 // Union returns a new set with all elements from the given sets.
 // Standalone function version.
-func Union[T comparable](sets ...*Set[T]) *Set[T] {
+func Union[T comparable](sets ...Set[T]) Set[T] {
 	result := New[T]()
 	for _, s := range sets {
-		if s != nil {
-			for e := range s.data {
-				result.data[e] = struct{}{}
-			}
+		for e := range s {
+			result[e] = struct{}{}
 		}
 	}
 	return result
@@ -401,45 +376,42 @@ func Union[T comparable](sets ...*Set[T]) *Set[T] {
 
 // Intersection returns a new set with elements common to all sets.
 // Standalone function version.
-func Intersection[T comparable](sets ...*Set[T]) *Set[T] {
+func Intersection[T comparable](sets ...Set[T]) Set[T] {
 	if len(sets) == 0 {
 		return New[T]()
 	}
 
-	// Start with the first non-empty set
-	var result *Set[T]
+	// Find the first non-empty set
+	var first Set[T]
 	for _, s := range sets {
-		if s != nil && !s.IsEmpty() {
-			result = s.Copy()
+		if !s.IsEmpty() {
+			first = s
 			break
 		}
 	}
-	if result == nil {
+	if first.IsEmpty() {
 		return New[T]()
 	}
 
-	// Intersect with remaining sets
+	// Start with the first set and intersect with others
+	result := first.Copy()
 	for _, s := range sets {
-		if s != nil {
-			result = result.Intersection(s)
-		}
+		result = result.Intersection(s)
 	}
 	return result
 }
 
 // Difference returns a new set with elements in the first set but not in others.
 // Standalone function version.
-func Difference[T comparable](first *Set[T], others ...*Set[T]) *Set[T] {
-	if first == nil || first.IsEmpty() {
+func Difference[T comparable](first Set[T], others ...Set[T]) Set[T] {
+	if first.IsEmpty() {
 		return New[T]()
 	}
 
 	result := first.Copy()
 	for _, s := range others {
-		if s != nil {
-			for e := range s.data {
-				delete(result.data, e)
-			}
+		for e := range s {
+			delete(result, e)
 		}
 	}
 	return result

@@ -145,8 +145,8 @@ func TestContains(t *testing.T) {
 		t.Error("Set should not contain 4")
 	}
 
-	// Nil set
-	var nilSet *Set[int]
+	// Nil set (Set[T] is a map, so nil is a valid zero value)
+	var nilSet Set[int]
 	if nilSet.Contains(1) {
 		t.Error("Nil set should not contain anything")
 	}
@@ -211,20 +211,22 @@ func TestToSlice(t *testing.T) {
 	}
 }
 
-func TestToMap(t *testing.T) {
+func TestAsMap(t *testing.T) {
+	// Since Set[T] is now map[T]struct{}, we can use it directly as a map
 	s := New("a", "b", "c")
-	m := s.ToMap()
-	if len(m) != 3 {
-		t.Errorf("ToMap() length = %d, want 3", len(m))
+
+	// Check that it can be used as a map
+	if len(s) != 3 {
+		t.Errorf("Set length = %d, want 3", len(s))
 	}
-	if _, ok := m["a"]; !ok {
-		t.Error("ToMap should contain 'a'")
+	if _, ok := s["a"]; !ok {
+		t.Error("Set should work as map and contain 'a'")
 	}
 
-	// Modifying returned map should not affect set
-	delete(m, "a")
-	if !s.Contains("a") {
-		t.Error("Modifying ToMap result should not affect original set")
+	// Modifying the set through map operations
+	delete(s, "a")
+	if s.Contains("a") {
+		t.Error("After delete(s, \"a\"), set should not contain 'a'")
 	}
 }
 
