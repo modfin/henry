@@ -12,7 +12,7 @@ The `slicez` package provides 70+ utility functions for working with slices. All
 - [Searching](#searching) - Contains, Find, Index, Search
 - [Aggregation](#aggregation) - Fold, Reduce, Every, Some, None
 - [Set Operations](#set-operations) - Union, Intersection, Difference, Uniq
-- [Sorting](#sorting) - Sort, SortBy, IsSorted, Max, Min
+- [Sorting](#sorting) - Sort, SortBy, OrderBy, IsSorted, Max, Min
 - [Grouping](#grouping) - GroupBy, Partition, Chunk, ChunkBy
 - [Combining](#combining) - Zip, Unzip, Interleave, Concat
 - [Utilities](#utilities) - Clone, Sample, Fill, Range, Repeat
@@ -425,6 +425,26 @@ people := []Person{
 byAge := slicez.SortBy(people, func(a, b Person) bool {
     return a.Age < b.Age
 })
+// byAge = [{Bob 25} {Alice 30} {Charlie 35}]
+```
+
+#### OrderBy
+Sort by extracted key with optional order direction.
+
+```go
+// Sort strings by length (ascending default)
+words := []string{"banana", "pie", "apple", "kiwi"}
+sorted := slicez.OrderBy(words, func(s string) int { return len(s) })
+// sorted = []string{"pie", "kiwi", "apple", "banana"}
+
+// Sort by length descending
+sortedDesc := slicez.OrderBy(words, func(s string) int { return len(s) }, compare.Desc[int])
+// sortedDesc = []string{"banana", "apple", "kiwi", "pie"}
+
+// Sort people by age
+type Person struct { Name string; Age int }
+people := []Person{{"Alice", 30}, {"Bob", 25}, {"Charlie", 35}}
+byAge := slicez.OrderBy(people, func(p Person) int { return p.Age })
 // byAge = [{Bob 25} {Alice 30} {Charlie 35}]
 ```
 

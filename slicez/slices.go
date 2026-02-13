@@ -705,8 +705,7 @@ func TakeRightWhile[A any](slice []A, take func(a A) bool) []A {
 
 // Take returns the first i elements of the slice.
 // If i > len(slice), returns a copy of the entire slice.
-// If i <= 0, returns an empty slice.
-// Returns nil if the slice is nil and i is within bounds.
+// If i <= 0, returns a zero-length slice (which may be nil).
 //
 // Example:
 //
@@ -719,7 +718,7 @@ func TakeRightWhile[A any](slice []A, take func(a A) bool) []A {
 //	slicez.Take([]int{1, 2, 3}, 10)
 //	// Returns []int{1, 2, 3} (all elements)
 //
-//	slicez.Take([]int{1, 2, 3}, 0) // Returns []int{}
+//	slicez.Take([]int{1, 2, 3}, 0) // Returns []int{} (zero-length)
 func Take[A any](slice []A, i int) []A {
 	var j int
 	return TakeWhile(slice, func(_ A) bool {
@@ -731,7 +730,7 @@ func Take[A any](slice []A, i int) []A {
 
 // TakeRight returns the last i elements of the slice.
 // If i > len(slice), returns a copy of the entire slice.
-// If i <= 0, returns an empty slice.
+// If i <= 0, returns a zero-length slice (which may be nil).
 //
 // Example:
 //
@@ -744,7 +743,7 @@ func Take[A any](slice []A, i int) []A {
 //	slicez.TakeRight([]int{1, 2, 3}, 10)
 //	// Returns []int{1, 2, 3} (all elements)
 //
-//	slicez.TakeRight([]int{1, 2, 3}, 0) // Returns []int{}
+//	slicez.TakeRight([]int{1, 2, 3}, 0) // Returns []int{} (zero-length)
 func TakeRight[A any](slice []A, i int) []A {
 	i = len(slice) - i - 1
 	j := len(slice) - 1
@@ -1146,24 +1145,25 @@ func Partition[A any](slice []A, predicate func(a A) bool) (satisfied, notSatisf
 	return satisfied, notSatisfied
 }
 
-// PartitionBy groups elements into consecutive groups based on a key function.
-// Unlike GroupBy which groups all matching elements, PartitionBy only groups
-// consecutive elements with the same key. Similar to "chunking" by key.
+// PartitionBy groups elements by key while preserving first-seen key order.
+// Unlike GroupBy, this returns ordered groups instead of a map.
+// Unlike ChunkBy, grouping is not based on adjacency; elements with the same key
+// are grouped together even when they are non-consecutive.
 //
 // Example:
 //
-//	// Group consecutive equal numbers
-//	slicez.PartitionBy([]int{1, 1, 2, 2, 2, 3, 3}, func(a int) int { return a })
-//	// Returns [][]int{{1, 1}, {2, 2, 2}, {3, 3}}
+//	// Group by value, preserving first key order
+//	slicez.PartitionBy([]int{2, 1, 2, 3, 1}, func(a int) int { return a })
+//	// Returns [][]int{{2, 2}, {1, 1}, {3}}
 //
 //	// Group by first letter
 //	slicez.PartitionBy([]string{"apple", "avocado", "banana", "blueberry", "cherry"},
 //	    func(s string) string { return string(s[0]) })
 //	// Returns [][]string{{"apple", "avocado"}, {"banana", "blueberry"}, {"cherry"}}
 //
-//	// Non-consecutive elements with same key get separate groups
+//	// Non-consecutive elements with same key are still grouped together
 //	slicez.PartitionBy([]int{1, 2, 1}, func(a int) int { return a })
-//	// Returns [][]int{{1}, {2}, {1}}
+//	// Returns [][]int{{1, 1}, {2}}
 func PartitionBy[A any, B comparable](slice []A, by func(a A) B) [][]A {
 	if len(slice) == 0 {
 		return nil
@@ -1346,6 +1346,38 @@ func Sample[A any](slice []A, n int) []A {
 	return ret
 }
 
+// OrderBy sorts a slice by a selected key using a custom comparison function.
+// The selector function extracts the key to sort by from each element.
+// The optional order function controls the sort direction; defaults to ascending (compare.Less).
+// Use compare.Asc or compare.Desc for common sort orders.
+// Returns a new slice; the original is not modified.
+//
+// Example:
+//
+//	// Sort strings by length (ascending)
+//	words := []string{"banana", "pie", "apple", "kiwi"}
+//	sorted := slicez.OrderBy(words, func(s string) int { return len(s) })
+//	// Returns []string{"pie", "kiwi", "apple", "banana"}
+//
+//	// Sort by length descending
+//	sortedDesc := slicez.OrderBy(words, func(s string) int { return len(s) }, compare.Desc[int])
+//	// Returns []string{"banana", "apple", "kiwi", "pie"}
+//
+//	// Sort people by age
+//	type Person struct { Name string; Age int }
+//	people := []Person{{"Alice", 30}, {"Bob", 25}, {"Charlie", 35}}
+//	sorted := slicez.OrderBy(people, func(p Person) int { return p.Age })
+//	// Returns [{Bob 25} {Alice 30} {Charlie 35}]
+func OrderBy[A any, T compare.Ordered](slice []A, selector func(a A) T, order ...func(a, b T) bool) []A {
+	cmp := compare.Less[T]
+	if len(order) > 0 {
+		cmp = order[0]
+	}
+	return SortBy(slice, func(a, b A) bool {
+		return cmp(selector(a), selector(b))
+	})
+}
+
 // Sort returns a new slice with elements sorted in natural ascending order.
 // Uses Go's sort.Slice internally. Returns a copy; the original slice is not modified.
 // Works with any Ordered type (integers, floats, strings).
@@ -1386,9 +1418,9 @@ func SortBy[A any](slice []A, less func(a, b A) bool) []A {
 	return res
 }
 
-// Search performs binary search on a sorted slice.
+// Search performs binary search on a monotonic predicate over a slice.
 // Returns the smallest index i where f(slice[i]) is true.
-// The slice must be sorted in ascending order according to f.
+// Predicate f must be false for a (possibly empty) prefix, then true afterwards.
 // If no element satisfies f, returns len(slice) and the zero value.
 //
 // Example:
@@ -1428,15 +1460,15 @@ func Compact[A comparable](slice []A) []A {
 }
 
 // CompactBy removes consecutive duplicate elements using a custom equality function.
-// Only removes duplicates that are adjacent; non-consecutive duplicates are kept.
+// Only adjacent elements are compared; non-consecutive duplicates are kept.
 //
 // Example:
 //
-//	// Remove consecutive equal-length strings
-//	slicez.CompactBy([]string{"hi", "go", "no", "up"}, func(a, b string) bool {
+//	// Compact consecutive runs of strings with equal length
+//	slicez.CompactBy([]string{"a", "to", "go", "bee", "at"}, func(a, b string) bool {
 //	    return len(a) == len(b)
 //	})
-//	// Returns []string{"hi", "go", "up"} (2-letter, 2-letter, 2-letter becomes hi, go, up)
+//	// Returns []string{"a", "to", "bee", "at"}
 func CompactBy[A any](slice []A, equal func(a, b A) bool) []A {
 	if len(slice) == 0 {
 		return slice
@@ -1874,24 +1906,25 @@ func IntersectionBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	return res
 }
 
-// Difference returns elements that are unique across all slices (symmetric difference).
-// Returns elements that appear in exactly one of the input slices.
-// Removes elements that appear in the intersection of any two or more slices.
+// Difference returns unique elements from all slices, excluding keys present in every slice.
+// For two slices, this is the classic symmetric difference.
+// For more than two slices, elements are excluded only when they appear in all inputs.
+// Output order follows first appearance across inputs.
 //
 // Example:
 //
 //	slicez.Difference([]int{1, 2, 3}, []int{2, 3, 4})
 //	// Returns []int{1, 4} (2 and 3 are in both, so removed)
 //
-//	// Three slices: keep only elements in exactly one slice
+//	// Three slices: only values present in all three are excluded
 //	slicez.Difference([]int{1, 2}, []int{2, 3}, []int{3, 4})
-//	// Returns []int{1, 4} (2 is in first two, 3 is in last two)
+//	// Returns []int{1, 2, 3, 4} (no value appears in all three)
 func Difference[A comparable](slices ...[]A) []A {
 	return DifferenceBy(compare.Identity[A], slices...)
 }
 
-// DifferenceBy returns elements unique across slices using a key function.
-// Returns elements whose keys appear in exactly one slice.
+// DifferenceBy is Difference with custom key extraction.
+// Keys present in every input slice are excluded; remaining keys are kept once.
 //
 // Example:
 //
@@ -1899,7 +1932,7 @@ func Difference[A comparable](slices ...[]A) []A {
 //	a := []Person{{"Alice", 30}, {"Bob", 25}}
 //	b := []Person{{"Charlie", 30}, {"Dave", 35}}
 //	slicez.DifferenceBy(func(p Person) int { return p.Age }, a, b)
-//	// Returns [{Bob 25} {Dave 35}] (ages 30 in both, ages 25 and 35 unique)
+//	// Returns [{Bob 25} {Dave 35}] (age 30 appears in both, so excluded)
 func DifferenceBy[A any, B comparable](by func(a A) B, slices ...[]A) []A {
 	if len(slices) == 0 {
 		return nil
@@ -2140,23 +2173,23 @@ func Unzip3[A any, B any, C any, D any, E any](eSlice []E, unzipper func(e E) (a
 	return aSlice, bSlice, cSlice, dSlice
 }
 
-// XOR returns the symmetric difference of multiple slices.
-// Returns elements that appear in exactly one slice (not in multiple slices).
-// Also known as symmetric difference. Preserves order of first appearance.
+// XOR returns elements whose key appears exactly once across all inputs.
+// Duplicate values within a single slice also count toward that frequency.
+// Output order follows input traversal.
 //
 // Example:
 //
 //	slicez.XOR([]int{1, 2, 3}, []int{2, 3, 4})
 //	// Returns []int{1, 4} (2 and 3 appear in both, so excluded)
 //
-//	slicez.XOR([]int{1, 2}, []int{2, 3}, []int{3, 4})
-//	// Returns []int{1, 4} (2 in first two, 3 in last two, 1 and 4 in exactly one)
+//	slicez.XOR([]int{1, 2, 2}, []int{2, 3})
+//	// Returns []int{1, 3} (2 appears three times total, so excluded)
 func XOR[A comparable](slices ...[]A) []A {
 	return XORBy(compare.Identity[A], slices...)
 }
 
-// XORBy returns the symmetric difference using a key function.
-// Returns elements whose keys appear in exactly one slice.
+// XORBy is XOR with custom key extraction.
+// A key is included only if it appears exactly once across all slices.
 //
 // Example:
 //

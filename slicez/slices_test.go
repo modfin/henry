@@ -390,6 +390,70 @@ func TestSortBy(t *testing.T) {
 	}
 }
 
+func TestOrderBy(t *testing.T) {
+	// Test sorting by extracted key (ascending by default)
+	words := []string{"banana", "pie", "apple", "kiwi"}
+	exp := []string{"pie", "kiwi", "apple", "banana"}
+	res := OrderBy(words, func(s string) int { return len(s) })
+	if !reflect.DeepEqual(res, exp) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", res, exp)
+	}
+
+	// Test sorting with compare.Asc explicitly
+	resAsc := OrderBy(words, func(s string) int { return len(s) }, compare.Asc[int])
+	if !reflect.DeepEqual(resAsc, exp) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", resAsc, exp)
+	}
+
+	// Test sorting with compare.Desc
+	expDesc := []string{"banana", "apple", "kiwi", "pie"}
+	resDesc := OrderBy(words, func(s string) int { return len(s) }, compare.Desc[int])
+	if !reflect.DeepEqual(resDesc, expDesc) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", resDesc, expDesc)
+	}
+
+	// Test sorting structs
+	type Person struct {
+		Name string
+		Age  int
+	}
+	people := []Person{{"Alice", 30}, {"Bob", 25}, {"Charlie", 35}}
+	expPeople := []Person{{"Bob", 25}, {"Alice", 30}, {"Charlie", 35}}
+	resPeople := OrderBy(people, func(p Person) int { return p.Age })
+	if !reflect.DeepEqual(resPeople, expPeople) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", resPeople, expPeople)
+	}
+
+	// Test empty slice
+	empty := []int{}
+	resEmpty := OrderBy(empty, func(i int) int { return i })
+	if len(resEmpty) != 0 {
+		t.Fail()
+		t.Logf("expected empty slice, got %v\n", resEmpty)
+	}
+
+	// Test nil slice (becomes empty slice, consistent with SortBy behavior)
+	var nilSlice []int
+	resNil := OrderBy(nilSlice, func(i int) int { return i })
+	if resNil == nil || len(resNil) != 0 {
+		t.Fail()
+		t.Logf("expected empty slice, got %v\n", resNil)
+	}
+
+	// Test with floats
+	floats := []float64{3.5, 1.2, 2.8, 0.5}
+	expFloats := []float64{0.5, 1.2, 2.8, 3.5}
+	resFloats := OrderBy(floats, func(f float64) float64 { return f })
+	if !reflect.DeepEqual(resFloats, expFloats) {
+		t.Fail()
+		t.Logf("expected, %v to equal %v\n", resFloats, expFloats)
+	}
+}
+
 func TestCompact(t *testing.T) {
 	ints := []int{3, 2, 2, 1, 1, 1, 1, 1, 3, 3, 4, 5}
 	exp := []int{3, 2, 1, 3, 4, 5}

@@ -105,6 +105,32 @@ func Less[E Ordered](a, b E) bool {
 	return a < b
 }
 
+// Asc returns true if a < b.
+// Shorthand for Less. Works with any Ordered type (integers, floats, strings).
+// Useful for specifying ascending sort order with OrderBy.
+//
+// Example:
+//
+//	nums := []int{5, 2, 8, 1, 9}
+//	sorted := slicez.OrderBy(nums, compare.Identity[int], compare.Asc[int])
+//	// sorted = []int{1, 2, 5, 8, 9}
+func Asc[E Ordered](a, b E) bool {
+	return Less(a, b)
+}
+
+// Desc returns true if a > b (descending order).
+// Negation of Asc. Works with any Ordered type (integers, floats, strings).
+// Useful for specifying descending sort order with OrderBy.
+//
+// Example:
+//
+//	nums := []int{5, 2, 8, 1, 9}
+//	sorted := slicez.OrderBy(nums, compare.Identity[int], compare.Desc[int])
+//	// sorted = []int{9, 8, 5, 2, 1}
+func Desc[E Ordered](a, b E) bool {
+	return Greater(a, b)
+}
+
 // LessOrEqual returns true if a <= b.
 // Works with any Ordered type (integers, floats, strings).
 //
