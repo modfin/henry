@@ -1,7 +1,6 @@
 // Package setz provides generic set data structures and operations.
 // It offers both a Set type with methods for fluent API usage and standalone
-// functions that work with map[T]struct{} for interoperability with other
-// packages in the henry library.
+// functions for interoperability with other packages in the henry library.
 package setz
 
 import "fmt"
@@ -37,14 +36,14 @@ func FromSlice[T comparable](slice []T) Set[T] {
 	return New(slice...)
 }
 
-// FromMap creates a Set from the keys of a map[T]struct{}.
+// FromMap creates a Set from an existing map[T]struct{}.
 // This allows interoperability with slicez.Set() output.
 //
 // Example:
 //
 //	m := map[string]struct{}{"a": {}, "b": {}}
 //	s := setz.FromMap(m)  // Set with "a", "b"
-func FromMap[T comparable](m map[T]struct{}) Set[T] {
+func FromMap[T comparable](m Set[T]) Set[T] {
 	s := make(Set[T], len(m))
 	for k := range m {
 		s[k] = struct{}{}
@@ -418,15 +417,15 @@ func Difference[T comparable](first Set[T], others ...Set[T]) Set[T] {
 }
 
 // Contains returns true if the element is in the set.
-// Standalone function that works with map[T]struct{}.
-func Contains[T comparable](s map[T]struct{}, element T) bool {
+// Standalone function version.
+func Contains[T comparable](s Set[T], element T) bool {
 	_, exists := s[element]
 	return exists
 }
 
-// ToSlice returns all elements from a map-based set as a slice.
-// Standalone function that works with map[T]struct{}.
-func ToSlice[T comparable](s map[T]struct{}) []T {
+// ToSlice returns all elements from a set as a slice.
+// Standalone function version.
+func ToSlice[T comparable](s Set[T]) []T {
 	if len(s) == 0 {
 		return []T{}
 	}
@@ -438,8 +437,8 @@ func ToSlice[T comparable](s map[T]struct{}) []T {
 }
 
 // IsSubset returns true if all elements of a are in b.
-// Standalone function that works with map[T]struct{}.
-func IsSubset[T comparable](a, b map[T]struct{}) bool {
+// Standalone function version.
+func IsSubset[T comparable](a, b Set[T]) bool {
 	if len(a) == 0 {
 		return true
 	}
@@ -455,8 +454,8 @@ func IsSubset[T comparable](a, b map[T]struct{}) bool {
 }
 
 // IsDisjoint returns true if a and b have no elements in common.
-// Standalone function that works with map[T]struct{}.
-func IsDisjoint[T comparable](a, b map[T]struct{}) bool {
+// Standalone function version.
+func IsDisjoint[T comparable](a, b Set[T]) bool {
 	if len(a) == 0 || len(b) == 0 {
 		return true
 	}
