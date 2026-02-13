@@ -2,6 +2,7 @@ package numz
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -277,5 +278,201 @@ func TestLCM(t *testing.T) {
 	if res != 60 {
 		t.Log("Expected 60", "got", res)
 		t.Fail()
+	}
+}
+
+func TestVPow(t *testing.T) {
+	vector := []float64{1, 2, 3}
+	result := VPow(vector, 2)
+	expected := []float64{1, 4, 9}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("VPow() = %v, want %v", result, expected)
+	}
+}
+
+func TestVMul(t *testing.T) {
+	x := []int{1, 2, 3}
+	y := []int{4, 5, 6}
+	result := VMul(x, y)
+	expected := []int{4, 10, 18}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("VMul() = %v, want %v", result, expected)
+	}
+	// Test with different lengths - should take min length
+	x2 := []int{1, 2, 3, 4}
+	y2 := []int{5, 6}
+	result2 := VMul(x2, y2)
+	if len(result2) != 2 {
+		t.Errorf("VMul different lengths: expected length 2, got %d", len(result2))
+	}
+}
+
+func TestVAdd(t *testing.T) {
+	x := []int{1, 2, 3}
+	y := []int{4, 5, 6}
+	result := VAdd(x, y)
+	expected := []int{5, 7, 9}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("VAdd() = %v, want %v", result, expected)
+	}
+}
+
+func TestVSub(t *testing.T) {
+	x := []int{10, 20, 30}
+	y := []int{1, 2, 3}
+	result := VSub(x, y)
+	expected := []int{9, 18, 27}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("VSub() = %v, want %v", result, expected)
+	}
+}
+
+func TestNegate(t *testing.T) {
+	if Negate(5) != -5 {
+		t.Errorf("Negate(5) = %d, want -5", Negate(5))
+	}
+	if Negate(-3) != 3 {
+		t.Errorf("Negate(-3) = %d, want 3", Negate(-3))
+	}
+	if Negate(0) != 0 {
+		t.Errorf("Negate(0) = %d, want 0", Negate(0))
+	}
+}
+
+func TestAbs(t *testing.T) {
+	if Abs(5) != 5 {
+		t.Errorf("Abs(5) = %d, want 5", Abs(5))
+	}
+	if Abs(-5) != 5 {
+		t.Errorf("Abs(-5) = %d, want 5", Abs(-5))
+	}
+	if Abs(0) != 0 {
+		t.Errorf("Abs(0) = %d, want 0", Abs(0))
+	}
+}
+
+func TestCastFunctions(t *testing.T) {
+	n := 42.5
+	if CastFloat64(n) != 42.5 {
+		t.Errorf("CastFloat64 failed")
+	}
+	if CastFloat32(n) != 42.5 {
+		t.Errorf("CastFloat32 failed")
+	}
+	if CastInt(n) != 42 {
+		t.Errorf("CastInt failed")
+	}
+	if CastInt8(100) != 100 {
+		t.Errorf("CastInt8 failed")
+	}
+	if CastInt16(1000) != 1000 {
+		t.Errorf("CastInt16 failed")
+	}
+	if CastInt32(100000) != 100000 {
+		t.Errorf("CastInt32 failed")
+	}
+	if CastInt64(10000000000) != 10000000000 {
+		t.Errorf("CastInt64 failed")
+	}
+	if CastUInt(42) != 42 {
+		t.Errorf("CastUInt failed")
+	}
+	if CastUInt8(255) != 255 {
+		t.Errorf("CastUInt8 failed")
+	}
+	if CastUInt16(1000) != 1000 {
+		t.Errorf("CastUInt16 failed")
+	}
+	if CastUInt32(100000) != 100000 {
+		t.Errorf("CastUInt32 failed")
+	}
+	if CastUInt64(10000000000) != 10000000000 {
+		t.Errorf("CastUInt64 failed")
+	}
+	if CastByte(65) != 65 {
+		t.Errorf("CastByte failed")
+	}
+}
+
+func TestEmptyInput(t *testing.T) {
+	// Test various functions with empty input
+	emptySlice := []int{}
+
+	// GCD with empty slice
+	if GCD(emptySlice...) != 0 {
+		t.Errorf("GCD(empty) = %d, want 0", GCD(emptySlice...))
+	}
+
+	// Mean with empty slice
+	if Mean(emptySlice...) != 0 {
+		t.Errorf("Mean(empty) = %v, want 0", Mean(emptySlice...))
+	}
+
+	// Min with empty slice
+	if Min(emptySlice...) != 0 {
+		t.Errorf("Min(empty) = %d, want 0", Min(emptySlice...))
+	}
+
+	// Max with empty slice
+	if Max(emptySlice...) != 0 {
+		t.Errorf("Max(empty) = %d, want 0", Max(emptySlice...))
+	}
+}
+
+func TestGCD_Empty(t *testing.T) {
+	// Test empty input
+	var empty []int
+	if GCD(empty...) != 0 {
+		t.Errorf("GCD with empty input should return 0")
+	}
+	// Test single element
+	if GCD(42) != 42 {
+		t.Errorf("GCD(42) = %d, want 42", GCD(42))
+	}
+}
+
+func TestLCM_Single(t *testing.T) {
+	// Test with single element
+	if LCM(10, 5) != 10 {
+		t.Errorf("LCM(10, 5) = %d, want 10", LCM(10, 5))
+	}
+}
+
+func TestRange_Empty(t *testing.T) {
+	// Range with no args should return 0
+	if Range[int]() != 0 {
+		t.Errorf("Range() with no args should return 0")
+	}
+}
+
+func TestSNR_EdgeCases(t *testing.T) {
+	// SNR when all values are the same (std dev = 0) will be +Inf
+	result := SNR(5, 5, 5)
+	if !math.IsInf(result, 1) {
+		t.Errorf("SNR with identical values should be +Inf, got %v", result)
+	}
+}
+
+func TestSkew_Symmetric(t *testing.T) {
+	// Symmetric distribution should have skew close to 0
+	data := []int{1, 2, 3, 4, 5, 4, 3, 2, 1}
+	skew := Skew(data...)
+	// This is approximately symmetric, skew should be close to 0
+	if skew > 0.5 || skew < -0.5 {
+		t.Errorf("Skew of symmetric distribution = %v, should be close to 0", skew)
+	}
+}
+
+func TestPercentile_EdgeCases(t *testing.T) {
+	data := []int{1, 2, 3, 4, 5}
+	// 1 is the minimum, should be at 0th percentile
+	p := Percentile(1, data...)
+	if p != 0 {
+		t.Errorf("Percentile(1, min) = %v, want 0", p)
+	}
+	// 5 is greater than everything except itself
+	p2 := Percentile(5, data...)
+	if p2 != 0.8 {
+		t.Errorf("Percentile(5) = %v, want 0.8", p2)
 	}
 }

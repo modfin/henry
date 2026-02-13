@@ -474,5 +474,454 @@ func TestGenerator(t *testing.T) {
 		t.Logf("expected, %v, but got %v", exp, res)
 		t.Fail()
 	}
+}
 
+func TestMapWith(t *testing.T) {
+	res := []string{}
+	exp := []string{"1", "2", "3"}
+	generated := Generate[int](1, 2, 3)
+	mapper := MapWith[int, string](OpBuffer(1))
+	mapped := mapper(generated, func(a int) string {
+		return fmt.Sprintf("%d", a)
+	})
+
+	for s := range mapped {
+		res = append(res, s)
+	}
+
+	if !slicez.Equal(exp, res) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestPeekWith(t *testing.T) {
+	var sum int
+	generated := Generate(1, 2, 3)
+	peeker := PeekWith[int](OpBuffer(1))
+	peeked := peeker(generated, func(a int) {
+		sum += a
+	})
+
+	Collect(peeked)
+
+	if sum != 6 {
+		t.Errorf("expected sum 6, got %d", sum)
+		t.Fail()
+	}
+}
+
+func TestFlattenWith(t *testing.T) {
+	in := [][]int{{1, 2}, {3}, {}, {4}}
+	exp := []int{1, 2, 3, 4}
+	generated := Generate[[]int](in...)
+	flattener := FlattenWith[int](OpBuffer(1))
+	flatten := flattener(generated)
+
+	res := Collect(flatten)
+
+	if !slicez.Equal(exp, res) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestConcat(t *testing.T) {
+	c1 := Generate(1, 2, 3)
+	c2 := Generate(4, 5, 6)
+	concatenated := Concat(c1, c2)
+	res := Collect(concatenated)
+	exp := []int{1, 2, 3, 4, 5, 6}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestConcatWith(t *testing.T) {
+	c1 := Generate(1, 2, 3)
+	c2 := Generate(4, 5, 6)
+	concatenator := ConcatWith[int](OpBuffer(1))
+	concatenated := concatenator(c1, c2)
+	res := Collect(concatenated)
+	exp := []int{1, 2, 3, 4, 5, 6}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestFilterWith(t *testing.T) {
+	in := []int{1, 2, 3, 4, 5, 6}
+	exp := []int{2, 4, 6}
+	generated := Generate(in...)
+	filterer := FilterWith[int](OpBuffer(1))
+	filtered := filterer(generated, func(a int) bool {
+		return a%2 == 0
+	})
+
+	res := Collect(filtered)
+
+	if !slicez.Equal(exp, res) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestCompactWith(t *testing.T) {
+	c := Generate(1, 1, 2, 2, 3, 3)
+	compactor := CompactWith[int](OpBuffer(1))
+	compact := compactor(c, compare.Equal[int])
+
+	var res []int
+	for v := range compact {
+		res = append(res, v)
+	}
+	exp := []int{1, 2, 3}
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestPartitionWith(t *testing.T) {
+	c := Generate(1, 2, 3, 4, 5)
+	partitioner := PartitionWith[int](OpBuffer(1))
+	even, odd := partitioner(c, func(i int) bool {
+		return i%2 == 0
+	})
+
+	var resEven []int
+	go func() {
+		resEven = Collect(even)
+	}()
+	resOdd := Collect(odd)
+
+	expEven := []int{2, 4}
+	if !slicez.Equal(expEven, resEven) {
+		t.Logf("expected even %v, but got %v", expEven, resEven)
+		t.Fail()
+	}
+
+	expOdd := []int{1, 3, 5}
+	if !slicez.Equal(expOdd, resOdd) {
+		t.Logf("expected odd %v, but got %v", expOdd, resOdd)
+		t.Fail()
+	}
+}
+
+func TestTakeWhileWith(t *testing.T) {
+	c := Generate(1, 2, 3, 4, 5)
+	taker := TakeWhileWith[int](OpBuffer(1))
+	result := taker(c, func(a int) bool {
+		return a < 4
+	})
+
+	res := Collect(result)
+	exp := []int{1, 2, 3}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestTakeWith(t *testing.T) {
+	c := Generate(1, 2, 3, 4, 5)
+	taker := TakeWith[int](OpBuffer(1))
+	result := taker(c, 3)
+
+	res := Collect(result)
+	exp := []int{1, 2, 3}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestDropWith(t *testing.T) {
+	c := Generate(1, 2, 3, 4, 5)
+	dropper := DropWith[int](OpBuffer(1))
+	result := dropper(c, 2)
+
+	res := Collect(result)
+	exp := []int{3, 4, 5}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestDropWhileWith(t *testing.T) {
+	c := Generate(1, 2, 3, 4, 5)
+	dropper := DropWhileWith[int](OpBuffer(1))
+	result := dropper(c, func(a int) bool {
+		return a < 3
+	})
+
+	res := Collect(result)
+	exp := []int{3, 4, 5}
+
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestFanInWith(t *testing.T) {
+	c1 := Generate(1, 2, 3)
+	c2 := Generate(4, 5, 6)
+	fanIn := FanInWith[int](OpBuffer(1))
+	result := fanIn(c1, c2)
+
+	res := Collect(result)
+	// Since it's concurrent, just check all values are present
+	if len(res) != 6 {
+		t.Errorf("expected 6 elements, got %d", len(res))
+		t.Fail()
+	}
+}
+
+func TestFanOutWith(t *testing.T) {
+	c := Generate(1, 2, 3)
+	fanOuter := FanOutWith[int](OpBuffer(1))
+	outs := fanOuter(c, 3)
+
+	if len(outs) != 3 {
+		t.Errorf("expected 3 output channels, got %d", len(outs))
+		t.Fail()
+	}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var results [][]int
+
+	wg.Add(3)
+	for _, o := range outs {
+		o := o
+		go func() {
+			nums := Collect(o)
+			mu.Lock()
+			results = append(results, nums)
+			mu.Unlock()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+
+	exp := []int{1, 2, 3}
+	for _, r := range results {
+		if !slicez.Equal(r, exp) {
+			t.Logf("expected, %v, but got %v", exp, r)
+			t.Fail()
+		}
+	}
+}
+
+func TestGeneratorWith(t *testing.T) {
+	generator := func(yield func(int)) {
+		yield(1)
+		yield(2)
+		yield(3)
+	}
+
+	gen := GeneratorWith[int](OpBuffer(1))
+	res := Collect(gen(generator))
+	exp := []int{1, 2, 3}
+	if !slicez.Equal(res, exp) {
+		t.Logf("expected, %v, but got %v", exp, res)
+		t.Fail()
+	}
+}
+
+func TestBuffer(t *testing.T) {
+	c := Generate(1, 2, 3, 4, 5)
+	buf, more := Buffer(3, c)
+
+	if len(buf) != 3 {
+		t.Errorf("expected buffer length 3, got %d", len(buf))
+		t.Fail()
+	}
+
+	if !more {
+		t.Error("expected more to be true since channel has more elements")
+		t.Fail()
+	}
+
+	// Collect remaining
+	remaining := Collect(c)
+	if len(remaining) != 2 {
+		t.Errorf("expected 2 remaining elements, got %d", len(remaining))
+		t.Fail()
+	}
+}
+
+func TestDone(t *testing.T) {
+	ch := make(chan int)
+	go func() {
+		ch <- 1
+		ch <- 2
+		close(ch)
+	}()
+
+	done := Done(ch)
+	select {
+	case <-done:
+		// Success
+	case <-time.After(time.Second):
+		t.Error("expected Done to close after channel closes")
+		t.Fail()
+	}
+}
+
+func TestReaders(t *testing.T) {
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+	ch3 := make(chan int)
+
+	readers := Readers(ch1, ch2, ch3)
+
+	if len(readers) != 3 {
+		t.Errorf("expected 3 readers, got %d", len(readers))
+		t.Fail()
+	}
+
+	// Test that they are receive-only
+	// This is a compile-time check, if it compiles, it works
+}
+
+func TestWriters(t *testing.T) {
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+
+	writers := Writers(ch1, ch2)
+
+	if len(writers) != 2 {
+		t.Errorf("expected 2 writers, got %d", len(writers))
+		t.Fail()
+	}
+
+	// Test that they are send-only
+	// This is a compile-time check, if it compiles, it works
+}
+
+func TestWriteTo(t *testing.T) {
+	ch := make(chan int, 10)
+
+	// Test WriteSync
+	writer := WriteTo(ch, WriteSync)
+	writer(42)
+	if <-ch != 42 {
+		t.Error("WriteSync failed")
+	}
+
+	// Test WriteAync - just verify it doesn't block
+	writer2 := WriteTo(ch, WriteAync)
+	writer2(100)
+	time.Sleep(10 * time.Millisecond) // Give goroutine time to execute
+	if <-ch != 100 {
+		t.Error("WriteAync failed")
+	}
+
+	// Test WriteIfFree when channel has space
+	writer3 := WriteTo(ch, WriteIfFree)
+	writer3(200)
+	if <-ch != 200 {
+		t.Error("WriteIfFree failed when space available")
+	}
+
+	// Test WriteIfFree when channel is full
+	fullCh := make(chan int) // Unbuffered, so it will block
+	writer4 := WriteTo(fullCh, WriteIfFree)
+	writer4(300) // Should not block, should be dropped
+	// If we get here without blocking, it worked
+}
+
+func TestReadFrom(t *testing.T) {
+	ch := make(chan int, 10)
+	ch <- 42
+	ch <- 100
+	close(ch)
+
+	// Test ReadWait
+	reader1 := ReadFrom(ch, ReadWait)
+	val, ok := reader1()
+	if val != 42 || !ok {
+		t.Errorf("ReadWait failed: val=%d, ok=%v", val, ok)
+	}
+
+	// Test ReadIfWaiting when data available
+	reader2 := ReadFrom(ch, ReadIfWaiting)
+	val2, ok2 := reader2()
+	if val2 != 100 || !ok2 {
+		t.Errorf("ReadIfWaiting with data failed: val=%d, ok=%v", val2, ok2)
+	}
+
+	// Test ReadIfWaiting when no data available
+	emptyCh := make(chan int)
+	reader3 := ReadFrom(emptyCh, ReadIfWaiting)
+	val3, ok3 := reader3()
+	if ok3 {
+		t.Errorf("ReadIfWaiting without data should return false, got val=%d, ok=%v", val3, ok3)
+	}
+}
+
+func TestSomeDone_Empty(t *testing.T) {
+	result := SomeDone[int]()
+	if result != nil {
+		t.Error("SomeDone with no channels should return nil")
+	}
+}
+
+func TestEveryDone_Empty(t *testing.T) {
+	result := EveryDone[int]()
+	if result != nil {
+		t.Error("EveryDone with no channels should return nil")
+	}
+}
+
+func TestEveryDone_Single(t *testing.T) {
+	ch := make(chan int)
+	go func() {
+		close(ch)
+	}()
+
+	result := EveryDone(ch)
+	select {
+	case <-result:
+		// Success
+	case <-time.After(time.Second):
+		t.Error("EveryDone with single channel should close when channel closes")
+	}
+}
+
+func TestSomeDone_Single(t *testing.T) {
+	ch := make(chan int)
+	go func() {
+		close(ch)
+	}()
+
+	result := SomeDone(ch)
+	select {
+	case <-result:
+		// Success
+	case <-time.After(time.Second):
+		t.Error("SomeDone with single channel should close when channel closes")
+	}
+}
+
+func TestCompact_EmptyChannel(t *testing.T) {
+	emptyCh := make(chan int)
+	close(emptyCh)
+
+	result := Compact(emptyCh, compare.Equal[int])
+	res := Collect(result)
+
+	if len(res) != 0 {
+		t.Errorf("Compact on empty channel should return empty, got %v", res)
+	}
 }

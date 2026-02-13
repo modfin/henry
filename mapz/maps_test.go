@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/modfin/henry/slicez"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -203,5 +204,151 @@ func TestOmitByValues(t *testing.T) {
 	if !reflect.DeepEqual(m, exp) {
 		t.Log("Expected", exp, "got", m)
 		t.Fail()
+	}
+}
+
+func TestEqualBy(t *testing.T) {
+	m1 := map[int]string{1: "one", 2: "two"}
+	m2 := map[int]string{1: "ONE", 2: "TWO"}
+	// Case-insensitive comparison
+	eq := func(a, b string) bool {
+		return strings.ToLower(a) == strings.ToLower(b)
+	}
+	if !EqualBy(m1, m2, eq) {
+		t.Error("Expected EqualBy to return true for case-insensitive match")
+	}
+	// Different values
+	m3 := map[int]string{1: "one", 2: "different"}
+	if EqualBy(m1, m3, eq) {
+		t.Error("Expected EqualBy to return false for different values")
+	}
+}
+
+func TestDeleteKeys(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+	DeleteKeys(m, "b", "d")
+	if len(m) != 2 {
+		t.Errorf("Expected length 2, got %d", len(m))
+	}
+	if _, ok := m["a"]; !ok {
+		t.Error("Expected key 'a' to exist")
+	}
+	if _, ok := m["c"]; !ok {
+		t.Error("Expected key 'c' to exist")
+	}
+}
+
+func TestFilter(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+	result := Filter(m, func(k string, v int) bool {
+		return v%2 == 0
+	})
+	if len(result) != 2 {
+		t.Errorf("Expected length 2, got %d", len(result))
+	}
+	if result["b"] != 2 || result["d"] != 4 {
+		t.Error("Expected only even values")
+	}
+}
+
+func TestReject(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3, "d": 4}
+	result := Reject(m, func(k string, v int) bool {
+		return v%2 == 0
+	})
+	if len(result) != 2 {
+		t.Errorf("Expected length 2, got %d", len(result))
+	}
+	if result["a"] != 1 || result["c"] != 3 {
+		t.Error("Expected only odd values")
+	}
+}
+
+func TestSlice(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2}
+	result := Slice(m, func(k string, v int) string {
+		return fmt.Sprintf("%s=%d", k, v)
+	})
+	if len(result) != 2 {
+		t.Errorf("Expected length 2, got %d", len(result))
+	}
+	// Check that all expected values are present
+	found := make(map[string]bool)
+	for _, s := range result {
+		found[s] = true
+	}
+	if !found["a=1"] || !found["b=2"] {
+		t.Errorf("Expected [a=1, b=2], got %v", result)
+	}
+}
+
+func TestEntries(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2}
+	entries := Entries(m)
+	if len(entries) != 2 {
+		t.Errorf("Expected 2 entries, got %d", len(entries))
+	}
+	// Convert to map for easier checking
+	result := make(map[string]int)
+	for _, e := range entries {
+		result[e.Key] = e.Value
+	}
+	if !reflect.DeepEqual(result, m) {
+		t.Errorf("Entries() = %v, want %v", result, m)
+	}
+}
+
+func TestFromEntries(t *testing.T) {
+	entries := []Entry[string, int]{
+		{Key: "a", Value: 1},
+		{Key: "b", Value: 2},
+	}
+	result := FromEntries(entries)
+	expected := map[string]int{"a": 1, "b": 2}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("FromEntries() = %v, want %v", result, expected)
+	}
+}
+
+func TestRemapKeys(t *testing.T) {
+	m := map[int]int{1: 10, 2: 20}
+	result := RemapKeys(m, func(k, v int) string {
+		return fmt.Sprintf("key_%d", k)
+	})
+	expected := map[string]int{"key_1": 10, "key_2": 20}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("RemapKeys() = %v, want %v", result, expected)
+	}
+}
+
+func TestRemapValues(t *testing.T) {
+	m := map[int]int{1: 10, 2: 20}
+	result := RemapValues(m, func(k, v int) string {
+		return fmt.Sprintf("value_%d", v)
+	})
+	expected := map[int]string{1: "value_10", 2: "value_20"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("RemapValues() = %v, want %v", result, expected)
+	}
+}
+
+func TestInvert(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	result := Invert(m)
+	expected := map[int]string{1: "a", 2: "b", 3: "c"}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Invert() = %v, want %v", result, expected)
+	}
+}
+
+func TestValueOr(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2}
+	// Key exists
+	if ValueOr(m, "a", 100) != 1 {
+		t.Error("Expected ValueOr to return 1 for key 'a'")
+	}
+	// Key does not exist
+	if ValueOr(m, "c", 100) != 100 {
+		t.Error("Expected ValueOr to return fallback 100 for key 'c'")
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -862,5 +863,264 @@ func TestXORBy(t *testing.T) {
 				t.Errorf("XORBy() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestIndex(t *testing.T) {
+	ints := []int{1, 2, 3, 2, 1}
+	if Index(ints, 3) != 2 {
+		t.Errorf("Index(ints, 3) = %d, want 2", Index(ints, 3))
+	}
+	if Index(ints, 5) != -1 {
+		t.Errorf("Index(ints, 5) = %d, want -1", Index(ints, 5))
+	}
+}
+
+func TestCutBy_NotFound(t *testing.T) {
+	ints := []int{1, 2, 3, 4, 5}
+	left, right, found := CutBy(ints, func(e int) bool { return e == 10 })
+	if found {
+		t.Error("Expected found = false for non-existent element")
+	}
+	if !reflect.DeepEqual(left, ints) {
+		t.Errorf("Expected left = original slice when not found")
+	}
+	if right != nil {
+		t.Error("Expected right = nil when not found")
+	}
+}
+
+func TestReplaceFirstAndAll(t *testing.T) {
+	ints := []int{1, 2, 3, 2, 1}
+
+	// ReplaceFirst
+	result := ReplaceFirst(ints, 2, 9)
+	expected := []int{1, 9, 3, 2, 1}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ReplaceFirst() = %v, want %v", result, expected)
+	}
+
+	// ReplaceAll
+	result2 := ReplaceAll(ints, 2, 9)
+	expected2 := []int{1, 9, 3, 9, 1}
+	if !reflect.DeepEqual(result2, expected2) {
+		t.Errorf("ReplaceAll() = %v, want %v", result2, expected2)
+	}
+}
+
+func TestFindLast(t *testing.T) {
+	ints := []int{1, 2, 3, 2, 1}
+	val, found := FindLast(ints, func(e int) bool { return e == 2 })
+	if !found {
+		t.Error("Expected found = true")
+	}
+	if val != 2 {
+		t.Errorf("FindLast() = %d, want 2", val)
+	}
+
+	// Not found
+	_, notFound := FindLast(ints, func(e int) bool { return e == 10 })
+	if notFound {
+		t.Error("Expected not found for non-existent element")
+	}
+}
+
+func TestContains(t *testing.T) {
+	ints := []int{1, 2, 3, 4, 5}
+	if !Contains(ints, 3) {
+		t.Error("Contains(ints, 3) should return true")
+	}
+	if Contains(ints, 10) {
+		t.Error("Contains(ints, 10) should return false")
+	}
+}
+
+func TestContainsBy(t *testing.T) {
+	ints := []int{1, 2, 3, 4, 5}
+	if !ContainsBy(ints, func(e int) bool { return e > 3 }) {
+		t.Error("ContainsBy(ints, >3) should return true")
+	}
+	if ContainsBy(ints, func(e int) bool { return e > 10 }) {
+		t.Error("ContainsBy(ints, >10) should return false")
+	}
+}
+
+func TestForEach(t *testing.T) {
+	ints := []int{1, 2, 3}
+	var sum int
+	ForEach(ints, func(a int) {
+		sum += a
+	})
+	if sum != 6 {
+		t.Errorf("ForEach sum = %d, want 6", sum)
+	}
+}
+
+func TestForEachRight(t *testing.T) {
+	ints := []int{1, 2, 3}
+	var result []int
+	ForEachRight(ints, func(a int) {
+		result = append(result, a)
+	})
+	expected := []int{3, 2, 1}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("ForEachRight() = %v, want %v", result, expected)
+	}
+}
+
+func TestClone_Nil(t *testing.T) {
+	var nilSlice []int
+	cloned := Clone(nilSlice)
+	if cloned != nil {
+		t.Error("Clone(nil) should return nil")
+	}
+
+	// Non-nil slice
+	nonNil := []int{1, 2, 3}
+	cloned2 := Clone(nonNil)
+	if !reflect.DeepEqual(cloned2, nonNil) {
+		t.Errorf("Clone() = %v, want %v", cloned2, nonNil)
+	}
+}
+
+func TestCompare(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := []int{1, 2, 4}
+	c := []int{1, 2}
+	d := []int{1, 2, 3}
+
+	if Compare(a, b) != -1 {
+		t.Error("Compare([1,2,3], [1,2,4]) should return -1")
+	}
+	if Compare(b, a) != 1 {
+		t.Error("Compare([1,2,4], [1,2,3]) should return 1")
+	}
+	if Compare(a, d) != 0 {
+		t.Error("Compare([1,2,3], [1,2,3]) should return 0")
+	}
+	if Compare(a, c) != 1 {
+		t.Error("Compare([1,2,3], [1,2]) should return 1")
+	}
+}
+
+func TestCompareBy(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := []int{1, 2, 4}
+	c := []int{1, 2}
+
+	// Simple comparison function
+	cmp := func(x, y int) int {
+		if x < y {
+			return -1
+		}
+		if x > y {
+			return 1
+		}
+		return 0
+	}
+
+	if CompareBy(a, b, cmp) != -1 {
+		t.Error("CompareBy([1,2,3], [1,2,4]) should return -1")
+	}
+	if CompareBy(b, a, cmp) != 1 {
+		t.Error("CompareBy([1,2,4], [1,2,3]) should return 1")
+	}
+	if CompareBy(a, a, cmp) != 0 {
+		t.Error("CompareBy([1,2,3], [1,2,3]) should return 0")
+	}
+	if CompareBy(a, c, cmp) != 1 {
+		t.Error("CompareBy([1,2,3], [1,2]) should return 1")
+	}
+}
+
+func TestRepeatBy(t *testing.T) {
+	result := RepeatBy(5, func(i int) int { return i * i })
+	expected := []int{0, 1, 4, 9, 16}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("RepeatBy() = %v, want %v", result, expected)
+	}
+}
+
+func TestZip2(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := []int{10, 20, 30}
+	c := []int{100, 200, 300}
+
+	result := Zip2(a, b, c, func(x, y, z int) int { return x + y + z })
+	expected := []int{111, 222, 333}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Zip2() = %v, want %v", result, expected)
+	}
+
+	// Test with different lengths
+	a2 := []int{1, 2}
+	b2 := []int{10, 20, 30}
+	c2 := []int{100}
+	result2 := Zip2(a2, b2, c2, func(x, y, z int) int { return x + y + z })
+	if len(result2) != 1 {
+		t.Errorf("Zip2 with different lengths: expected length 1, got %d", len(result2))
+	}
+}
+
+func TestUnzip2(t *testing.T) {
+	input := []string{"111", "222", "333"}
+	a, b, c := Unzip2(input, func(s string) (int, int, int) {
+		return int(s[0] - '0'), int(s[1] - '0'), int(s[2] - '0')
+	})
+
+	if !reflect.DeepEqual(a, []int{1, 2, 3}) {
+		t.Errorf("Unzip2 first = %v, want %v", a, []int{1, 2, 3})
+	}
+	if !reflect.DeepEqual(b, []int{1, 2, 3}) {
+		t.Errorf("Unzip2 second = %v, want %v", b, []int{1, 2, 3})
+	}
+	if !reflect.DeepEqual(c, []int{1, 2, 3}) {
+		t.Errorf("Unzip2 third = %v, want %v", c, []int{1, 2, 3})
+	}
+}
+
+func TestZip3(t *testing.T) {
+	a := []int{1, 2}
+	b := []int{10, 20}
+	c := []int{100, 200}
+	d := []int{1000, 2000}
+
+	result := Zip3(a, b, c, d, func(w, x, y, z int) int { return w + x + y + z })
+	expected := []int{1111, 2222}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Zip3() = %v, want %v", result, expected)
+	}
+}
+
+func TestUnzip3(t *testing.T) {
+	input := []string{"1234", "5678"}
+	a, b, c, d := Unzip3(input, func(s string) (int, int, int, int) {
+		return int(s[0] - '0'), int(s[1] - '0'), int(s[2] - '0'), int(s[3] - '0')
+	})
+
+	if !reflect.DeepEqual(a, []int{1, 5}) {
+		t.Errorf("Unzip3 first = %v, want %v", a, []int{1, 5})
+	}
+	if !reflect.DeepEqual(b, []int{2, 6}) {
+		t.Errorf("Unzip3 second = %v, want %v", b, []int{2, 6})
+	}
+	if !reflect.DeepEqual(c, []int{3, 7}) {
+		t.Errorf("Unzip3 third = %v, want %v", c, []int{3, 7})
+	}
+	if !reflect.DeepEqual(d, []int{4, 8}) {
+		t.Errorf("Unzip3 fourth = %v, want %v", d, []int{4, 8})
+	}
+}
+
+func TestSliceToMap(t *testing.T) {
+	slice := []string{"a:1", "b:2", "c:3"}
+	result := SliceToMap(slice, func(s string) (string, int) {
+		parts := strings.Split(s, ":")
+		val, _ := strconv.Atoi(parts[1])
+		return parts[0], val
+	})
+	expected := map[string]int{"a": 1, "b": 2, "c": 3}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("SliceToMap() = %v, want %v", result, expected)
 	}
 }

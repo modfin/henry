@@ -91,7 +91,7 @@ func (p Pipe[A]) Fold(combined func(accumulator A, val A) A, accumulator A) A {
 }
 
 func (p Pipe[A]) FoldRight(combined func(accumulator A, val A) A, accumulator A) A {
-	return slicez.Fold(p, combined, accumulator)
+	return slicez.FoldRight(p, combined, accumulator)
 }
 
 func (p Pipe[A]) Every(predicate func(a A) bool) bool {

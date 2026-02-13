@@ -1,6 +1,16 @@
 package compare
 
 func Compare[N Ordered](a N, b N) int {
+	// Handle NaN cases - NaN is not comparable and should not equal anything
+	if isNaN(a) && isNaN(b) {
+		return 0 // NaN == NaN for comparison purposes
+	}
+	if isNaN(a) {
+		return -1 // NaN is less than everything (except NaN)
+	}
+	if isNaN(b) {
+		return +1 // everything is greater than NaN
+	}
 	switch {
 	case a < b:
 		return -1
