@@ -3,7 +3,9 @@
 // functions for interoperability with other packages in the henry library.
 package setz
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Set represents a mathematical set of unique elements.
 // It is implemented as a type alias of map[T]struct{} for O(1) operations.
@@ -34,6 +36,37 @@ func New[T comparable](elements ...T) Set[T] {
 //	// s contains {1, 2, 3}
 func FromSlice[T comparable](slice []T) Set[T] {
 	return New(slice...)
+}
+
+// FromSliceBy creates a Set by applying f to each element of the slice and
+// collecting the results, removing duplicates.
+//
+// Example:
+//
+//	s := setz.FromSliceBy([]int{2, 3, 4}, func(a int) int { return a % 2 })
+//	// s contains {0, 1}
+func FromSliceBy[T, V comparable](slice []T, f func(T) V) Set[V] {
+	s := make(Set[V], len(slice))
+	for _, e := range slice {
+		s[f(e)] = struct{}{}
+	}
+	return s
+}
+
+// FromMapBy creates a Set by applying f to each key/value a pair of the map and
+// collecting the results, removing duplicates.
+//
+// Example:
+//
+//	m := map[string]int{"a": 1, "b": 2, "c": 2}
+//	s := setz.FromMapBy(m, func(k string, v int) int { return v })
+//	// s contains {1, 2}
+func FromMapBy[K, V, E comparable](m map[K]V, f func(K, V) E) Set[E] {
+	s := make(Set[E], len(m))
+	for k, v := range m {
+		s[f(k, v)] = struct{}{}
+	}
+	return s
 }
 
 // FromMap creates a Set from an existing map[T]struct{}.

@@ -47,6 +47,59 @@ func TestFromSlice(t *testing.T) {
 	}
 }
 
+func TestFromSliceBy(t *testing.T) {
+	// Transform maps several inputs onto the same value, deduplicating them.
+	s := FromSliceBy([]int{2, 3, 4}, func(a int) int { return a % 2 })
+	if s.Len() != 2 {
+		t.Errorf("Len() = %d, want 2", s.Len())
+	}
+	if !s.Contains(0) || !s.Contains(1) {
+		t.Error("Set should contain transformed values {0, 1}")
+	}
+
+	// Transform to a different type.
+	lengths := FromSliceBy([]string{"a", "bb", "cc", "ddd"}, func(w string) int { return len(w) })
+	if lengths.Len() != 3 {
+		t.Errorf("Len() = %d, want 3", lengths.Len())
+	}
+	if !lengths.Contains(1) || !lengths.Contains(2) || !lengths.Contains(3) {
+		t.Error("Set should contain string lengths {1, 2, 3}")
+	}
+
+	// Empty slice produces an empty set.
+	empty := FromSliceBy([]int{}, func(a int) int { return a })
+	if !empty.IsEmpty() {
+		t.Error("FromSliceBy([]) should create empty set")
+	}
+}
+
+func TestFromMapBy(t *testing.T) {
+	// Multiple values map onto the same result, deduplicating them.
+	m := map[string]int{"a": 1, "b": 2, "c": 2}
+	s := FromMapBy(m, func(_ string, v int) int { return v })
+	if s.Len() != 2 {
+		t.Errorf("Len() = %d, want 2", s.Len())
+	}
+	if !s.Contains(1) || !s.Contains(2) {
+		t.Error("Set should contain transformed values {1, 2}")
+	}
+
+	// Transform over the keys, to a different type.
+	keys := FromMapBy(m, func(k string, _ int) string { return k })
+	if keys.Len() != 3 {
+		t.Errorf("Len() = %d, want 3", keys.Len())
+	}
+	if !keys.Contains("a") || !keys.Contains("b") || !keys.Contains("c") {
+		t.Error("Set should contain all keys {a, b, c}")
+	}
+
+	// Empty map produces an empty set.
+	empty := FromMapBy(map[int]int{}, func(k, _ int) int { return k })
+	if !empty.IsEmpty() {
+		t.Error("FromMapBy({}) should create empty set")
+	}
+}
+
 func TestFromMap(t *testing.T) {
 	m := map[string]struct{}{"a": {}, "b": {}, "c": {}}
 	s := FromMap(m)
